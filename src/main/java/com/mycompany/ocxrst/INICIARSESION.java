@@ -193,7 +193,7 @@ public boolean validarUsuarioExcel(String usuario, String contraseña) {
     boolean encontrado = false;
 
     try {
-        File archivo = new File("C:\\NetBeansProjects\\OCXRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx"); // 👈 cambia la ruta
+        File archivo = new File("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx"); // 👈 cambia la ruta
         FileInputStream fis = new FileInputStream(archivo);
         Workbook libro = new XSSFWorkbook(fis);
         Sheet hoja = libro.getSheetAt(0);

@@ -422,7 +422,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     public void buscarProveedor(String idBuscado) {
     try {
-        FileInputStream file = new FileInputStream("C:\\NetBeansProjects\\OCXRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\proveedores.xlsx");
+        FileInputStream file = new FileInputStream("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\proveedores.xlsx");
         Workbook workbook = new XSSFWorkbook(file);
         Sheet sheet = workbook.getSheetAt(0);
 

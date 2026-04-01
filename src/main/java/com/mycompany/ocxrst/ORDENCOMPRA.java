@@ -50,6 +50,12 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 });
 
     jButton7.addActionListener(e -> eliminarFilaSeleccionada());
+
+    // Auto-llenar jTextField4 con AVANTE + AñoMesDía (editable)
+    java.time.LocalDate hoy = java.time.LocalDate.now();
+    String cotizacion = String.format("AVANTE%04d%02d%02d",
+            hoy.getYear(), hoy.getMonthValue(), hoy.getDayOfMonth());
+    jTextField4.setText(cotizacion);
     }
 
     /**
@@ -75,7 +81,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel10 = new javax.swing.JLabel();
         jDateChooser2 = new com.toedter.calendar.JDateChooser();
         jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
+        jTextField4 = new javax.swing.JTextField();
         jLabel13 = new javax.swing.JLabel();
         jTextField2 = new javax.swing.JTextField();
         jComboBox1 = new javax.swing.JComboBox<>();
@@ -137,7 +143,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         jLabel11.setText("COTIZACIÓN:");
 
-        jLabel12.setText("AVANTE20260123");
+        jTextField4.setText("");
 
         jLabel13.setText("PROYECTO:");
 
@@ -253,7 +259,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                         .addGap(190, 190, 190)
                                         .addComponent(jLabel11)
                                         .addGap(18, 18, 18)
-                                        .addComponent(jLabel12))
+                                        .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addComponent(jLabel16)
                                         .addGap(18, 18, 18)
@@ -340,7 +346,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel11)
-                                .addComponent(jLabel12))
+                                .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel9)
                                 .addComponent(jLabel10)))
@@ -828,8 +834,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
+    private javax.swing.JTextField jTextField4;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;

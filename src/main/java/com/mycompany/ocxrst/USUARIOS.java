@@ -37,7 +37,7 @@ public class USUARIOS extends javax.swing.JFrame {
      */
     public USUARIOS() {
         initComponents();
-        IconoVentanaUtil.aplicar(this);
+        aplicarIconoVentana();
         setLocationRelativeTo(null);
         asegurarArchivoUsuarios();
     }
@@ -225,7 +225,7 @@ public class USUARIOS extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         eliminarUsuario();
-    }                                        
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -246,7 +246,7 @@ public class USUARIOS extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new USUARIOS().setVisible(true));
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
         // TODO add your handling code here:

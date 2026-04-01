@@ -17,7 +17,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
      */
     public PROVEEDORES() {
         initComponents();
-    setLocationRelativeTo(null); 
+        IconoVentanaUtil.aplicar(this);
+        setLocationRelativeTo(null); 
     }
 
     /**

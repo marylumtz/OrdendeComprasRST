@@ -18,7 +18,8 @@ public class INICIARSESION extends javax.swing.JFrame {
      */
     public INICIARSESION() {
         initComponents();
-    setLocationRelativeTo(null); 
+        IconoVentanaUtil.aplicar(this);
+        setLocationRelativeTo(null); 
     
     }
 

@@ -22,11 +22,16 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     public ORDENCOMPRA() {
         initComponents();
+        IconoVentanaUtil.aplicar(this);
         configurarTablaProductos();
         cargarCFDI();
         cargarUsuario();
+<<<<<<< Updated upstream
         actualizarTotales();
     setLocationRelativeTo(null); 
+=======
+        setLocationRelativeTo(null); 
+>>>>>>> Stashed changes
     
     jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
     @Override

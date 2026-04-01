@@ -17,7 +17,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
      */
     public INVENTARIOS() {
         initComponents();
-    setLocationRelativeTo(null); 
+        IconoVentanaUtil.aplicar(this);
+        setLocationRelativeTo(null); 
     }
 
     /**

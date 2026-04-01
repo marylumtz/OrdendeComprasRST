@@ -17,7 +17,8 @@ public class TERMINOS extends javax.swing.JFrame {
      */
     public TERMINOS() {
         initComponents();
-    setLocationRelativeTo(null); 
+        IconoVentanaUtil.aplicar(this);
+        setLocationRelativeTo(null); 
     }
 
     /**

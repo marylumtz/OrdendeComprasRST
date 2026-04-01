@@ -7,7 +7,8 @@ public class PRINCIPAL extends javax.swing.JFrame {
 
     public PRINCIPAL() {
         initComponents();
-    setLocationRelativeTo(null); 
+        IconoVentanaUtil.aplicar(this);
+        setLocationRelativeTo(null); 
     }
 
     @SuppressWarnings("unchecked")

@@ -5,8 +5,8 @@
 package com.mycompany.ocxrst;
 
 import java.io.FileInputStream;
-import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 /**
@@ -14,19 +14,21 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * @author Maria Luisa Martinez
  */
 public class ORDENCOMPRA extends javax.swing.JFrame {
-
-    private static final String RUTA_INVENTARIOS = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INVENTARIOS.xlsx";
-    private final DataFormatter dataFormatter = new DataFormatter();
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ORDENCOMPRA.class.getName());
 
+    // Lista de productos cargados desde INVENTARIOS.xlsx para autocompletado
+    private List<String[]> listaProductos = new ArrayList<>(); // [codigo, descripcion, unidad, precio]
+    private javax.swing.JPopupMenu popupSugerencias = new javax.swing.JPopupMenu();
+
     public ORDENCOMPRA() {
         initComponents();
-        configurarTablaProductos();
         cargarCFDI();
         cargarUsuario();
-        actualizarTotales();
-    setLocationRelativeTo(null); 
+        cargarInventarioEnMemoria();
+    setLocationRelativeTo(null);
+    java.time.LocalDate hoy = java.time.LocalDate.now();
+    jTextField4.setText(String.format("AVANTE%d%02d%02d", hoy.getYear(), hoy.getMonthValue(), hoy.getDayOfMonth()));
     
     jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
     @Override
@@ -34,20 +36,32 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         buscarProveedor(jTextField1.getText());
     }
 });
-
-    jTextField3.addFocusListener(new java.awt.event.FocusAdapter() {
-    @Override
-    public void focusLost(java.awt.event.FocusEvent e) {
-        procesarCodigoProducto();
-    }
+    
+  jTextField3.addActionListener(e -> {
+    popupSugerencias.setVisible(false);
+    buscarProducto(jTextField3.getText().trim());
+    jTextField3.setText("");
 });
+
+  jTextField3.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+    public void insertUpdate(javax.swing.event.DocumentEvent e) { mostrarSugerencias(); }
+    public void removeUpdate(javax.swing.event.DocumentEvent e) { mostrarSugerencias(); }
+    public void changedUpdate(javax.swing.event.DocumentEvent e) { mostrarSugerencias(); }
+  });
+
+  jTextField3.addKeyListener(new java.awt.event.KeyAdapter() {
+    @Override
+    public void keyPressed(java.awt.event.KeyEvent e) {
+        if (e.getKeyCode() == java.awt.event.KeyEvent.VK_ESCAPE) {
+            popupSugerencias.setVisible(false);
+        }
+    }
+  });
     
   jComboBox1.addActionListener(e -> {
     String seleccionado = jComboBox1.getSelectedItem().toString();
     buscarArea(seleccionado);
 });
-
-    jButton7.addActionListener(e -> eliminarFilaSeleccionada());
     }
 
     /**
@@ -73,7 +87,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel10 = new javax.swing.JLabel();
         jDateChooser2 = new com.toedter.calendar.JDateChooser();
         jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
         jTextField2 = new javax.swing.JTextField();
         jComboBox1 = new javax.swing.JComboBox<>();
@@ -103,6 +116,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel30 = new javax.swing.JLabel();
         jLabel31 = new javax.swing.JLabel();
         jLabel32 = new javax.swing.JLabel();
+        jTextField4 = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -134,8 +148,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel10.setText("NUMERO");
 
         jLabel11.setText("COTIZACIÓN:");
-
-        jLabel12.setText("AVANTE20260123");
 
         jLabel13.setText("PROYECTO:");
 
@@ -245,19 +257,19 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 674, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(jLabel9)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(jLabel10)
-                                        .addGap(190, 190, 190)
-                                        .addComponent(jLabel11)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(jLabel12))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addComponent(jLabel16)
                                         .addGap(18, 18, 18)
                                         .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(270, 270, 270)
                                         .addComponent(jButton7))
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel9)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(jLabel10)
+                                        .addGap(190, 190, 190)
+                                        .addComponent(jLabel11)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addComponent(jLabel6)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -288,24 +300,15 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                             .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 773, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(jLabel19)
-                                .addGap(15, 15, 15)
-                                .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(38, 38, 38)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addComponent(jLabel2)
-                                            .addComponent(jLabel14)
-                                            .addComponent(jLabel31)
-                                            .addComponent(jLabel7)
-                                            .addComponent(jLabel4)
-                                            .addComponent(jLabel13)))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addComponent(jLabel18)))
+                                .addGap(14, 14, 14)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel14)
+                                    .addComponent(jLabel31)
+                                    .addComponent(jLabel7)
+                                    .addComponent(jLabel4)
+                                    .addComponent(jLabel13)
+                                    .addComponent(jLabel18))
                                 .addGap(18, 18, 18)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -321,6 +324,12 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                     .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel19)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 297, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -338,7 +347,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel11)
-                                .addComponent(jLabel12))
+                                .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel9)
                                 .addComponent(jLabel10)))
@@ -364,34 +373,31 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel14)
                     .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 14, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel31, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel32, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel32, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel31))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(9, 9, 9)
-                        .addComponent(jLabel4))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel26, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel26, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel13)
                     .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel18)
                     .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel19, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel19)
                     .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel16)
                     .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -485,153 +491,112 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel8.setText("Error");
     }
 }
-
-    private void configurarTablaProductos() {
-    jTable1.setModel(new DefaultTableModel(
-        new Object[][] {},
-        new String[] {"Código", "Descripción", "Unidad de Medida", "Cantidad", "Precio", "Importe"}
-    ) {
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return switch (columnIndex) {
-                case 0, 1, 2 -> String.class;
-                case 3 -> Integer.class;
-                case 4, 5 -> Double.class;
-                default -> Object.class;
-            };
-        }
-
-        @Override
-        public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 3;
-        }
-
-        @Override
-        public void setValueAt(Object aValue, int row, int column) {
-            if (column == 3) {
-                int cantidad = parseCantidad(aValue);
-                super.setValueAt(cantidad, row, 3);
-
-                Object precioObj = getValueAt(row, 4);
-                double precio = parseNumero(precioObj);
-                super.setValueAt(precio * cantidad, row, 5);
-                ORDENCOMPRA.this.actualizarTotales();
-                return;
-            }
-
-            super.setValueAt(aValue, row, column);
-        }
-    });
-}
-
-    private int parseCantidad(Object valor) {
-    if (valor == null) {
-        return 1;
-    }
-
-    if (valor instanceof Number numero) {
-        return Math.max(1, numero.intValue());
-    }
-
-    try {
-        return Math.max(1, Integer.parseInt(valor.toString().trim()));
-    } catch (NumberFormatException e) {
-        return 1;
-    }
-}
-
-    private double parseNumero(Object valor) {
-    if (valor == null) {
-        return 0;
-    }
-
-    if (valor instanceof Number numero) {
-        return numero.doubleValue();
-    }
-
-    try {
-        return Double.parseDouble(valor.toString().trim().replace(",", ""));
-    } catch (NumberFormatException e) {
-        return 0;
-    }
-}
-
-    private void procesarCodigoProducto() {
-    String codigoBuscado = jTextField3.getText().trim();
-
-    if (codigoBuscado.isEmpty()) {
-        return;
-    }
-
-    if (buscarProducto(codigoBuscado)) {
-        jTextField3.setText("");
-    } else {
-        JOptionPane.showMessageDialog(this, "Producto no encontrado en INVENTARIOS.", "Inventarios", JOptionPane.WARNING_MESSAGE);
-        jTextField3.requestFocus();
-        jTextField3.selectAll();
-    }
-}
     
-    public boolean buscarProducto(String codigoBuscado) {
-    try (FileInputStream file = new FileInputStream(RUTA_INVENTARIOS);
-         Workbook workbook = new XSSFWorkbook(file)) {
-
-        Sheet sheet = workbook.getSheetAt(0);
-
-        for (Row row : sheet) {
-            if (row.getRowNum() == 0) {
-                continue;
+    public void cargarInventarioEnMemoria() {
+        try {
+            FileInputStream file = new FileInputStream(
+                "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INVENTARIOS.xlsx"
+            );
+            Workbook workbook = new XSSFWorkbook(file);
+            Sheet sheet = workbook.getSheetAt(0);
+            listaProductos.clear();
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue;
+                Cell celdaCodigo = row.getCell(0);
+                if (celdaCodigo == null) continue;
+                String codigo = (celdaCodigo.getCellType() == CellType.NUMERIC)
+                    ? String.valueOf((int) celdaCodigo.getNumericCellValue())
+                    : celdaCodigo.toString().trim();
+                String descripcion = row.getCell(1) != null ? row.getCell(1).toString() : "";
+                String unidad     = row.getCell(2) != null ? row.getCell(2).toString() : "";
+                String precio     = row.getCell(3) != null ? String.valueOf(row.getCell(3).getNumericCellValue()) : "0";
+                listaProductos.add(new String[]{codigo, descripcion, unidad, precio});
             }
+            workbook.close();
+            file.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-            String codigo = obtenerTextoCelda(row.getCell(0));
-
-            if (codigo.equalsIgnoreCase(codigoBuscado.trim())) {
-                String descripcion = obtenerTextoCelda(row.getCell(1));
-                String unidad = obtenerTextoCelda(row.getCell(2));
-                double precio = obtenerNumeroCelda(row.getCell(3));
-
-                agregarATabla(codigo, descripcion, unidad, precio);
-                return true;
+    private void mostrarSugerencias() {
+        String texto = jTextField3.getText().trim().toLowerCase();
+        popupSugerencias.removeAll();
+        if (texto.isEmpty()) {
+            popupSugerencias.setVisible(false);
+            return;
+        }
+        int count = 0;
+        for (String[] producto : listaProductos) {
+            String codigo      = producto[0].toLowerCase();
+            String descripcion = producto[1].toLowerCase();
+            if (codigo.contains(texto) || descripcion.contains(texto)) {
+                final String codigoFinal = producto[0];
+                final String etiqueta    = producto[0] + " - " + producto[1];
+                javax.swing.JMenuItem item = new javax.swing.JMenuItem(etiqueta);
+                item.addActionListener(ev -> {
+                    jTextField3.setText(codigoFinal);
+                    popupSugerencias.setVisible(false);
+                    buscarProducto(codigoFinal);
+                    jTextField3.setText("");
+                });
+                popupSugerencias.add(item);
+                if (++count >= 10) break; // máximo 10 sugerencias
             }
         }
+        if (count > 0) {
+            popupSugerencias.show(jTextField3, 0, jTextField3.getHeight());
+            jTextField3.requestFocusInWindow();
+        } else {
+            popupSugerencias.setVisible(false);
+        }
+    }
+
+    public void buscarProducto(String codigoBuscado) {
+    try {
+        FileInputStream file = new FileInputStream(
+            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INVENTARIOS.xlsx"
+        );
+        Workbook workbook = new XSSFWorkbook(file);
+        Sheet sheet = workbook.getSheetAt(0);
+        for (Row row : sheet) {
+            if (row.getRowNum() == 0) continue; // encabezado
+            Cell celdaCodigo = row.getCell(0);
+            if (celdaCodigo != null) {
+               String codigo = "";
+if (celdaCodigo.getCellType() == CellType.NUMERIC) {
+    codigo = String.valueOf((int) celdaCodigo.getNumericCellValue());
+} else {
+    codigo = celdaCodigo.toString().trim();
+}
+                if (codigo.trim().equalsIgnoreCase(codigoBuscado.trim())){
+
+                    String descripcion = row.getCell(1).toString();
+                    String unidad = row.getCell(2).toString();
+                    double precio = row.getCell(3).getNumericCellValue();
+
+                    agregarATabla(codigo, descripcion, unidad, precio);
+
+                    workbook.close();
+                    file.close();
+                    return;
+                }
+            }
+        }
+
+        System.out.println("Producto no encontrado");
+
+        workbook.close();
+        file.close();
+
     } catch (Exception e) {
         e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "No se pudo leer el archivo INVENTARIOS.xlsx", "Error", JOptionPane.ERROR_MESSAGE);
     }
-
-    return false;
 }
-
-    private String obtenerTextoCelda(Cell celda) {
-    if (celda == null) {
-        return "";
-    }
-
-    return dataFormatter.formatCellValue(celda).trim();
-}
-
-    private double obtenerNumeroCelda(Cell celda) {
-    if (celda == null) {
-        return 0;
-    }
-
-    if (celda.getCellType() == CellType.NUMERIC) {
-        return celda.getNumericCellValue();
-    }
-
-    String valor = dataFormatter.formatCellValue(celda).trim().replace(",", "");
-    return valor.isEmpty() ? 0 : Double.parseDouble(valor);
-}
-
     public void agregarATabla(String codigo, String descripcion, String unidad, double precio) {
 
-    DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
-
-    int filaExistente = buscarFilaPorCodigo(modelo, codigo);
-    if (filaExistente >= 0) {
-        JOptionPane.showMessageDialog(this, "El codigo ya existe en la tabla.", "Producto duplicado", JOptionPane.INFORMATION_MESSAGE);
-        return;
-    }
+    javax.swing.table.DefaultTableModel modelo =
+        (javax.swing.table.DefaultTableModel) jTable1.getModel();
 
     Object[] fila = new Object[6];
 
@@ -644,54 +609,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     modelo.addRow(fila);
     modelo.fireTableDataChanged();
-    actualizarTotales();
-}
-
-    private void eliminarFilaSeleccionada() {
-    int filaSeleccionada = jTable1.getSelectedRow();
-
-    if (filaSeleccionada < 0) {
-        JOptionPane.showMessageDialog(this, "Selecciona un producto para eliminar.", "Eliminar", JOptionPane.INFORMATION_MESSAGE);
-        return;
-    }
-
-    DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
-    modelo.removeRow(filaSeleccionada);
-    actualizarTotales();
-}
-
-    private void actualizarTotales() {
-    DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
-    double subtotal = 0;
-
-    for (int i = 0; i < modelo.getRowCount(); i++) {
-        int cantidad = parseCantidad(modelo.getValueAt(i, 3));
-        double precio = parseNumero(modelo.getValueAt(i, 4));
-        double importe = cantidad * precio;
-
-        modelo.setValueAt(importe, i, 5);
-        subtotal += importe;
-    }
-
-    double iva = subtotal * 0.16;
-    double total = subtotal + iva;
-
-    jLabel23.setText(String.format("$ %.2f", subtotal));
-    jLabel24.setText(String.format("$ %.2f", iva));
-    jLabel25.setText(String.format("$ %.2f", total));
-}
-
-    private int buscarFilaPorCodigo(DefaultTableModel modelo, String codigo) {
-    String codigoNormalizado = codigo == null ? "" : codigo.trim();
-
-    for (int i = 0; i < modelo.getRowCount(); i++) {
-        Object codigoFila = modelo.getValueAt(i, 0);
-        if (codigoFila != null && codigoFila.toString().trim().equalsIgnoreCase(codigoNormalizado)) {
-            return i;
-        }
-    }
-
-    return -1;
 }
     
     public void cargarCFDI() {
@@ -792,7 +709,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
       
     private void jTextField3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField3ActionPerformed
-        procesarCodigoProducto();
+        // TODO add your handling code here:
     }//GEN-LAST:event_jTextField3ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -826,7 +743,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
@@ -861,5 +777,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
     private javax.swing.JTextField jTextField3;
+    private javax.swing.JTextField jTextField4;
     // End of variables declaration//GEN-END:variables
 }

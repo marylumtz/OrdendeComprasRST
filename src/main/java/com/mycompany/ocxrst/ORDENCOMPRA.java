@@ -25,6 +25,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         configurarTablaProductos();
         cargarCFDI();
         cargarUsuario();
+        actualizarTotales();
     setLocationRelativeTo(null); 
     
     jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -45,6 +46,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     String seleccionado = jComboBox1.getSelectedItem().toString();
     buscarArea(seleccionado);
 });
+
+    jButton7.addActionListener(e -> eliminarFilaSeleccionada());
     }
 
     /**
@@ -512,6 +515,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 Object precioObj = getValueAt(row, 4);
                 double precio = parseNumero(precioObj);
                 super.setValueAt(precio * cantidad, row, 5);
+                ORDENCOMPRA.this.actualizarTotales();
                 return;
             }
 
@@ -640,6 +644,41 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     modelo.addRow(fila);
     modelo.fireTableDataChanged();
+    actualizarTotales();
+}
+
+    private void eliminarFilaSeleccionada() {
+    int filaSeleccionada = jTable1.getSelectedRow();
+
+    if (filaSeleccionada < 0) {
+        JOptionPane.showMessageDialog(this, "Selecciona un producto para eliminar.", "Eliminar", JOptionPane.INFORMATION_MESSAGE);
+        return;
+    }
+
+    DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+    modelo.removeRow(filaSeleccionada);
+    actualizarTotales();
+}
+
+    private void actualizarTotales() {
+    DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+    double subtotal = 0;
+
+    for (int i = 0; i < modelo.getRowCount(); i++) {
+        int cantidad = parseCantidad(modelo.getValueAt(i, 3));
+        double precio = parseNumero(modelo.getValueAt(i, 4));
+        double importe = cantidad * precio;
+
+        modelo.setValueAt(importe, i, 5);
+        subtotal += importe;
+    }
+
+    double iva = subtotal * 0.16;
+    double total = subtotal + iva;
+
+    jLabel23.setText(String.format("$ %.2f", subtotal));
+    jLabel24.setText(String.format("$ %.2f", iva));
+    jLabel25.setText(String.format("$ %.2f", total));
 }
 
     private int buscarFilaPorCodigo(DefaultTableModel modelo, String codigo) {

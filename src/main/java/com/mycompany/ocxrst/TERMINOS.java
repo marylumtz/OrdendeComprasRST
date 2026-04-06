@@ -18,7 +18,25 @@ public class TERMINOS extends javax.swing.JFrame {
     public TERMINOS() {
         initComponents();
         IconoVentanaUtil.aplicar(this);
-        setLocationRelativeTo(null); 
+        setLocationRelativeTo(null);
+        cargarTerminos();
+        jButton2.addActionListener(this::jButton2ActionPerformed);
+    }
+    
+    private void cargarTerminos() {
+        try (java.io.InputStream is = getClass().getResourceAsStream("/com/mycompany/ocxrst/TERMINOS/Términos y Condiciones.txt");
+             java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8))) {
+            StringBuilder sb = new StringBuilder();
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                sb.append(linea).append("\n");
+            }
+            jTextPane1.setText(sb.toString());
+            jTextPane1.setCaretPosition(0);
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.SEVERE, "No se pudo cargar el archivo de términos", ex);
+            jTextPane1.setText("No se pudo cargar los Términos y Condiciones.");
+        }
     }
 
     /**
@@ -107,6 +125,38 @@ public class TERMINOS extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void guardarEnArchivo(java.io.File archivo) throws java.io.IOException {
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(
+                new java.io.OutputStreamWriter(new java.io.FileOutputStream(archivo), java.nio.charset.StandardCharsets.UTF_8))) {
+            writer.write(jTextPane1.getText());
+        }
+    }
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {
+        try {
+            java.net.URL url = getClass().getResource("/com/mycompany/ocxrst/TERMINOS/Términos y Condiciones.txt");
+            java.io.File archivoTarget = new java.io.File(url.toURI());
+
+            // Guardar en target/classes (cambios inmediatos en ejecución)
+            guardarEnArchivo(archivoTarget);
+
+            // Guardar también en src/main/java (persistencia ante recompilaciones)
+            java.io.File archivoSrc = new java.io.File(
+                archivoTarget.getAbsolutePath()
+                    .replace("\\target\\classes\\", "\\src\\main\\java\\")
+                    .replace("/target/classes/", "/src/main/java/")
+            );
+            if (archivoSrc.exists()) {
+                guardarEnArchivo(archivoSrc);
+            }
+
+            javax.swing.JOptionPane.showMessageDialog(this, "Términos guardados correctamente.", "Guardado", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.SEVERE, "No se pudo guardar el archivo de términos", ex);
+            javax.swing.JOptionPane.showMessageDialog(this, "Error al guardar los Términos y Condiciones.", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         PRINCIPAL ventana = new PRINCIPAL();

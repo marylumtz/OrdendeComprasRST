@@ -1,10 +1,13 @@
+com\mycompany\ocxrst\INVENTARIOS.class
+com\mycompany\ocxrst\ORDENCOMPRA$5.class
+com\mycompany\ocxrst\ORDENCOMPRA$4.class
 com\mycompany\ocxrst\PRINCIPAL.class
+com\mycompany\ocxrst\IconoVentanaUtil.class
+com\mycompany\ocxrst\ORDENCOMPRA$3.class
+com\mycompany\ocxrst\USUARIOS.class
 com\mycompany\ocxrst\ORDENCOMPRA$2.class
 com\mycompany\ocxrst\TERMINOS.class
 com\mycompany\ocxrst\PROVEEDORES.class
-com\mycompany\ocxrst\INVENTARIOS.class
-com\mycompany\ocxrst\ORDENCOMPRA$3.class
-com\mycompany\ocxrst\USUARIOS.class
 com\mycompany\ocxrst\INICIARSESION.class
 com\mycompany\ocxrst\ORDENCOMPRA$1.class
 com\mycompany\ocxrst\ORDENCOMPRA.class

@@ -4,6 +4,18 @@
  */
 package com.mycompany.ocxrst;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import javax.swing.JOptionPane;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 /**
  *
  * @author Maria Luisa Martinez
@@ -11,6 +23,14 @@ package com.mycompany.ocxrst;
 public class PROVEEDORES extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PROVEEDORES.class.getName());
+    private static final String PROVEEDORES_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\PROVEEDORES.xlsx";
+    private static final String PROVEEDORES_FILE_RELATIVE = "src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\PROVEEDORES.xlsx";
+    private static final String[] ENCABEZADOS = {
+        "ID_PROVEEDOR", "NOMBRE_RAZON_SOCIAL", "RFC", "TELEFONO", "CORREO",
+        "DIRECCION", "CONTACTO", "PAGO", "METODO_PAGO", "TIEMPO_ENTREGA", "FORMA_PAGO", "ACTIVO"
+    };
+    private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+    private int filaProveedorActual = -1;
 
     /**
      * Creates new form PRINCIPAL
@@ -18,7 +38,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
     public PROVEEDORES() {
         initComponents();
         IconoVentanaUtil.aplicar(this);
-        setLocationRelativeTo(null); 
+        setLocationRelativeTo(null);
+        asegurarArchivoProveedores();
+        configurarEventos();
     }
 
     /**
@@ -68,16 +90,16 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jButton6.setText("< ATRAS");
         jButton6.addActionListener(this::jButton6ActionPerformed);
 
-        jLabel2.setText("NOMBRE O RAZÓN SOCIAL:");
+        jLabel2.setText("NOMBRE O RAZON SOCIAL:");
         jLabel2.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         jLabel3.setText("RFC:");
 
-        jLabel4.setText("TELÉFONO:");
+        jLabel4.setText("TELEFONO:");
 
         jLabel5.setText("CORREO:");
 
-        jLabel6.setText("DIRECCIÓN:");
+        jLabel6.setText("DIRECCION:");
 
         jLabel7.setText("CONTACTO:");
 
@@ -184,7 +206,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
+        buscarProveedor();
     }//GEN-LAST:event_jButton4ActionPerformed
 
     /**
@@ -233,4 +255,536 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField6;
     // End of variables declaration//GEN-END:variables
+
+    private void configurarEventos() {
+        jButton1.addActionListener(e -> crearProveedor());
+        jButton2.addActionListener(e -> editarProveedor());
+        jButton3.addActionListener(e -> alternarEstadoProveedor());
+        restablecerIndicadorEstado();
+    }//configurarEventos
+
+    private void asegurarArchivoProveedores() {
+        File archivo = obtenerArchivoProveedores();
+        if (!archivo.exists()) {
+            try (Workbook libro = new XSSFWorkbook()) {
+                Sheet hoja = libro.createSheet("PROVEEDORES");
+                asegurarEncabezados(hoja);
+                guardarLibro(libro, archivo);
+            } catch (IOException ex) {
+                mostrarError("No se pudo crear el archivo de proveedores.", ex);
+            }
+            return;
+        }
+
+        try (Workbook libro = cargarLibro(archivo)) {
+            Sheet hoja = obtenerHojaProveedores(libro);
+            if (asegurarEncabezados(hoja)) {
+                guardarLibro(libro, archivo);
+            }
+        } catch (IOException ex) {
+            mostrarError("No se pudo preparar el archivo de proveedores.", ex);
+        }
+    }//asegurarArchivoProveedores
+
+    private void crearProveedor() {
+        if (!validarCamposBase()) {
+            return;
+        }
+
+        String rfc = jTextField2.getText().trim();
+        String idCreado = "";
+
+        try {
+            File archivo = obtenerArchivoProveedores();
+            try (Workbook libro = cargarLibro(archivo)) {
+                Sheet hoja = obtenerHojaProveedores(libro);
+                asegurarEncabezados(hoja);
+
+                if (buscarFilaProveedorPorRFC(hoja, rfc) >= 0) {
+                    JOptionPane.showMessageDialog(this, "Ya existe un proveedor con ese RFC.");
+                    return;
+                }
+
+                int nuevaFila = primeraFilaDisponible(hoja);
+                Row fila = hoja.getRow(nuevaFila);
+                if (fila == null) {
+                    fila = hoja.createRow(nuevaFila);
+                }
+
+                idCreado = generarIdProveedor(hoja, jTextField1.getText());
+                escribirCelda(fila, 0, idCreado);
+                guardarDatosPrincipalesEnFila(fila);
+                completarValoresComercialesPorDefecto(fila);
+                escribirCelda(fila, 11, "1");
+
+                guardarLibro(libro, archivo);
+                filaProveedorActual = nuevaFila;
+                actualizarIndicadorEstado("1");
+            }
+
+            JOptionPane.showMessageDialog(this, "Proveedor creado.\nID asignado: " + idCreado + "\nEstado: ACTIVO (1)");
+            limpiarFormulario(false);
+        } catch (IOException ex) {
+            mostrarError("No se pudo crear el proveedor.", ex);
+        }
+    }//crearProveedor
+
+    private void editarProveedor() {
+        if (!validarCamposBase()) {
+            return;
+        }
+
+        try {
+            File archivo = obtenerArchivoProveedores();
+            try (Workbook libro = cargarLibro(archivo)) {
+                Sheet hoja = obtenerHojaProveedores(libro);
+                asegurarEncabezados(hoja);
+
+                int filaIndex = resolverFilaProveedor(hoja);
+                if (filaIndex < 0) {
+                    restablecerIndicadorEstado();
+                    JOptionPane.showMessageDialog(this, "No se encontro un proveedor para editar. Usa BUSCAR primero.");
+                    return;
+                }
+
+                String rfcForm = jTextField2.getText().trim();
+                int filaMismoRFC = buscarFilaProveedorPorRFC(hoja, rfcForm);
+                if (filaMismoRFC >= 0 && filaMismoRFC != filaIndex) {
+                    JOptionPane.showMessageDialog(this, "El RFC ya pertenece a otro proveedor.");
+                    return;
+                }
+
+                Row fila = hoja.getRow(filaIndex);
+                if (fila == null) {
+                    fila = hoja.createRow(filaIndex);
+                }
+
+                if (leerCelda(fila, 0).isEmpty()) {
+                    escribirCelda(fila, 0, generarIdProveedor(hoja, jTextField1.getText()));
+                }
+                guardarDatosPrincipalesEnFila(fila);
+                completarValoresComercialesPorDefecto(fila);
+
+                if (leerCelda(fila, 11).isEmpty()) {
+                    escribirCelda(fila, 11, "1");
+                } else {
+                    escribirCelda(fila, 11, normalizarEstado(leerCelda(fila, 11)));
+                }
+
+                guardarLibro(libro, archivo);
+                filaProveedorActual = filaIndex;
+                actualizarIndicadorEstado(leerCelda(fila, 11));
+            }
+
+            JOptionPane.showMessageDialog(this, "Proveedor actualizado correctamente.");
+        } catch (IOException ex) {
+            mostrarError("No se pudo editar el proveedor.", ex);
+        }
+    }//editarProveedor
+
+    private void alternarEstadoProveedor() {
+        try {
+            File archivo = obtenerArchivoProveedores();
+            try (Workbook libro = cargarLibro(archivo)) {
+                Sheet hoja = obtenerHojaProveedores(libro);
+                asegurarEncabezados(hoja);
+
+                int filaIndex = resolverFilaProveedor(hoja);
+                if (filaIndex < 0) {
+                    restablecerIndicadorEstado();
+                    JOptionPane.showMessageDialog(this, "No se encontro un proveedor para activar/desactivar. Usa BUSCAR primero.");
+                    return;
+                }
+
+                Row fila = hoja.getRow(filaIndex);
+                if (fila == null) {
+                    restablecerIndicadorEstado();
+                    JOptionPane.showMessageDialog(this, "El registro encontrado esta vacio.");
+                    return;
+                }
+
+                String estadoActual = normalizarEstado(leerCelda(fila, 11));
+                String nuevoEstado = "1".equals(estadoActual) ? "0" : "1";
+                escribirCelda(fila, 11, nuevoEstado);
+
+                guardarLibro(libro, archivo);
+                actualizarIndicadorEstado(nuevoEstado);
+
+                filaProveedorActual = filaIndex;
+                String id = leerCelda(fila, 0);
+                String nombre = leerCelda(fila, 1);
+                String mensajeEstado = "1".equals(nuevoEstado) ? "ACTIVADO (1)" : "DESACTIVADO (0)";
+                JOptionPane.showMessageDialog(this, "Proveedor actualizado:\nID: " + id + "\nNombre: " + nombre + "\nEstado: " + mensajeEstado);
+            }
+        } catch (IOException ex) {
+            mostrarError("No se pudo cambiar el estado del proveedor.", ex);
+        }
+    }//alternarEstadoProveedor
+
+    private void buscarProveedor() {
+        String nombre = jTextField1.getText().trim();
+        String rfc = jTextField2.getText().trim();
+
+        if (nombre.isEmpty() && rfc.isEmpty()) {
+            restablecerIndicadorEstado();
+            JOptionPane.showMessageDialog(this, "Ingresa NOMBRE, RFC o ID para buscar.");
+            return;
+        }
+
+        try {
+            File archivo = obtenerArchivoProveedores();
+            try (Workbook libro = cargarLibro(archivo)) {
+                Sheet hoja = obtenerHojaProveedores(libro);
+                asegurarEncabezados(hoja);
+
+                int filaIndex = -1;
+                if (!rfc.isEmpty()) {
+                    filaIndex = buscarFilaProveedorPorRFC(hoja, rfc);
+                }
+                if (filaIndex < 0 && !nombre.isEmpty()) {
+                    filaIndex = buscarFilaProveedorPorNombre(hoja, nombre);
+                }
+                if (filaIndex < 0 && !nombre.isEmpty()) {
+                    filaIndex = buscarFilaProveedorPorId(hoja, nombre);
+                }
+
+                if (filaIndex < 0) {
+                    filaProveedorActual = -1;
+                    restablecerIndicadorEstado();
+                    JOptionPane.showMessageDialog(this, "No se encontro un proveedor con los datos capturados.");
+                    return;
+                }
+
+                Row fila = hoja.getRow(filaIndex);
+                if (fila == null) {
+                    filaProveedorActual = -1;
+                    restablecerIndicadorEstado();
+                    JOptionPane.showMessageDialog(this, "El registro encontrado esta vacio.");
+                    return;
+                }
+
+                cargarFilaEnFormulario(fila);
+                filaProveedorActual = filaIndex;
+
+                String id = leerCelda(fila, 0);
+                String estado = normalizarEstado(leerCelda(fila, 11));
+                actualizarIndicadorEstado(estado);
+                String estadoTexto = "1".equals(estado) ? "ACTIVO (1)" : "INACTIVO (0)";
+                JOptionPane.showMessageDialog(this, "Proveedor encontrado.\nID: " + id + "\nEstado: " + estadoTexto);
+            }
+        } catch (IOException ex) {
+            restablecerIndicadorEstado();
+            mostrarError("No se pudo buscar el proveedor.", ex);
+        }
+    }//buscarProveedor
+
+    private boolean validarCamposBase() {
+        if (jTextField1.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "NOMBRE O RAZON SOCIAL es obligatorio.");
+            return false;
+        }
+        if (jTextField2.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "RFC es obligatorio.");
+            return false;
+        }
+        return true;
+    }//validarCamposBase
+
+    private int resolverFilaProveedor(Sheet hoja) {
+        if (filaProveedorActual > 0 && filaProveedorActual <= hoja.getLastRowNum()) {
+            Row fila = hoja.getRow(filaProveedorActual);
+            if (fila != null) {
+                String rfcCapturado = jTextField2.getText().trim();
+                String rfcFila = leerCelda(fila, 2);
+                if (rfcCapturado.isEmpty() || rfcCapturado.equalsIgnoreCase(rfcFila)) {
+                    return filaProveedorActual;
+                }
+            }
+        }
+
+        String rfc = jTextField2.getText().trim();
+        if (!rfc.isEmpty()) {
+            int filaPorRFC = buscarFilaProveedorPorRFC(hoja, rfc);
+            if (filaPorRFC >= 0) {
+                return filaPorRFC;
+            }
+        }
+
+        String nombre = jTextField1.getText().trim();
+        if (!nombre.isEmpty()) {
+            int filaPorNombre = buscarFilaProveedorPorNombre(hoja, nombre);
+            if (filaPorNombre >= 0) {
+                return filaPorNombre;
+            }
+
+            int filaPorId = buscarFilaProveedorPorId(hoja, nombre);
+            if (filaPorId >= 0) {
+                return filaPorId;
+            }
+        }
+
+        return -1;
+    }//resolverFilaProveedor
+
+    private void guardarDatosPrincipalesEnFila(Row fila) {
+        escribirCelda(fila, 1, jTextField1.getText().trim());
+        escribirCelda(fila, 2, jTextField2.getText().trim());
+        escribirCelda(fila, 3, jTextField3.getText().trim());
+        escribirCelda(fila, 4, jTextField4.getText().trim());
+        escribirCelda(fila, 5, jTextField5.getText().trim());
+        escribirCelda(fila, 6, jTextField6.getText().trim());
+    }//guardarDatosPrincipalesEnFila
+
+    private void completarValoresComercialesPorDefecto(Row fila) {
+        if (leerCelda(fila, 7).isEmpty()) {
+            escribirCelda(fila, 7, "CONTADO");
+        }
+        if (leerCelda(fila, 8).isEmpty()) {
+            escribirCelda(fila, 8, "PUE(PAGO EN UNA SOLA EXHIBICION)");
+        }
+        if (leerCelda(fila, 9).isEmpty()) {
+            escribirCelda(fila, 9, "De 3 a 5 dias");
+        }
+        if (leerCelda(fila, 10).isEmpty()) {
+            escribirCelda(fila, 10, "Transferencia Electronica Fondos");
+        }
+    }//completarValoresComercialesPorDefecto
+
+    private void cargarFilaEnFormulario(Row fila) {
+        jTextField1.setText(leerCelda(fila, 1));
+        jTextField2.setText(leerCelda(fila, 2));
+        jTextField3.setText(leerCelda(fila, 3));
+        jTextField4.setText(leerCelda(fila, 4));
+        jTextField5.setText(leerCelda(fila, 5));
+        jTextField6.setText(leerCelda(fila, 6));
+    }//cargarFilaEnFormulario
+
+    private void limpiarFormulario(boolean conservarNombre) {
+        if (!conservarNombre) {
+            jTextField1.setText("");
+        }
+        jTextField2.setText("");
+        jTextField3.setText("");
+        jTextField4.setText("");
+        jTextField5.setText("");
+        jTextField6.setText("");
+        filaProveedorActual = -1;
+        restablecerIndicadorEstado();
+    }//limpiarFormulario
+
+    private int buscarFilaProveedorPorId(Sheet hoja, String id) {
+        for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+            Row row = hoja.getRow(fila);
+            if (row == null) {
+                continue;
+            }
+            String idActual = leerCelda(row, 0);
+            if (id.equalsIgnoreCase(idActual)) {
+                return fila;
+            }
+        }
+        return -1;
+    }//buscarFilaProveedorPorId
+
+    private int buscarFilaProveedorPorNombre(Sheet hoja, String nombre) {
+        for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+            Row row = hoja.getRow(fila);
+            if (row == null) {
+                continue;
+            }
+            String nombreActual = leerCelda(row, 1);
+            if (nombre.equalsIgnoreCase(nombreActual)) {
+                return fila;
+            }
+        }
+        return -1;
+    }//buscarFilaProveedorPorNombre
+
+    private int buscarFilaProveedorPorRFC(Sheet hoja, String rfc) {
+        for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+            Row row = hoja.getRow(fila);
+            if (row == null) {
+                continue;
+            }
+            String rfcActual = leerCelda(row, 2);
+            if (rfc.equalsIgnoreCase(rfcActual)) {
+                return fila;
+            }
+        }
+        return -1;
+    }//buscarFilaProveedorPorRFC
+
+    private int primeraFilaDisponible(Sheet hoja) {
+        for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+            Row row = hoja.getRow(fila);
+            if (row == null || leerCelda(row, 0).isEmpty()) {
+                return fila;
+            }
+        }
+        return hoja.getLastRowNum() + 1;
+    }//primeraFilaDisponible
+
+    private String generarIdProveedor(Sheet hoja, String nombreProveedor) {
+        String base = nombreProveedor == null ? "" : nombreProveedor.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
+        if (base.isEmpty()) {
+            base = "prov";
+        }
+
+        if (base.length() > 4) {
+            base = base.substring(0, 4);
+        }
+
+        while (base.length() < 4) {
+            base = base + "x";
+        }
+
+        for (int i = 1; i <= 999; i++) {
+            String sufijo = i <= 99 ? String.format("%02d", i) : String.valueOf(i);
+            String candidato = base + sufijo;
+            if (buscarFilaProveedorPorId(hoja, candidato) < 0) {
+                return candidato;
+            }
+        }
+
+        return base + System.currentTimeMillis();
+    }//generarIdProveedor
+
+    private boolean asegurarEncabezados(Sheet hoja) {
+        boolean huboCambios = false;
+        Row filaEncabezado = hoja.getRow(0);
+        if (filaEncabezado == null) {
+            filaEncabezado = hoja.createRow(0);
+            huboCambios = true;
+        }
+
+        for (int columna = 0; columna < ENCABEZADOS.length; columna++) {
+            Cell celda = filaEncabezado.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+            String valorEsperado = ENCABEZADOS[columna];
+
+            if (celda == null) {
+                celda = filaEncabezado.createCell(columna);
+                celda.setCellValue(valorEsperado);
+                huboCambios = true;
+                continue;
+            }
+
+            String valorActual = DATA_FORMATTER.formatCellValue(celda).trim();
+            if (!valorEsperado.equalsIgnoreCase(valorActual)) {
+                celda.setCellValue(valorEsperado);
+                huboCambios = true;
+            }
+        }
+
+        return huboCambios;
+    }//asegurarEncabezados
+
+    private Sheet obtenerHojaProveedores(Workbook libro) {
+        if (libro.getNumberOfSheets() == 0) {
+            return libro.createSheet("PROVEEDORES");
+        }
+        return libro.getSheetAt(0);
+    }//obtenerHojaProveedores
+
+    private Workbook cargarLibro(File archivo) throws IOException {
+        if (!archivo.exists()) {
+            Workbook libroNuevo = new XSSFWorkbook();
+            Sheet hojaNueva = libroNuevo.createSheet("PROVEEDORES");
+            asegurarEncabezados(hojaNueva);
+            guardarLibro(libroNuevo, archivo);
+            return libroNuevo;
+        }
+
+        try (FileInputStream fis = new FileInputStream(archivo)) {
+            return new XSSFWorkbook(fis);
+        }
+    }//cargarLibro
+
+    private void guardarLibro(Workbook libro, File archivo) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(archivo)) {
+            libro.write(fos);
+        }
+    }//guardarLibro
+
+    private File obtenerArchivoProveedores() {
+        File archivoAbsoluto = new File(PROVEEDORES_FILE_ABSOLUTE);
+        if (archivoAbsoluto.exists()) {
+            return archivoAbsoluto;
+        }
+
+        File archivoRelativo = new File(PROVEEDORES_FILE_RELATIVE);
+        if (archivoRelativo.exists()) {
+            return archivoRelativo;
+        }
+
+        File parent = archivoAbsoluto.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
+        return archivoAbsoluto;
+    }//obtenerArchivoProveedores
+
+    private String leerCelda(Row fila, int columna) {
+        if (fila == null) {
+            return "";
+        }
+        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (celda == null) {
+            return "";
+        }
+        return DATA_FORMATTER.formatCellValue(celda).trim();
+    }//leerCelda
+
+    private void escribirCelda(Row fila, int columna, String valor) {
+        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+        celda.setCellValue(valor == null ? "" : valor.trim());
+    }//escribirCelda
+
+    private String normalizarEstado(String valor) {
+        String limpio = valor == null ? "" : valor.trim();
+        if (limpio.isEmpty()) {
+            return "1";
+        }
+        if ("1".equals(limpio)) {
+            return "1";
+        }
+        if ("0".equals(limpio)) {
+            return "0";
+        }
+
+        try {
+            return Double.parseDouble(limpio) > 0 ? "1" : "0";
+        } catch (NumberFormatException ex) {
+            if ("ACTIVO".equalsIgnoreCase(limpio)
+                    || "SI".equalsIgnoreCase(limpio)
+                    || "TRUE".equalsIgnoreCase(limpio)) {
+                return "1";
+            }
+            return "0";
+        }
+    }//normalizarEstado
+
+    private void actualizarIndicadorEstado(String estado) {
+        String estadoNormalizado = normalizarEstado(estado);
+        if ("1".equals(estadoNormalizado)) {
+            jButton3.setText("DESACTIVAR (ACTIVO)");
+            jButton3.setForeground(new java.awt.Color(0, 120, 0));
+            jButton3.setToolTipText("Estado actual: ACTIVO (1)");
+            return;
+        }
+
+        jButton3.setText("ACTIVAR (INACTIVO)");
+        jButton3.setForeground(new java.awt.Color(180, 0, 0));
+        jButton3.setToolTipText("Estado actual: INACTIVO (0)");
+    }//actualizarIndicadorEstado
+
+    private void restablecerIndicadorEstado() {
+        jButton3.setText("ACTIVAR/DESACTIVAR");
+        jButton3.setForeground(new java.awt.Color(0, 0, 0));
+        jButton3.setToolTipText("Estado actual: sin seleccionar");
+    }//restablecerIndicadorEstado
+
+    private void mostrarError(String mensajeUsuario, Exception ex) {
+        logger.log(java.util.logging.Level.SEVERE, mensajeUsuario, ex);
+        JOptionPane.showMessageDialog(this, mensajeUsuario + "\nDetalle tecnico: " + ex.getMessage());
+    }//mostrarError
 }

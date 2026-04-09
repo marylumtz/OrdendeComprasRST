@@ -12,7 +12,12 @@ import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfPage;
+import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
+import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
+import com.itextpdf.kernel.events.PdfDocumentEvent;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
@@ -269,38 +274,47 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(0, 0, 153));
+        jLabel1.setForeground(new java.awt.Color(0, 95, 131));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("ORDEN DE COMPRA");
 
-        jButton6.setBackground(new java.awt.Color(0, 0, 153));
+        jButton6.setBackground(new java.awt.Color(0, 95, 131));
         jButton6.setForeground(new java.awt.Color(255, 255, 255));
         jButton6.setText("< ATRAS");
         jButton6.addActionListener(this::jButton6ActionPerformed);
 
+        jLabel2.setForeground(new java.awt.Color(0, 95, 131));
         jLabel2.setText("PROVEEDOR:");
         jLabel2.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
+        jLabel3.setForeground(new java.awt.Color(0, 95, 131));
         jLabel3.setText("FECHA:");
 
+        jLabel4.setForeground(new java.awt.Color(0, 95, 131));
         jLabel4.setText("AREA:");
 
+        jLabel6.setForeground(new java.awt.Color(0, 95, 131));
         jLabel6.setText("ID_PROVEEDOR:");
 
+        jLabel7.setForeground(new java.awt.Color(0, 95, 131));
         jLabel7.setText("SOLICITANTE:");
 
         jTextField1.addActionListener(this::jTextField1ActionPerformed);
 
+        jLabel9.setForeground(new java.awt.Color(0, 95, 131));
         jLabel9.setText("NO.");
 
+        jLabel11.setForeground(new java.awt.Color(0, 95, 131));
         jLabel11.setText("COTIZACIÓN:");
 
+        jLabel13.setForeground(new java.awt.Color(0, 95, 131));
         jLabel13.setText("PROYECTO:");
 
         jTextField2.addActionListener(this::jTextField2ActionPerformed);
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
+        jLabel14.setForeground(new java.awt.Color(0, 95, 131));
         jLabel14.setText("DIRECCIÓN:");
 
         jLabel15.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -354,28 +368,39 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(jTable1);
 
+        jLabel16.setForeground(new java.awt.Color(0, 95, 131));
         jLabel16.setText("PRODUCTO:");
 
         jTextField3.addActionListener(this::jTextField3ActionPerformed);
 
+        jButton7.setBackground(new java.awt.Color(0, 95, 131));
+        jButton7.setForeground(new java.awt.Color(255, 255, 255));
         jButton7.setText("Eliminar");
 
+        jLabel17.setForeground(new java.awt.Color(0, 95, 131));
         jLabel17.setText("USO CFDI:");
 
         jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         jComboBox3.addActionListener(this::jComboBox3ActionPerformed);
 
+        jLabel18.setForeground(new java.awt.Color(0, 95, 131));
         jLabel18.setText("PAGO:");
 
+        jLabel19.setForeground(new java.awt.Color(0, 95, 131));
         jLabel19.setText("METODO DE PAGO:");
 
+        jLabel20.setForeground(new java.awt.Color(0, 95, 131));
         jLabel20.setText("SUB TOTAL:");
 
+        jLabel21.setForeground(new java.awt.Color(0, 95, 131));
         jLabel21.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel21.setText("IVA 16%: ");
 
+        jLabel22.setForeground(new java.awt.Color(0, 95, 131));
         jLabel22.setText("TOTAL:");
 
+        jButton1.setBackground(new java.awt.Color(0, 95, 131));
+        jButton1.setForeground(new java.awt.Color(255, 255, 255));
         jButton1.setText("PDF");
         jButton1.addActionListener(this::jButton1ActionPerformed);
 
@@ -388,14 +413,19 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel25.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         jLabel25.setText("jLabel25");
 
+        jLabel29.setForeground(new java.awt.Color(0, 95, 131));
         jLabel29.setText("RFC:");
 
+        jLabel31.setForeground(new java.awt.Color(0, 95, 131));
         jLabel31.setText("CONTACTO:");
 
+        jLabel12.setForeground(new java.awt.Color(0, 95, 131));
         jLabel12.setText("TIEMPO DE ENTREGA:");
 
+        jLabel34.setForeground(new java.awt.Color(0, 95, 131));
         jLabel34.setText("FORMA DE PAGO:");
 
+        jLabel36.setForeground(new java.awt.Color(0, 95, 131));
         jLabel36.setText("TIPO DE MONEDA:");
 
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -404,16 +434,21 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         jTextField5.setHorizontalAlignment(javax.swing.JTextField.CENTER);
 
+        jLabel38.setForeground(new java.awt.Color(0, 95, 131));
         jLabel38.setText("TIPO DE CAMBIO:");
 
+        jLabel39.setForeground(new java.awt.Color(0, 95, 131));
         jLabel39.setText("ELABORÓ:");
 
+        jLabel40.setForeground(new java.awt.Color(0, 95, 131));
         jLabel40.setText("AUTORIZÓ:");
 
         jComboBox4.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jComboBox5.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
+        jButton2.setBackground(new java.awt.Color(0, 95, 131));
+        jButton2.setForeground(new java.awt.Color(255, 255, 255));
         jButton2.setText("BUSCAR");
 
         jComboBox6.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -558,8 +593,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                 .addGap(18, 18, 18)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(jComboBox4, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jComboBox5, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(jComboBox5, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -747,10 +781,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 if (valorCelda.equalsIgnoreCase(idBuscado)) {
                     String nombre       = obtenerTextoCelda(row.getCell(1));
                     String RFC          = obtenerTextoCelda(row.getCell(2));
+                    String telefono     = obtenerTextoCelda(row.getCell(3));
+                    String correo       = obtenerTextoCelda(row.getCell(4));
                     String direccion    = obtenerTextoCelda(row.getCell(5));
                     String contacto     = obtenerTextoCelda(row.getCell(6));
                     workbook.close();
 
+                    proveedorTelefono = telefono;
+                    proveedorCorreo   = correo;
                     jLabel8.setText(nombre);
                     jLabel15.setText("<html>" + direccion + "</html>");
                     jLabel30.setText("<html>" + RFC + "</html>");
@@ -1388,6 +1426,24 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         try {
             PdfWriter  writer = new PdfWriter(ruta);
             PdfDocument pdfDoc = new PdfDocument(writer);
+
+            // Aplicar plantilla de fondo en todas las páginas
+            String rutaPlantilla = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\IMAGENES\\PLANTILLAOCRST.pdf";
+            try {
+                PdfDocument templateDoc = new PdfDocument(new PdfReader(rutaPlantilla));
+                PdfFormXObject plantillaXObj = templateDoc.getFirstPage().copyAsFormXObject(pdfDoc);
+                templateDoc.close();
+                pdfDoc.addEventHandler(PdfDocumentEvent.START_PAGE, event -> {
+                    PdfDocumentEvent docEvent = (PdfDocumentEvent) event;
+                    PdfPage page = docEvent.getPage();
+                    PdfCanvas canvas = new PdfCanvas(page.newContentStreamBefore(), page.getResources(), pdfDoc);
+                    canvas.addXObjectAt(plantillaXObj, 0, 0);
+                    canvas.release();
+                });
+            } catch (Exception ePlantilla) {
+                logger.log(java.util.logging.Level.WARNING, "No se pudo cargar la plantilla PDF", ePlantilla);
+            }
+
             Document   doc    = new Document(pdfDoc, PageSize.LETTER);
             doc.setMargins(36, 36, 36, 36);
 
@@ -1460,16 +1516,20 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             provTbl.addCell(new Cell()
                     .add(new Paragraph("RFC:").setFont(bold).setFontSize(8).setFontColor(azul))
                     .add(new Paragraph("CONTACTO:").setFont(bold).setFontSize(8).setFontColor(azul).setMarginTop(4))
+                    .add(new Paragraph("TELÉFONO:").setFont(bold).setFontSize(8).setFontColor(azul).setMarginTop(4))
                     .setBorder(Border.NO_BORDER).setPadding(3));
             provTbl.addCell(new Cell()
                     .add(new Paragraph(stripHtmlPDF(jLabel30.getText())).setFont(plain).setFontSize(8))
                     .add(new Paragraph(stripHtmlPDF(jLabel32.getText())).setFont(plain).setFontSize(8).setMarginTop(4))
+                    .add(new Paragraph(proveedorTelefono).setFont(plain).setFontSize(8).setMarginTop(4))
                     .setBorder(Border.NO_BORDER).setPadding(3).setVerticalAlignment(VerticalAlignment.TOP));
             provTbl.addCell(new Cell()
                     .add(new Paragraph("DIRECCIÓN:").setFont(bold).setFontSize(8).setFontColor(azul))
+                    .add(new Paragraph("CORREO:").setFont(bold).setFontSize(8).setFontColor(azul).setMarginTop(4))
                     .setBorder(Border.NO_BORDER).setPadding(3));
             provTbl.addCell(new Cell()
                     .add(new Paragraph(stripHtmlPDF(jLabel15.getText())).setFont(plain).setFontSize(8))
+                    .add(new Paragraph(proveedorCorreo).setFont(plain).setFontSize(8).setMarginTop(4))
                     .setBorder(Border.NO_BORDER).setPadding(3).setVerticalAlignment(VerticalAlignment.TOP));
             doc.add(provTbl);
 
@@ -1836,6 +1896,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private javax.swing.JCheckBox jCheckBoxIVA;
+    private String proveedorTelefono = "";
+    private String proveedorCorreo = "";
     private javax.swing.JCheckBox jCheckBoxDescuento;
     private javax.swing.JTextField jTextFieldDescuentoPct;
     private double subtotalOriginal = 0;

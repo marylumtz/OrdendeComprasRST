@@ -74,35 +74,45 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
+        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
+
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(0, 0, 153));
+        jLabel1.setForeground(new java.awt.Color(0, 95, 131));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("PROVEEDORES");
 
+        jButton1.setBackground(new java.awt.Color(0, 95, 131));
+        jButton1.setForeground(new java.awt.Color(255, 255, 255));
         jButton1.setText("CREAR");
 
+        jButton2.setBackground(new java.awt.Color(0, 95, 131));
+        jButton2.setForeground(new java.awt.Color(255, 255, 255));
         jButton2.setText("EDITAR");
 
+        jButton3.setBackground(new java.awt.Color(0, 95, 131));
+        jButton3.setForeground(new java.awt.Color(255, 255, 255));
         jButton3.setText("ELIMINAR");
 
-        jButton6.setBackground(new java.awt.Color(0, 0, 153));
+        jButton6.setBackground(new java.awt.Color(0, 95, 131));
         jButton6.setForeground(new java.awt.Color(255, 255, 255));
         jButton6.setText("< ATRAS");
         jButton6.addActionListener(this::jButton6ActionPerformed);
 
-        jLabel2.setText("NOMBRE O RAZON SOCIAL:");
+        jLabel2.setText("NOMBRE O RAZÓN SOCIAL:");
         jLabel2.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
         jLabel3.setText("RFC:");
 
-        jLabel4.setText("TELEFONO:");
+        jLabel4.setText("TELÉFONO:");
 
         jLabel5.setText("CORREO:");
 
-        jLabel6.setText("DIRECCION:");
+        jLabel6.setText("DIRECCIÓN:");
 
         jLabel7.setText("CONTACTO:");
 
+        jButton4.setBackground(new java.awt.Color(0, 95, 131));
+        jButton4.setForeground(new java.awt.Color(255, 255, 255));
         jButton4.setText("BUSCAR");
         jButton4.addActionListener(this::jButton4ActionPerformed);
 

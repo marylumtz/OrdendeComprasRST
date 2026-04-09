@@ -51,17 +51,23 @@ public class INVENTARIOS extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
-        jLabel1.setForeground(new java.awt.Color(0, 0, 153));
+        jLabel1.setForeground(new java.awt.Color(0, 95, 131));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setText("INVENTARIOS");
 
+        jButton1.setBackground(new java.awt.Color(0, 95, 131));
+        jButton1.setForeground(new java.awt.Color(255, 255, 255));
         jButton1.setText("CREAR");
 
+        jButton2.setBackground(new java.awt.Color(0, 95, 131));
+        jButton2.setForeground(new java.awt.Color(255, 255, 255));
         jButton2.setText("EDITAR");
 
+        jButton3.setBackground(new java.awt.Color(0, 95, 131));
+        jButton3.setForeground(new java.awt.Color(255, 255, 255));
         jButton3.setText("ELIMINAR");
 
-        jButton6.setBackground(new java.awt.Color(0, 0, 153));
+        jButton6.setBackground(new java.awt.Color(0, 95, 131));
         jButton6.setForeground(new java.awt.Color(255, 255, 255));
         jButton6.setText("< ATRAS");
         jButton6.addActionListener(this::jButton6ActionPerformed);
@@ -77,6 +83,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
 
         jLabel7.setText("CANTIDAD: ");
 
+        jButton4.setBackground(new java.awt.Color(0, 95, 131));
+        jButton4.setForeground(new java.awt.Color(255, 255, 255));
         jButton4.setText("BUSCAR");
         jButton4.addActionListener(this::jButton4ActionPerformed);
 

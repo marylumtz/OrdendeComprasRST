@@ -114,6 +114,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     });
 
     jButton7.addActionListener(e -> eliminarFilaSeleccionada());
+    jButton2.addActionListener(e -> buscarOrden());
 
     // Visibilidad inicial de tipo de cambio según moneda seleccionada
     {
@@ -142,6 +143,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jCheckBoxDescuento.setSelected(false);
     jCheckBoxDescuento.setBackground(jPanel1.getBackground());
     jTextFieldDescuentoPct = new javax.swing.JTextField("0");
+    jTextFieldDescuentoPct.setFont(jTextFieldDescuentoPct.getFont().deriveFont(java.awt.Font.BOLD, 15f));
     jTextFieldDescuentoPct.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
     jTextFieldDescuentoPct.setVisible(false);
     jCheckBoxDescuento.addActionListener(e -> {
@@ -156,9 +158,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     java.awt.Rectangle rSub = jLabel20.getBounds();
     java.awt.Rectangle rIVA = jLabel21.getBounds();
     int checkX = Math.min(rSub.x, rIVA.x) - 220;
-    jCheckBoxDescuento.setBounds(checkX, rSub.y - 1, 96, rSub.height + 4);
-    jTextFieldDescuentoPct.setBounds(checkX + 98, rSub.y, 48, rSub.height + 2);
-    jCheckBoxIVA.setBounds(checkX, rIVA.y - 1, 140, rIVA.height + 4);
+    int fieldH = Math.max(rSub.height + 4, 26);
+    jCheckBoxDescuento.setBounds(checkX, rSub.y - 1, 106, fieldH);
+    jTextFieldDescuentoPct.setBounds(checkX + 108, rSub.y - 1, 65, fieldH);
+    jCheckBoxIVA.setBounds(checkX, rIVA.y - 1, 140, fieldH);
     jPanel1.setComponentZOrder(jCheckBoxIVA, 0);
     jPanel1.setComponentZOrder(jCheckBoxDescuento, 0);
     jPanel1.setComponentZOrder(jTextFieldDescuentoPct, 0);
@@ -226,7 +229,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jComboBox1 = new javax.swing.JComboBox<>();
         jLabel14 = new javax.swing.JLabel();
         jLabel15 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         jLabel16 = new javax.swing.JLabel();
@@ -326,7 +329,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
         });
 
-        jLabel5.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel5.setText("FO-SG-04-00");
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
@@ -355,7 +358,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 java.lang.Double.class, java.lang.String.class, java.lang.String.class, java.lang.Integer.class, java.lang.Float.class, java.lang.Float.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, true, false, false
+                false, false, true, true, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -452,19 +455,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jButton2.setText("BUSCAR");
 
         jComboBox6.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jComboBox6.setEditable(true);
 
         jComboBox7.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jComboBox7.setEditable(true);
 
         jComboBox8.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jComboBox8.setEditable(true);
 
         jComboBox9.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jComboBox9.setEditable(true);
 
         jComboBox10.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        jComboBox10.setEditable(true);
 
         jLabel10.setText("A");
 
@@ -476,10 +474,43 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(22, 22, 22)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addGap(9, 9, 9)
+                                        .addComponent(jLabel19)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(jComboBox8, javax.swing.GroupLayout.PREFERRED_SIZE, 239, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                                        .addGap(55, 55, 55)
+                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                            .addComponent(jLabel13)
+                                            .addComponent(jLabel18))
+                                        .addGap(18, 18, 18)
+                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addComponent(jTextField2)
+                                            .addComponent(jComboBox6, 0, 238, Short.MAX_VALUE))))
+                                .addGap(66, 66, 66)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jLabel34)
+                                    .addComponent(jLabel12))
+                                .addGap(18, 18, 18)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jComboBox7, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGap(38, 38, 38))
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jComboBox9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jLabel10)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jComboBox10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jLabel27)
+                                        .addGap(0, 0, Short.MAX_VALUE))))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -560,37 +591,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 674, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(jLabel12)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(jComboBox9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(jLabel10)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(jComboBox10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(jLabel27)))
-                                .addGap(0, 53, Short.MAX_VALUE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addGap(9, 9, 9)
-                                        .addComponent(jLabel19)
+                                        .addComponent(jLabel16)
                                         .addGap(18, 18, 18)
-                                        .addComponent(jComboBox8, javax.swing.GroupLayout.PREFERRED_SIZE, 239, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                        .addGap(55, 55, 55)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addComponent(jLabel13)
-                                            .addComponent(jLabel18))
-                                        .addGap(18, 18, 18)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(jTextField2)
-                                            .addComponent(jComboBox6, 0, 238, Short.MAX_VALUE))))
-                                .addGap(85, 85, 85)
-                                .addComponent(jLabel34)
-                                .addGap(18, 18, 18)
-                                .addComponent(jComboBox7, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(38, 38, 38))))
+                                        .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(38, 38, 38)
+                                        .addComponent(jButton7)))
+                                .addGap(0, 53, Short.MAX_VALUE))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jScrollPane1))
@@ -623,14 +630,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                             .addComponent(jLabel25, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(14, 14, 14)))
                 .addContainerGap())
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(43, 43, 43)
-                .addComponent(jLabel16)
-                .addGap(18, 18, 18)
-                .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(38, 38, 38)
-                .addComponent(jButton7)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addGap(0, 0, Short.MAX_VALUE)
+                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(324, 324, 324))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -712,13 +715,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel19)
-                    .addComponent(jComboBox8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jComboBox8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel12)
                     .addComponent(jComboBox9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jComboBox10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel10)
+                    .addComponent(jComboBox10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel27))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -726,7 +727,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton7))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -755,7 +756,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
                             .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(0, 6, Short.MAX_VALUE))))
+                        .addGap(0, 12, Short.MAX_VALUE))))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -1419,6 +1420,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField3ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        guardarEnRegistroc();
         generarPDF();
     }//GEN-LAST:event_jButton1ActionPerformed
 
@@ -1633,6 +1635,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             doc.add(prodTbl);
 
             // ── TOTALES ───────────────────────────────────────────────────────
+            String monedaPDF = jComboBox2.getSelectedItem() != null ? jComboBox2.getSelectedItem().toString().toUpperCase() : "MXN";
+            String simboloPDF;
+            switch (monedaPDF) {
+                case "USD": simboloPDF = "USD $"; break;
+                case "EUR": simboloPDF = "€";     break;
+                default:    simboloPDF = "$";     break;
+            }
             boolean mostrarDescuento = jCheckBoxDescuento != null && jCheckBoxDescuento.isSelected() && descuentoImporte > 0;
             int filasTot = mostrarDescuento ? 4 : 3;
             Table totTbl = new Table(UnitValue.createPercentArray(new float[]{6, 2.5f, 1.5f}))
@@ -1645,7 +1654,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     .setTextAlignment(TextAlignment.RIGHT).setBackgroundColor(azulClaro)
                     .setBorder(new SolidBorder(azul, 1)).setPadding(3));
             totTbl.addCell(new Cell()
-                    .add(new Paragraph(mostrarDescuento ? String.format("$ %,.2f", subtotalOriginal) : jLabel23.getText()).setFont(bold).setFontSize(8))
+                    .add(new Paragraph(mostrarDescuento ? String.format(simboloPDF + " %,.2f", subtotalOriginal) : jLabel23.getText()).setFont(bold).setFontSize(8))
                     .setTextAlignment(TextAlignment.RIGHT).setBackgroundColor(azulClaro)
                     .setBorder(new SolidBorder(azul, 1)).setPadding(3));
 
@@ -1660,7 +1669,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                         .setBorderTop(Border.NO_BORDER)
                         .setBorderBottom(new SolidBorder(azul, 1)).setPadding(3));
                 totTbl.addCell(new Cell()
-                        .add(new Paragraph(String.format("$ -%,.2f", descuentoImporte)).setFont(bold).setFontSize(8))
+                        .add(new Paragraph(String.format(simboloPDF + " -%,.2f", descuentoImporte)).setFont(bold).setFontSize(8))
                         .setTextAlignment(TextAlignment.RIGHT).setBackgroundColor(azulClaro)
                         .setBorderLeft(Border.NO_BORDER)
                         .setBorderRight(new SolidBorder(azul, 1))
@@ -1867,18 +1876,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
              Workbook wb = new XSSFWorkbook(fis)) {
 
             Sheet sheet = wb.getSheetAt(0);
-            java.util.Set<Long> numerosUsados = new java.util.HashSet<>();
             long maxNumero = 0;
 
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) continue; // saltar encabezado
 
-                org.apache.poi.ss.usermodel.Cell celdaA = row.getCell(0);  // columna A
-                org.apache.poi.ss.usermodel.Cell celdaJ = row.getCell(9);  // columna J (0-indexed)
-
+                org.apache.poi.ss.usermodel.Cell celdaA = row.getCell(0); // columna A = NOORDEN
                 if (celdaA == null) continue;
 
-                // Obtener el número de orden de la columna A
                 long numOrden = 0;
                 if (celdaA.getCellType() == CellType.NUMERIC) {
                     numOrden = (long) celdaA.getNumericCellValue();
@@ -1889,37 +1894,245 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     }
                 }
 
-                if (numOrden > 0) numerosUsados.add(numOrden);
-
-                // Si columna J tiene 1, ese número ya fue usado; actualizar máximo
-                if (celdaJ != null) {
-                    double jVal = 0;
-                    if (celdaJ.getCellType() == CellType.NUMERIC) {
-                        jVal = celdaJ.getNumericCellValue();
-                    } else {
-                        String jStr = dataFormatter.formatCellValue(celdaJ).trim();
-                        if (!jStr.isEmpty()) {
-                            try { jVal = Double.parseDouble(jStr); } catch (NumberFormatException ignore) {}
-                        }
-                    }
-                    if (jVal == 1 && numOrden > maxNumero) {
-                        maxNumero = numOrden;
-                    }
+                if (numOrden > maxNumero) {
+                    maxNumero = numOrden;
                 }
             }
 
-            // El siguiente número es maxNumero + 1; si ya existe, sigue incrementando
-            long siguiente = maxNumero + 1;
-            while (numerosUsados.contains(siguiente)) {
-                siguiente++;
-            }
-
-            jTextField6.setText(String.valueOf(siguiente));
+            jTextField6.setText(String.valueOf(maxNumero + 1));
             jTextField6.setEditable(true);
 
         } catch (Exception e) {
             logger.log(java.util.logging.Level.WARNING, "No se pudo generar número de orden", e);
             jTextField6.setText("1");
+        }
+    }
+
+    private void guardarEnRegistroc() {
+        java.io.File archivo = new java.io.File(RUTA_REGISTROC);
+        Workbook wb;
+        Sheet sheet;
+        try {
+            if (archivo.exists()) {
+                try (FileInputStream fis = new FileInputStream(archivo)) {
+                    wb = new XSSFWorkbook(fis);
+                }
+                sheet = wb.getSheetAt(0);
+            } else {
+                wb = new XSSFWorkbook();
+                sheet = wb.createSheet("REGISTROS");
+                String[] headers = {"NOORDEN","FECHA","DOCUMENTO","COTIZACIÓN","ID_PROVEEDOR",
+                    "CFDI","SOLICITUD","PROYECTO","PAGO","FORMAPAGO","METODOPAGO",
+                    "ENTREGAINICIO","ENTREGAFINAL","DESCUENTO","IVA","ELABORO","AUTORIZO",
+                    "MONEDA","TIPOCAMBIO"};
+                Row headerRow = sheet.createRow(0);
+                for (int i = 0; i < headers.length; i++) {
+                    headerRow.createCell(i).setCellValue(headers[i]);
+                }
+            }
+
+            int lastRow = sheet.getLastRowNum();
+            Row row = sheet.createRow(lastRow + 1);
+
+            // NOORDEN
+            String noOrden = jTextField6.getText().trim();
+            try { row.createCell(0).setCellValue(Long.parseLong(noOrden)); }
+            catch (NumberFormatException ignore) { row.createCell(0).setCellValue(noOrden); }
+
+            // FECHA
+            java.util.Date fecha = jDateChooser2.getDate();
+            if (fecha != null) {
+                org.apache.poi.ss.usermodel.Cell celdaFecha = row.createCell(1);
+                celdaFecha.setCellValue(fecha);
+                org.apache.poi.ss.usermodel.CellStyle dateStyle = wb.createCellStyle();
+                org.apache.poi.ss.usermodel.CreationHelper ch = wb.getCreationHelper();
+                dateStyle.setDataFormat(ch.createDataFormat().getFormat("dd/MM/yyyy"));
+                celdaFecha.setCellStyle(dateStyle);
+            } else {
+                row.createCell(1).setCellValue("");
+            }
+
+            // DOCUMENTO
+            row.createCell(2).setCellValue(jLabel5.getText());
+            // COTIZACIÓN
+            row.createCell(3).setCellValue(jTextField4.getText().trim());
+            // ID_PROVEEDOR
+            row.createCell(4).setCellValue(jTextField1.getText().trim());
+            // CFDI
+            Object cfdi = jComboBox3.getSelectedItem();
+            row.createCell(5).setCellValue(cfdi != null ? cfdi.toString() : "");
+            // SOLICITUD
+            Object solicitud = jComboBox1.getSelectedItem();
+            row.createCell(6).setCellValue(solicitud != null ? solicitud.toString() : "");
+            // PROYECTO
+            row.createCell(7).setCellValue(jTextField2.getText().trim());
+            // PAGO
+            Object pago = jComboBox6.getSelectedItem();
+            row.createCell(8).setCellValue(pago != null ? pago.toString() : "");
+            // FORMAPAGO
+            Object formaPago = jComboBox7.getSelectedItem();
+            row.createCell(9).setCellValue(formaPago != null ? formaPago.toString() : "");
+            // METODOPAGO
+            Object metodoPago = jComboBox8.getSelectedItem();
+            row.createCell(10).setCellValue(metodoPago != null ? metodoPago.toString() : "");
+            // ENTREGAINICIO
+            Object entregaInicio = jComboBox9.getSelectedItem();
+            row.createCell(11).setCellValue(entregaInicio != null ? entregaInicio.toString() : "");
+            // ENTREGAFINAL
+            Object entregaFinal = jComboBox10.getSelectedItem();
+            row.createCell(12).setCellValue(entregaFinal != null ? entregaFinal.toString() : "");
+            // DESCUENTO
+            String descuento = (jCheckBoxDescuento != null && jCheckBoxDescuento.isSelected())
+                    ? jTextFieldDescuentoPct.getText().trim() : "0";
+            row.createCell(13).setCellValue(descuento);
+            // IVA
+            row.createCell(14).setCellValue((jCheckBoxIVA != null && jCheckBoxIVA.isSelected()) ? "SI" : "NO");
+            // ELABORO
+            Object elaboro = jComboBox4.getSelectedItem();
+            row.createCell(15).setCellValue(elaboro != null ? elaboro.toString() : "");
+            // AUTORIZO
+            Object autorizo = jComboBox5.getSelectedItem();
+            row.createCell(16).setCellValue(autorizo != null ? autorizo.toString() : "");
+            // MONEDA
+            Object moneda = jComboBox2.getSelectedItem();
+            row.createCell(17).setCellValue(moneda != null ? moneda.toString() : "");
+            // TIPOCAMBIO
+            row.createCell(18).setCellValue(jTextField5.isVisible() ? jTextField5.getText().trim() : "");
+
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(archivo)) {
+                wb.write(fos);
+            }
+            wb.close();
+
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo guardar en REGISTROC.xlsx", ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo guardar en REGISTROC.xlsx:\n" + ex.getMessage(),
+                    "Advertencia", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void buscarOrden() {
+        String buscar = jTextField6.getText().trim();
+        if (buscar.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingresa un número de orden para buscar.", "Buscar", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try (FileInputStream fis = new FileInputStream(RUTA_REGISTROC);
+             Workbook wb = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = wb.getSheetAt(0);
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue;
+                org.apache.poi.ss.usermodel.Cell celdaA = row.getCell(0);
+                if (celdaA == null) continue;
+
+                String valA = celdaA.getCellType() == CellType.NUMERIC
+                        ? String.valueOf((long) celdaA.getNumericCellValue())
+                        : dataFormatter.formatCellValue(celdaA).trim();
+
+                if (!valA.equals(buscar)) continue;
+
+                // Col 1 - FECHA
+                org.apache.poi.ss.usermodel.Cell cFecha = row.getCell(1);
+                if (cFecha != null && cFecha.getCellType() == CellType.NUMERIC
+                        && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cFecha)) {
+                    jDateChooser2.setDate(cFecha.getDateCellValue());
+                }
+
+                // Col 2 - DOCUMENTO (jLabel5)
+                org.apache.poi.ss.usermodel.Cell cDoc = row.getCell(2);
+                if (cDoc != null) jLabel5.setText(dataFormatter.formatCellValue(cDoc).trim());
+
+                // Col 3 - COTIZACIÓN
+                org.apache.poi.ss.usermodel.Cell cCot = row.getCell(3);
+                if (cCot != null) jTextField4.setText(dataFormatter.formatCellValue(cCot).trim());
+
+                // Col 4 - ID_PROVEEDOR
+                org.apache.poi.ss.usermodel.Cell cProv = row.getCell(4);
+                if (cProv != null) {
+                    String idProv = dataFormatter.formatCellValue(cProv).trim();
+                    jTextField1.setText(idProv);
+                    buscarProveedor(idProv);
+                }
+
+                // Col 5 - CFDI
+                seleccionarCombo(jComboBox3, row.getCell(5));
+
+                // Col 6 - SOLICITUD (SOLICITANTE -> jComboBox1)
+                seleccionarCombo(jComboBox1, row.getCell(6));
+
+                // Col 7 - PROYECTO
+                org.apache.poi.ss.usermodel.Cell cProy = row.getCell(7);
+                if (cProy != null) jTextField2.setText(dataFormatter.formatCellValue(cProy).trim());
+
+                // Col 8 - PAGO
+                seleccionarCombo(jComboBox6, row.getCell(8));
+
+                // Col 9 - FORMAPAGO
+                seleccionarCombo(jComboBox7, row.getCell(9));
+
+                // Col 10 - METODOPAGO
+                seleccionarCombo(jComboBox8, row.getCell(10));
+
+                // Col 11 - ENTREGAINICIO
+                seleccionarCombo(jComboBox9, row.getCell(11));
+
+                // Col 12 - ENTREGAFINAL
+                seleccionarCombo(jComboBox10, row.getCell(12));
+
+                // Col 13 - DESCUENTO
+                org.apache.poi.ss.usermodel.Cell cDesc = row.getCell(13);
+                if (cDesc != null) {
+                    String dVal = dataFormatter.formatCellValue(cDesc).trim();
+                    boolean tieneDesc = !dVal.isEmpty() && !dVal.equals("0");
+                    jCheckBoxDescuento.setSelected(tieneDesc);
+                    jTextFieldDescuentoPct.setText(tieneDesc ? dVal : "0");
+                    jTextFieldDescuentoPct.setVisible(tieneDesc);
+                }
+
+                // Col 14 - IVA
+                org.apache.poi.ss.usermodel.Cell cIva = row.getCell(14);
+                if (cIva != null) {
+                    jCheckBoxIVA.setSelected("SI".equalsIgnoreCase(dataFormatter.formatCellValue(cIva).trim()));
+                }
+
+                // Col 15 - ELABORO
+                seleccionarCombo(jComboBox4, row.getCell(15));
+
+                // Col 16 - AUTORIZO
+                seleccionarCombo(jComboBox5, row.getCell(16));
+
+                // Col 17 - MONEDA
+                seleccionarCombo(jComboBox2, row.getCell(17));
+
+                // Col 18 - TIPOCAMBIO
+                org.apache.poi.ss.usermodel.Cell cTc = row.getCell(18);
+                if (cTc != null) jTextField5.setText(dataFormatter.formatCellValue(cTc).trim());
+
+                actualizarTotales();
+                return;
+            }
+
+            JOptionPane.showMessageDialog(this, "No se encontró la orden № " + buscar + ".", "Buscar", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "Error al buscar orden", ex);
+            JOptionPane.showMessageDialog(this, "Error al buscar:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** Selecciona en un JComboBox el valor que coincide con el texto de la celda */
+    private void seleccionarCombo(javax.swing.JComboBox<String> combo, org.apache.poi.ss.usermodel.Cell celda) {
+        if (celda == null) return;
+        String val = dataFormatter.formatCellValue(celda).trim();
+        javax.swing.ComboBoxModel<String> model = combo.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            if (model.getElementAt(i).equalsIgnoreCase(val)) {
+                combo.setSelectedIndex(i);
+                return;
+            }
         }
     }
 
@@ -1983,7 +2196,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel39;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel40;
-    private javax.swing.JTextField jLabel5;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;

@@ -1470,17 +1470,26 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             return;
         }
 
-        javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
-        fc.setDialogTitle("Guardar Orden de Compra");
         String noOrden = jTextField6.getText().trim();
         String cotizacion = jTextField4.getText().trim();
         String nombreArchivo = "OrdenCompra#" + noOrden + "_" + cotizacion + ".pdf";
+
+        javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+        fc.setDialogTitle("Guardar Orden de Compra");
         fc.setSelectedFile(new File(System.getProperty("user.home") + "\\Desktop\\" + nombreArchivo));
         fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF (*.pdf)", "pdf"));
         if (fc.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return;
 
         String ruta = fc.getSelectedFile().getAbsolutePath();
         if (!ruta.toLowerCase().endsWith(".pdf")) ruta += ".pdf";
+
+        File archivoPDF = new File(ruta);
+        if (archivoPDF.exists()) {
+            JOptionPane.showMessageDialog(this,
+                "El PDF '" + archivoPDF.getName() + "' ya existe y no se generará de nuevo.",
+                "PDF ya generado", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
         try {
             PdfWriter  writer = new PdfWriter(ruta);
@@ -2060,6 +2069,32 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private boolean guardarEnRegistroc() {
+        // Verificar si el número de orden ya existe ANTES de pedir más datos
+        java.io.File archivo = new java.io.File(RUTA_REGISTROC);
+        if (archivo.exists()) {
+            String noOrdenBuscar = jTextField6.getText().trim();
+            try (FileInputStream fisPre = new FileInputStream(archivo);
+                 Workbook wbPre = new XSSFWorkbook(fisPre)) {
+                Sheet sheetPre = wbPre.getSheetAt(0);
+                for (Row r : sheetPre) {
+                    if (r.getRowNum() == 0) continue;
+                    org.apache.poi.ss.usermodel.Cell celdaA = r.getCell(0);
+                    if (celdaA == null) continue;
+                    String valA = celdaA.getCellType() == CellType.NUMERIC
+                            ? String.valueOf((long) celdaA.getNumericCellValue())
+                            : dataFormatter.formatCellValue(celdaA).trim();
+                    if (valA.equals(noOrdenBuscar)) {
+                        JOptionPane.showMessageDialog(this,
+                                "La orden de compra No. " + noOrdenBuscar + " ya existe y no puede duplicarse.",
+                                "Orden ya registrada", JOptionPane.WARNING_MESSAGE);
+                        return false;
+                    }
+                }
+            } catch (Exception exPre) {
+                logger.log(java.util.logging.Level.WARNING, "No se pudo verificar duplicado", exPre);
+            }
+        }
+
         String errorValidacion = validarCampos();
         if (errorValidacion != null) {
             JOptionPane.showMessageDialog(this, errorValidacion,
@@ -2067,7 +2102,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             return false;
         }
 
-        java.io.File archivo = new java.io.File(RUTA_REGISTROC);
         Workbook wb;
         Sheet sheet;
         try {
@@ -2076,23 +2110,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     wb = new XSSFWorkbook(fis);
                 }
                 sheet = wb.getSheetAt(0);
-                // Verificar si el número de orden ya existe
-                String noOrdenBuscar = jTextField6.getText().trim();
-                for (Row r : sheet) {
-                    if (r.getRowNum() == 0) continue;
-                    org.apache.poi.ss.usermodel.Cell celdaA = r.getCell(0);
-                    if (celdaA == null) continue;
-                    String valA = celdaA.getCellType() == CellType.NUMERIC
-                            ? String.valueOf((long) celdaA.getNumericCellValue())
-                            : dataFormatter.formatCellValue(celdaA).trim();
-                    if (valA.equals(noOrdenBuscar)) {
-                        wb.close();
-                        JOptionPane.showMessageDialog(this,
-                                "La orden de compra No. " + noOrdenBuscar + " ya existe y no puede duplicarse.",
-                                "Orden ya registrada", JOptionPane.WARNING_MESSAGE);
-                        return false;
-                    }
-                }
             } else {
                 wb = new XSSFWorkbook();
                 sheet = wb.createSheet("REGISTROS");
@@ -2188,7 +2205,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this,
                     "Orden de compra No. " + jTextField6.getText().trim() + " guardada correctamente.",
                     "Guardado exitoso", JOptionPane.INFORMATION_MESSAGE);
-            generarNumeroOrden();
+            generarPDF();
+            salirDeOrden();
             return true;
 
         } catch (Exception ex) {

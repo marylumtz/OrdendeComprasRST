@@ -600,8 +600,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                         .addGap(9, 9, 9)
                                         .addComponent(jLabel16)
                                         .addGap(18, 18, 18)
-                                        .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(38, 38, 38)
+                                        .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 212, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jButton7)))
                                 .addGap(0, 53, Short.MAX_VALUE))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -759,10 +759,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                             .addComponent(jLabel40)
                             .addComponent(jComboBox5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE, false)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addContainerGap(12, Short.MAX_VALUE))))
         );
 
@@ -1871,6 +1872,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private static final String RUTA_REGISTROC =
         "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\REGISTROC.xlsx";
 
+    private static final String RUTA_INTORDENDECOMPRA =
+        "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INTORDENDECOMPRA.xlsx";
+
     /**
      * Genera el siguiente número de orden único consultando REGISTROC.xlsx.
      * Busca el valor máximo en columna A de las filas cuya columna J = 1,
@@ -2032,6 +2036,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 wb.write(fos);
             }
             wb.close();
+            guardarTablaEnIntOrden(jTextField6.getText().trim());
             JOptionPane.showMessageDialog(this,
                     "Orden de compra No. " + jTextField6.getText().trim() + " guardada correctamente.",
                     "Guardado exitoso", JOptionPane.INFORMATION_MESSAGE);
@@ -2158,6 +2163,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 org.apache.poi.ss.usermodel.Cell cTot = row.getCell(21);
                 if (cTot != null) { String v = dataFormatter.formatCellValue(cTot).trim(); if (!v.isEmpty()) jLabel25.setText(v); }
 
+                cargarTablaDesdeIntOrden(buscar);
                 return;
             }
 
@@ -2166,6 +2172,113 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         } catch (Exception ex) {
             logger.log(java.util.logging.Level.WARNING, "Error al buscar orden", ex);
             JOptionPane.showMessageDialog(this, "Error al buscar:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** Guarda las filas de jTable1 en INTORDENDECOMPRA.xlsx asociadas al número de orden dado */
+    private void guardarTablaEnIntOrden(String noOrden) {
+        java.io.File archivo = new java.io.File(RUTA_INTORDENDECOMPRA);
+        Workbook wb;
+        Sheet sheet;
+        try {
+            if (archivo.exists()) {
+                try (FileInputStream fis = new FileInputStream(archivo)) {
+                    wb = new XSSFWorkbook(fis);
+                }
+                sheet = wb.getSheetAt(0);
+                // Eliminar filas existentes de esta orden para evitar duplicados
+                for (int i = sheet.getLastRowNum(); i >= 1; i--) {
+                    Row r = sheet.getRow(i);
+                    if (r == null) continue;
+                    org.apache.poi.ss.usermodel.Cell c0 = r.getCell(0);
+                    if (c0 == null) continue;
+                    String val = c0.getCellType() == CellType.NUMERIC
+                            ? String.valueOf((long) c0.getNumericCellValue())
+                            : dataFormatter.formatCellValue(c0).trim();
+                    if (val.equals(noOrden)) {
+                        sheet.removeRow(r);
+                    }
+                }
+            } else {
+                wb = new XSSFWorkbook();
+                sheet = wb.createSheet("INTORDEN");
+                String[] headers = {"NOORDEN", "CODIGO", "DESCRIPCION", "UNIDAD", "CANTIDAD", "PRECIO", "IMPORTE"};
+                Row headerRow = sheet.createRow(0);
+                for (int i = 0; i < headers.length; i++) {
+                    headerRow.createCell(i).setCellValue(headers[i]);
+                }
+            }
+
+            DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+            for (int i = 0; i < modelo.getRowCount(); i++) {
+                Object codigo = modelo.getValueAt(i, 0);
+                if (codigo == null || codigo.toString().trim().isEmpty()) continue;
+                int lastRow = sheet.getLastRowNum();
+                Row fila = sheet.createRow(lastRow + 1);
+                // Col 0: NOORDEN
+                try { fila.createCell(0).setCellValue(Long.parseLong(noOrden)); }
+                catch (NumberFormatException ignore) { fila.createCell(0).setCellValue(noOrden); }
+                // Col 1: CODIGO
+                fila.createCell(1).setCellValue(codigo.toString().trim());
+                // Col 2: DESCRIPCION
+                Object desc = modelo.getValueAt(i, 1);
+                fila.createCell(2).setCellValue(desc != null ? desc.toString() : "");
+                // Col 3: UNIDAD
+                Object unidad = modelo.getValueAt(i, 2);
+                fila.createCell(3).setCellValue(unidad != null ? unidad.toString() : "");
+                // Col 4: CANTIDAD
+                Object cant = modelo.getValueAt(i, 3);
+                fila.createCell(4).setCellValue(cant instanceof Number n ? n.doubleValue() : parseNumero(cant));
+                // Col 5: PRECIO
+                Object precio = modelo.getValueAt(i, 4);
+                fila.createCell(5).setCellValue(precio instanceof Number n ? n.doubleValue() : parseNumero(precio));
+                // Col 6: IMPORTE
+                Object importe = modelo.getValueAt(i, 5);
+                fila.createCell(6).setCellValue(importe instanceof Number n ? n.doubleValue() : parseNumero(importe));
+            }
+
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(archivo)) {
+                wb.write(fos);
+            }
+            wb.close();
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo guardar en INTORDENDECOMPRA.xlsx", ex);
+        }
+    }
+
+    /** Carga las filas de INTORDENDECOMPRA.xlsx que corresponden al número de orden dado en jTable1 */
+    private void cargarTablaDesdeIntOrden(String noOrden) {
+        java.io.File archivo = new java.io.File(RUTA_INTORDENDECOMPRA);
+        if (!archivo.exists()) return;
+        try (FileInputStream fis = new FileInputStream(archivo);
+             Workbook wb = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = wb.getSheetAt(0);
+            DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+            modelo.setRowCount(0); // limpiar tabla
+
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue;
+                org.apache.poi.ss.usermodel.Cell c0 = row.getCell(0);
+                if (c0 == null) continue;
+                String val = c0.getCellType() == CellType.NUMERIC
+                        ? String.valueOf((long) c0.getNumericCellValue())
+                        : dataFormatter.formatCellValue(c0).trim();
+                if (!val.equals(noOrden)) continue;
+
+                String codigo  = dataFormatter.formatCellValue(row.getCell(1));
+                String desc    = dataFormatter.formatCellValue(row.getCell(2));
+                String unidad  = dataFormatter.formatCellValue(row.getCell(3));
+                org.apache.poi.ss.usermodel.Cell cCant   = row.getCell(4);
+                org.apache.poi.ss.usermodel.Cell cPrecio = row.getCell(5);
+                org.apache.poi.ss.usermodel.Cell cImp    = row.getCell(6);
+                int cantidad = cCant   != null && cCant.getCellType()   == CellType.NUMERIC ? (int) cCant.getNumericCellValue()   : 0;
+                double precio  = cPrecio != null && cPrecio.getCellType() == CellType.NUMERIC ? cPrecio.getNumericCellValue() : 0;
+                double importe = cImp    != null && cImp.getCellType()    == CellType.NUMERIC ? cImp.getNumericCellValue()    : 0;
+                modelo.addRow(new Object[]{codigo, desc, unidad, cantidad, precio, importe});
+            }
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo cargar tabla desde INTORDENDECOMPRA.xlsx", ex);
         }
     }
 

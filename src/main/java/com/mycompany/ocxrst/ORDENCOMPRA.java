@@ -200,6 +200,17 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
         }
     }
+
+    // Botón SALIR DE ORDEN — a la derecha de IMPRIMIR PDF
+    jButtonSalirOrden = new javax.swing.JButton("SALIR DE ORDEN");
+    jButtonSalirOrden.setBackground(new java.awt.Color(0, 95, 131));
+    jButtonSalirOrden.setForeground(java.awt.Color.WHITE);
+    java.awt.Rectangle rBtn1 = jButton1.getBounds();
+    jButtonSalirOrden.setBounds(rBtn1.x + rBtn1.width + 10, rBtn1.y, 140, rBtn1.height);
+    jButtonSalirOrden.addActionListener(e -> salirDeOrden());
+    jButtonSalirOrden.setEnabled(false);
+    jPanel1.add(jButtonSalirOrden);
+    jPanel1.setComponentZOrder(jButtonSalirOrden, 0);
     }
 
     /**
@@ -609,13 +620,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                         .addComponent(jScrollPane1))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(28, 28, 28)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                     .addComponent(jLabel40)
@@ -624,7 +635,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(jComboBox4, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(jComboBox5, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 307, Short.MAX_VALUE)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel20, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel21, javax.swing.GroupLayout.Alignment.TRAILING)
@@ -759,11 +770,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                             .addComponent(jLabel40)
                             .addComponent(jComboBox5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addContainerGap(12, Short.MAX_VALUE))))
         );
 
@@ -1456,7 +1466,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private void generarPDF() {
         javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
         fc.setDialogTitle("Guardar Orden de Compra");
-        fc.setSelectedFile(new File(System.getProperty("user.home") + "\\Desktop\\OrdenCompra_" + jTextField4.getText() + ".pdf"));
+        String noOrden = jTextField6.getText().trim();
+        String cotizacion = jTextField4.getText().trim();
+        String nombreArchivo = "OrdenCompra#" + noOrden + "_" + cotizacion + ".pdf";
+        fc.setSelectedFile(new File(System.getProperty("user.home") + "\\Desktop\\" + nombreArchivo));
         fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF (*.pdf)", "pdf"));
         if (fc.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return;
 
@@ -1916,6 +1929,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             logger.log(java.util.logging.Level.WARNING, "No se pudo generar número de orden", e);
             jTextField6.setText("1");
         }
+        setModoSoloLectura(false);
     }
 
     private boolean guardarEnRegistroc() {
@@ -2164,6 +2178,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 if (cTot != null) { String v = dataFormatter.formatCellValue(cTot).trim(); if (!v.isEmpty()) jLabel25.setText(v); }
 
                 cargarTablaDesdeIntOrden(buscar);
+                setModoSoloLectura(true);
+                jButtonSalirOrden.setEnabled(true);
                 return;
             }
 
@@ -2295,6 +2311,61 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    /** Limpia el formulario y habilita la creación de una nueva orden */
+    private void salirDeOrden() {
+        // Limpiar campos de texto
+        jTextField1.setText("");
+        jTextField2.setText("");
+        jTextField3.setText("");
+        jTextField5.setText("");
+        // Restaurar cotización con fecha de hoy
+        java.time.LocalDate hoy = java.time.LocalDate.now();
+        jTextField4.setText(String.format("AVANTE%04d%02d%02d",
+                hoy.getYear(), hoy.getMonthValue(), hoy.getDayOfMonth()));
+        // Restaurar fecha a hoy
+        jDateChooser2.setDate(new java.util.Date());
+        // Limpiar etiquetas de proveedor y dirección
+        jLabel8.setText("");
+        jLabel15.setText("");
+        jLabel30.setText("");
+        jLabel32.setText("");
+        // Limpiar tabla de productos
+        ((DefaultTableModel) jTable1.getModel()).setRowCount(0);
+        // Limpiar totales
+        jLabel23.setText("$0.00");
+        jLabel24.setText("$0.00");
+        jLabel25.setText("$0.00");
+        // Generar nuevo número de orden y re-habilitar edición
+        generarNumeroOrden();
+        jButtonSalirOrden.setEnabled(false);
+    }
+
+    /** Habilita o deshabilita la edición de todos los campos del formulario */
+    private void setModoSoloLectura(boolean soloLectura) {
+        jTextField1.setEditable(!soloLectura);
+        jTextField2.setEditable(!soloLectura);
+        jTextField3.setEditable(!soloLectura);
+        jTextField4.setEditable(!soloLectura);
+        jTextField5.setEditable(!soloLectura);
+        jDateChooser2.setEnabled(!soloLectura);
+        jComboBox1.setEnabled(!soloLectura);
+        jComboBox2.setEnabled(!soloLectura);
+        jComboBox3.setEnabled(!soloLectura);
+        jComboBox4.setEnabled(!soloLectura);
+        jComboBox5.setEnabled(!soloLectura);
+        jComboBox6.setEnabled(!soloLectura);
+        jComboBox7.setEnabled(!soloLectura);
+        jComboBox8.setEnabled(!soloLectura);
+        jComboBox9.setEnabled(!soloLectura);
+        jComboBox10.setEnabled(!soloLectura);
+        if (jCheckBoxIVA != null) jCheckBoxIVA.setEnabled(!soloLectura);
+        if (jCheckBoxDescuento != null) jCheckBoxDescuento.setEnabled(!soloLectura);
+        if (jTextFieldDescuentoPct != null) jTextFieldDescuentoPct.setEditable(!soloLectura);
+        jTable1.setEnabled(!soloLectura);
+        jButton7.setEnabled(!soloLectura);
+        jButton3.setEnabled(!soloLectura);
+    }
+
     public static void main(String args[]) {
 
         java.awt.EventQueue.invokeLater(() -> new ORDENCOMPRA().setVisible(true));
@@ -2305,6 +2376,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private String proveedorCorreo = "";
     private javax.swing.JCheckBox jCheckBoxDescuento;
     private javax.swing.JTextField jTextFieldDescuentoPct;
+    private javax.swing.JButton jButtonSalirOrden;
     private double subtotalOriginal = 0;
     private double descuentoImporte = 0;
     // Variables declaration - do not modify//GEN-BEGIN:variables

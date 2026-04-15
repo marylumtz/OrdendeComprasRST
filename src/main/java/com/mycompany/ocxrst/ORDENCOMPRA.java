@@ -645,12 +645,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                             .addComponent(jLabel24, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE)
                             .addComponent(jLabel23, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jLabel25, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(14, 14, 14)))
+                        .addGap(14, 14, 14))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 222, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(324, 324, 324))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1464,6 +1463,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\IMAGENES\\Logo PDF.png";
 
     private void generarPDF() {
+        String errorValidacion = validarCampos();
+        if (errorValidacion != null) {
+            JOptionPane.showMessageDialog(this, errorValidacion,
+                    "Campos incompletos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
         javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
         fc.setDialogTitle("Guardar Orden de Compra");
         String noOrden = jTextField6.getText().trim();
@@ -1882,6 +1888,127 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         return html.replaceAll("<[^>]*>", "").trim();
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    //  VALIDACIÓN DE CAMPOS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Verifica que un combo tenga una selección real (no vacía ni placeholder). */
+    private boolean esSeleccionValida(javax.swing.JComboBox<?> combo) {
+        Object sel = combo.getSelectedItem();
+        if (sel == null) return false;
+        String txt = sel.toString().trim();
+        return !txt.isEmpty()
+                && !txt.equals("** Selecciona una opción **")
+                && !txt.equals("--");
+    }
+
+    /**
+     * Valida que todos los campos obligatorios estén completos.
+     * @return null si todo es correcto, o un mensaje indicando los campos faltantes.
+     */
+    private String validarCampos() {
+        java.util.List<String> faltantes = new java.util.ArrayList<>();
+
+        // ID Proveedor
+        if (jTextField1.getText().trim().isEmpty()) {
+            faltantes.add("• ID PROVEEDOR");
+        } else {
+            String nomProv = jLabel8.getText();
+            if (nomProv.isEmpty()
+                    || nomProv.equals("Proveedor no encontrado")
+                    || nomProv.equals("Error")) {
+                faltantes.add("• PROVEEDOR (ID no encontrado, verifique el dato)");
+            }
+        }
+
+        // Fecha
+        if (jDateChooser2.getDate() == null) {
+            faltantes.add("• FECHA");
+        }
+
+        // Cotización
+        if (jTextField4.getText().trim().isEmpty()) {
+            faltantes.add("• COTIZACIÓN");
+        }
+
+        // USO CFDI
+        if (!esSeleccionValida(jComboBox3)) {
+            faltantes.add("• USO CFDI");
+        }
+
+        // Solicitante
+        if (!esSeleccionValida(jComboBox1)) {
+            faltantes.add("• SOLICITANTE");
+        }
+
+        // Proyecto
+        if (jTextField2.getText().trim().isEmpty()) {
+            faltantes.add("• PROYECTO");
+        }
+
+        // Pago
+        if (!esSeleccionValida(jComboBox6)) {
+            faltantes.add("• PAGO");
+        }
+
+        // Forma de pago
+        if (!esSeleccionValida(jComboBox7)) {
+            faltantes.add("• FORMA DE PAGO");
+        }
+
+        // Método de pago
+        if (!esSeleccionValida(jComboBox8)) {
+            faltantes.add("• MÉTODO DE PAGO");
+        }
+
+        // Tiempo de entrega
+        if (!esSeleccionValida(jComboBox9)) {
+            faltantes.add("• TIEMPO DE ENTREGA (inicio)");
+        }
+        if (!esSeleccionValida(jComboBox10)) {
+            faltantes.add("• TIEMPO DE ENTREGA (fin)");
+        }
+
+        // Tipo de moneda
+        if (!esSeleccionValida(jComboBox2)) {
+            faltantes.add("• TIPO DE MONEDA");
+        }
+
+        // Tipo de cambio (solo cuando la moneda requiere conversión)
+        if (jTextField5.isVisible() && jTextField5.getText().trim().isEmpty()) {
+            faltantes.add("• TIPO DE CAMBIO");
+        }
+
+        // Elaboró
+        if (!esSeleccionValida(jComboBox4)) {
+            faltantes.add("• ELABORÓ");
+        }
+
+        // Autorizó
+        if (!esSeleccionValida(jComboBox5)) {
+            faltantes.add("• AUTORIZÓ");
+        }
+
+        // Tabla de productos (al menos un producto)
+        DefaultTableModel modeloVal = (DefaultTableModel) jTable1.getModel();
+        boolean tieneProductos = false;
+        for (int i = 0; i < modeloVal.getRowCount(); i++) {
+            Object cod = modeloVal.getValueAt(i, 0);
+            if (cod != null && !cod.toString().trim().isEmpty()) {
+                tieneProductos = true;
+                break;
+            }
+        }
+        if (!tieneProductos) {
+            faltantes.add("• PRODUCTOS (la tabla debe contener al menos un producto)");
+        }
+
+        if (faltantes.isEmpty()) return null;
+
+        return "Por favor, complete los siguientes campos antes de continuar:\n\n"
+                + String.join("\n", faltantes);
+    }
+
     private static final String RUTA_REGISTROC =
         "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\REGISTROC.xlsx";
 
@@ -1933,6 +2060,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private boolean guardarEnRegistroc() {
+        String errorValidacion = validarCampos();
+        if (errorValidacion != null) {
+            JOptionPane.showMessageDialog(this, errorValidacion,
+                    "Campos incompletos", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
         java.io.File archivo = new java.io.File(RUTA_REGISTROC);
         Workbook wb;
         Sheet sheet;
@@ -2313,29 +2447,68 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     /** Limpia el formulario y habilita la creación de una nueva orden */
     private void salirDeOrden() {
-        // Limpiar campos de texto
+        // ── Campos de texto ───────────────────────────────────────────────
         jTextField1.setText("");
         jTextField2.setText("");
         jTextField3.setText("");
         jTextField5.setText("");
+
         // Restaurar cotización con fecha de hoy
         java.time.LocalDate hoy = java.time.LocalDate.now();
         jTextField4.setText(String.format("AVANTE%04d%02d%02d",
                 hoy.getYear(), hoy.getMonthValue(), hoy.getDayOfMonth()));
+
         // Restaurar fecha a hoy
         jDateChooser2.setDate(new java.util.Date());
-        // Limpiar etiquetas de proveedor y dirección
+
+        // ── Etiquetas de proveedor / dirección / área ─────────────────────
         jLabel8.setText("");
         jLabel15.setText("");
+        jLabel26.setText("");
         jLabel30.setText("");
         jLabel32.setText("");
-        // Limpiar tabla de productos
+        proveedorTelefono = "";
+        proveedorCorreo   = "";
+
+        // ── Combos: seleccionar primer elemento disponible ────────────────
+        if (jComboBox1.getItemCount() > 0) jComboBox1.setSelectedIndex(0);
+        if (jComboBox3.getItemCount() > 0) jComboBox3.setSelectedIndex(0);
+        if (jComboBox4.getItemCount() > 0) jComboBox4.setSelectedIndex(0);
+        if (jComboBox5.getItemCount() > 0) jComboBox5.setSelectedIndex(0);
+        if (jComboBox6.getItemCount() > 0) jComboBox6.setSelectedIndex(0);
+        if (jComboBox7.getItemCount() > 0) jComboBox7.setSelectedIndex(0);
+        if (jComboBox8.getItemCount() > 0) jComboBox8.setSelectedIndex(0);
+        if (jComboBox9.getItemCount() > 0) jComboBox9.setSelectedIndex(0);
+        if (jComboBox10.getItemCount() > 0) jComboBox10.setSelectedIndex(0);
+
+        // Moneda: restaurar al primer elemento y actualizar descripción / visibilidad tipo cambio
+        if (jComboBox2.getItemCount() > 0) {
+            jComboBox2.setSelectedIndex(0);
+            String clave = jComboBox2.getSelectedItem().toString();
+            jLabel37.setText(monedaDescMap.getOrDefault(clave, ""));
+            boolean mostrarCambio = clave.equalsIgnoreCase("USD") || clave.equalsIgnoreCase("EUR");
+            jTextField5.setVisible(mostrarCambio);
+            jLabel38.setVisible(mostrarCambio);
+        }
+
+        // ── Checkboxes ─────────────────────────────────────────────────────
+        if (jCheckBoxIVA != null) jCheckBoxIVA.setSelected(true);
+        if (jCheckBoxDescuento != null) {
+            jCheckBoxDescuento.setSelected(false);
+            if (jTextFieldDescuentoPct != null) {
+                jTextFieldDescuentoPct.setText("0");
+                jTextFieldDescuentoPct.setVisible(false);
+            }
+        }
+
+        // ── Tabla de productos y totales ──────────────────────────────────
         ((DefaultTableModel) jTable1.getModel()).setRowCount(0);
-        // Limpiar totales
+        jLabel20.setText("SUB TOTAL:");
         jLabel23.setText("$0.00");
         jLabel24.setText("$0.00");
         jLabel25.setText("$0.00");
-        // Generar nuevo número de orden y re-habilitar edición
+
+        // ── Generar nuevo número de orden y re-habilitar edición ──────────
         generarNumeroOrden();
         jButtonSalirOrden.setEnabled(false);
     }

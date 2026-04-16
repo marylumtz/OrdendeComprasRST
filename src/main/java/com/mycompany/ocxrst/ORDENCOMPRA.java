@@ -54,6 +54,12 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private final java.util.List<String[]> cacheInventario = new java.util.ArrayList<>();
     private final javax.swing.JPopupMenu popupProductos = new javax.swing.JPopupMenu();
 
+    // Caché de proveedores: id -> "id | nombre"
+    private final java.util.List<String[]> cacheProveedores = new java.util.ArrayList<>();
+    private final javax.swing.JPopupMenu popupProveedores = new javax.swing.JPopupMenu();
+    private boolean seleccionandoProveedor = false;
+    private boolean modoCrear = false;
+
     public ORDENCOMPRA() {
         initComponents();
         IconoVentanaUtil.aplicar(this);
@@ -66,17 +72,38 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         cargarMetodoPago();
         cargarDias();
         cargarCacheInventario();
+        cargarCacheProveedores();
         actualizarTotales();
         generarNumeroOrden();
     setLocationRelativeTo(null); 
         setLocationRelativeTo(null); 
     
+    jTextField1.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            if (modoCrear) {
+                jTextField1.setEditable(true);
+                jTextField1.requestFocusInWindow();
+            }
+        }
+    });
+
     jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
     @Override
     public void focusLost(java.awt.event.FocusEvent e) {
-        buscarProveedor(jTextField1.getText());
+        if (!e.isTemporary()) {
+            popupProveedores.setVisible(false);
+            buscarProveedor(jTextField1.getText());
+        }
     }
 });
+
+    // ── AUTOCOMPLETE DE PROVEEDOR ─────────────────────────────────────────
+    jTextField1.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+        public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedores(); }
+        public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedores(); }
+        public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedores(); }
+    });
 
     jTextField3.addFocusListener(new java.awt.event.FocusAdapter() {
     @Override
@@ -203,7 +230,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     // Botón SALIR DE ORDEN — a la derecha de IMPRIMIR PDF
     jButtonSalirOrden = new javax.swing.JButton("SALIR DE ORDEN");
-    jButtonSalirOrden.setBackground(new java.awt.Color(0, 95, 131));
+    jButtonSalirOrden.setBackground(new java.awt.Color(139, 0, 0));
     jButtonSalirOrden.setForeground(java.awt.Color.WHITE);
     java.awt.Rectangle rBtn1 = jButton1.getBounds();
     jButtonSalirOrden.setBounds(rBtn1.x + rBtn1.width + 10, rBtn1.y, 140, rBtn1.height);
@@ -463,7 +490,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         jComboBox5.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
-        jButton2.setBackground(new java.awt.Color(0, 95, 131));
+        jButton2.setBackground(new java.awt.Color(0, 204, 51));
         jButton2.setForeground(new java.awt.Color(255, 255, 255));
         jButton2.setText("BUSCAR");
 
@@ -481,7 +508,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         jLabel27.setText("DIAS");
 
-        jButton3.setBackground(new java.awt.Color(0, 95, 131));
+        jButton3.setBackground(new java.awt.Color(255, 102, 0));
         jButton3.setForeground(new java.awt.Color(255, 255, 255));
         jButton3.setText("CREAR");
 
@@ -931,6 +958,54 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
         } catch (Exception e) {
             logger.log(java.util.logging.Level.WARNING, "No se pudo cargar caché de inventario", e);
+        }
+    }
+
+    private void cargarCacheProveedores() {
+        cacheProveedores.clear();
+        try (FileInputStream file = new FileInputStream("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\proveedores.xlsx");
+             Workbook workbook = new XSSFWorkbook(file)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue;
+                String id     = obtenerTextoCelda(row.getCell(0));
+                String nombre = obtenerTextoCelda(row.getCell(1));
+                if (!id.isEmpty()) {
+                    cacheProveedores.add(new String[]{id, nombre});
+                }
+            }
+        } catch (Exception e) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo cargar caché de proveedores", e);
+        }
+    }
+
+    private void filtrarProveedores() {
+        if (seleccionandoProveedor || !modoCrear) return;
+        String texto = jTextField1.getText().trim().toLowerCase();
+        popupProveedores.setVisible(false);
+        popupProveedores.removeAll();
+        if (texto.isEmpty()) return;
+
+        int count = 0;
+        for (String[] prov : cacheProveedores) {
+            if (prov[0].toLowerCase().contains(texto) || prov[1].toLowerCase().contains(texto)) {
+                String etiqueta = prov[0] + "  |  " + prov[1];
+                javax.swing.JMenuItem item = new javax.swing.JMenuItem(etiqueta);
+                final String id = prov[0];
+                item.addActionListener(ev -> {
+                    seleccionandoProveedor = true;
+                    popupProveedores.setVisible(false);
+                    jTextField1.setText(id);
+                    buscarProveedor(id);
+                    seleccionandoProveedor = false;
+                });
+                popupProveedores.add(item);
+                if (++count == 10) break; // máximo 10 sugerencias
+            }
+        }
+        if (count > 0) {
+            popupProveedores.show(jTextField1, 0, jTextField1.getHeight());
+            jTextField1.requestFocusInWindow();
         }
     }
 
@@ -2259,7 +2334,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 org.apache.poi.ss.usermodel.Cell cProv = row.getCell(4);
                 if (cProv != null) {
                     String idProv = dataFormatter.formatCellValue(cProv).trim();
+                    seleccionandoProveedor = true;
                     jTextField1.setText(idProv);
+                    seleccionandoProveedor = false;
                     buscarProveedor(idProv);
                 }
 
@@ -2466,7 +2543,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     /** Limpia el formulario y habilita la creación de una nueva orden */
     private void salirDeOrden() {
         // ── Campos de texto ───────────────────────────────────────────────
+        seleccionandoProveedor = true;
         jTextField1.setText("");
+        seleccionandoProveedor = false;
         jTextField2.setText("");
         jTextField3.setText("");
         jTextField5.setText("");
@@ -2533,7 +2612,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     /** Habilita o deshabilita la edición de todos los campos del formulario */
     private void setModoSoloLectura(boolean soloLectura) {
-        jTextField1.setEditable(!soloLectura);
+        modoCrear = !soloLectura;
+        jTextField1.setEditable(false); // se activa solo al hacer clic (modo crear)
         jTextField2.setEditable(!soloLectura);
         jTextField3.setEditable(!soloLectura);
         jTextField4.setEditable(!soloLectura);

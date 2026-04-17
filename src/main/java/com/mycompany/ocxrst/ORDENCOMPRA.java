@@ -105,6 +105,21 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedores(); }
     });
 
+    // ── EDICIÓN DE jLabel5 CON DOBLE CLIC ────────────────────────────────
+    jLabel5.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+    jLabel5.addMouseListener(new java.awt.event.MouseAdapter() {
+        @Override
+        public void mouseClicked(java.awt.event.MouseEvent e) {
+            if (e.getClickCount() == 2 && modoCrear) {
+                String nuevo = JOptionPane.showInputDialog(
+                        ORDENCOMPRA.this, "Editar documento:", jLabel5.getText());
+                if (nuevo != null) {
+                    jLabel5.setText(nuevo.trim());
+                }
+            }
+        }
+    });
+
     jTextField3.addFocusListener(new java.awt.event.FocusAdapter() {
     @Override
     public void focusLost(java.awt.event.FocusEvent e) {
@@ -1618,7 +1633,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     .setVerticalAlignment(VerticalAlignment.MIDDLE));
 
             header.addCell(new Cell()
-                    .add(new Paragraph("FO-SG-04-00")
+                    .add(new Paragraph(jLabel5.getText())
                             .setFont(bold).setFontSize(8)
                             .setTextAlignment(TextAlignment.RIGHT))
                     .add(new Paragraph("NO.  " + jTextField6.getText())
@@ -2605,6 +2620,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel24.setText("$0.00");
         jLabel25.setText("$0.00");
 
+        // ── Restablecer número de documento ───────────────────────────────
+        jLabel5.setText("FO-SG-04-00");
+
         // ── Generar nuevo número de orden y re-habilitar edición ──────────
         generarNumeroOrden();
         jButtonSalirOrden.setEnabled(false);
@@ -2624,11 +2642,15 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jComboBox3.setEnabled(!soloLectura);
         jComboBox4.setEnabled(!soloLectura);
         jComboBox5.setEnabled(!soloLectura);
+        // jLabel5, jComboBox6-10 editables solo en modo crear
         jComboBox6.setEnabled(!soloLectura);
         jComboBox7.setEnabled(!soloLectura);
         jComboBox8.setEnabled(!soloLectura);
         jComboBox9.setEnabled(!soloLectura);
         jComboBox10.setEnabled(!soloLectura);
+        jLabel5.setCursor(soloLectura
+                ? java.awt.Cursor.getDefaultCursor()
+                : java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
         if (jCheckBoxIVA != null) jCheckBoxIVA.setEnabled(!soloLectura);
         if (jCheckBoxDescuento != null) jCheckBoxDescuento.setEnabled(!soloLectura);
         if (jTextFieldDescuentoPct != null) jTextFieldDescuentoPct.setEditable(!soloLectura);

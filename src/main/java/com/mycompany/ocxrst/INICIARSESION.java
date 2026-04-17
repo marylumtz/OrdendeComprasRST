@@ -10,6 +10,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;/*
  * @author Maria Luisa Martinez
  */
 public class INICIARSESION extends javax.swing.JFrame {
+
+    /** Usuario que inició sesión actualmente */
+    public static String usuarioActual = "";
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(INICIARSESION.class.getName());
 
@@ -108,6 +111,7 @@ public class INICIARSESION extends javax.swing.JFrame {
     String contraseña = new String(jPasswordField1.getPassword());
 
     if (validarUsuarioExcel(usuario, contraseña)) {
+        usuarioActual = usuario;
         javax.swing.JOptionPane.showMessageDialog(this, "Bienvenido " + usuario);
 
         PRINCIPAL ventana = new PRINCIPAL();

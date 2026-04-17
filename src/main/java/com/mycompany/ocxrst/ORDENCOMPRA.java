@@ -253,6 +253,37 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jButtonSalirOrden.setEnabled(false);
     jPanel1.add(jButtonSalirOrden);
     jPanel1.setComponentZOrder(jButtonSalirOrden, 0);
+
+    // Botón GUARDAR CAMBIOS — esquina superior derecha (solo visible para admin)
+    jButtonGuardarCambios = new javax.swing.JButton("Guardar Cambios");
+    jButtonGuardarCambios.setBackground(new java.awt.Color(0, 128, 0));
+    jButtonGuardarCambios.setForeground(java.awt.Color.WHITE);
+    java.awt.Rectangle rBtn6 = jButton6.getBounds();
+    // Posicionar en la esquina superior derecha alineado verticalmente con < ATRÁS
+    jButtonGuardarCambios.setBounds(jPanel1.getPreferredSize().width - 170, rBtn6.y, 155, rBtn6.height);
+    jButtonGuardarCambios.addComponentListener(new java.awt.event.ComponentAdapter() {
+        @Override public void componentResized(java.awt.event.ComponentEvent e) {
+            // reposicionar si el panel cambia de tamaño
+            int panelW = jPanel1.getWidth();
+            if (panelW > 0) {
+                java.awt.Rectangle r = jButtonGuardarCambios.getBounds();
+                jButtonGuardarCambios.setLocation(panelW - 170, r.y);
+            }
+        }
+    });
+    jPanel1.addComponentListener(new java.awt.event.ComponentAdapter() {
+        @Override public void componentResized(java.awt.event.ComponentEvent e) {
+            int panelW = jPanel1.getWidth();
+            if (panelW > 0 && jButtonGuardarCambios != null) {
+                java.awt.Rectangle r = jButtonGuardarCambios.getBounds();
+                jButtonGuardarCambios.setLocation(panelW - 170, r.y);
+            }
+        }
+    });
+    jButtonGuardarCambios.addActionListener(e -> guardarCambiosOrden());
+    jButtonGuardarCambios.setVisible(false);
+    jPanel1.add(jButtonGuardarCambios);
+    jPanel1.setComponentZOrder(jButtonGuardarCambios, 0);
     }
 
     /**
@@ -2308,6 +2339,119 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    /** Actualiza la orden buscada en REGISTROC.xlsx (solo accesible para admin) */
+    private void guardarCambiosOrden() {
+        String noOrden = jTextField6.getText().trim();
+        if (noOrden.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay ninguna orden cargada para guardar.", "Guardar Cambios", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        java.io.File archivo = new java.io.File(RUTA_REGISTROC);
+        if (!archivo.exists()) {
+            JOptionPane.showMessageDialog(this, "No se encontró el archivo de registros.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try (FileInputStream fis = new FileInputStream(archivo);
+             Workbook wb = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = wb.getSheetAt(0);
+            Row rowToUpdate = null;
+
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue;
+                org.apache.poi.ss.usermodel.Cell celdaA = row.getCell(0);
+                if (celdaA == null) continue;
+                String valA = celdaA.getCellType() == CellType.NUMERIC
+                        ? String.valueOf((long) celdaA.getNumericCellValue())
+                        : dataFormatter.formatCellValue(celdaA).trim();
+                if (valA.equals(noOrden)) {
+                    rowToUpdate = row;
+                    break;
+                }
+            }
+
+            if (rowToUpdate == null) {
+                JOptionPane.showMessageDialog(this, "No se encontró la orden № " + noOrden + " para actualizar.", "Guardar Cambios", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // FECHA
+            java.util.Date fecha = jDateChooser2.getDate();
+            if (fecha != null) {
+                org.apache.poi.ss.usermodel.Cell celdaFecha = rowToUpdate.getCell(1);
+                if (celdaFecha == null) celdaFecha = rowToUpdate.createCell(1);
+                celdaFecha.setCellValue(fecha);
+                org.apache.poi.ss.usermodel.CellStyle dateStyle = wb.createCellStyle();
+                dateStyle.setDataFormat(wb.getCreationHelper().createDataFormat().getFormat("dd/MM/yyyy"));
+                celdaFecha.setCellStyle(dateStyle);
+            }
+            // DOCUMENTO
+            setCellString(rowToUpdate, 2, jLabel5.getText());
+            // COTIZACIÓN
+            setCellString(rowToUpdate, 3, jTextField4.getText().trim());
+            // ID_PROVEEDOR
+            setCellString(rowToUpdate, 4, jTextField1.getText().trim());
+            // CFDI
+            setCellString(rowToUpdate, 5, jComboBox3.getSelectedItem() != null ? jComboBox3.getSelectedItem().toString() : "");
+            // SOLICITUD
+            setCellString(rowToUpdate, 6, jComboBox1.getSelectedItem() != null ? jComboBox1.getSelectedItem().toString() : "");
+            // PROYECTO
+            setCellString(rowToUpdate, 7, jTextField2.getText().trim());
+            // PAGO
+            setCellString(rowToUpdate, 8, jComboBox6.getSelectedItem() != null ? jComboBox6.getSelectedItem().toString() : "");
+            // FORMAPAGO
+            setCellString(rowToUpdate, 9, jComboBox7.getSelectedItem() != null ? jComboBox7.getSelectedItem().toString() : "");
+            // METODOPAGO
+            setCellString(rowToUpdate, 10, jComboBox8.getSelectedItem() != null ? jComboBox8.getSelectedItem().toString() : "");
+            // ENTREGAINICIO
+            setCellString(rowToUpdate, 11, jComboBox9.getSelectedItem() != null ? jComboBox9.getSelectedItem().toString() : "");
+            // ENTREGAFINAL
+            setCellString(rowToUpdate, 12, jComboBox10.getSelectedItem() != null ? jComboBox10.getSelectedItem().toString() : "");
+            // DESCUENTO
+            String descuento = (jCheckBoxDescuento != null && jCheckBoxDescuento.isSelected())
+                    ? jTextFieldDescuentoPct.getText().trim() : "0";
+            setCellString(rowToUpdate, 13, descuento);
+            // IVA
+            setCellString(rowToUpdate, 14, (jCheckBoxIVA != null && jCheckBoxIVA.isSelected()) ? "SI" : "NO");
+            // ELABORO
+            setCellString(rowToUpdate, 15, jComboBox4.getSelectedItem() != null ? jComboBox4.getSelectedItem().toString() : "");
+            // AUTORIZO
+            setCellString(rowToUpdate, 16, jComboBox5.getSelectedItem() != null ? jComboBox5.getSelectedItem().toString() : "");
+            // MONEDA
+            setCellString(rowToUpdate, 17, jComboBox2.getSelectedItem() != null ? jComboBox2.getSelectedItem().toString() : "");
+            // TIPOCAMBIO
+            setCellString(rowToUpdate, 18, jTextField5.isVisible() ? jTextField5.getText().trim() : "");
+            // SUBTOTAL, IVA_IMPORTE, TOTAL
+            setCellString(rowToUpdate, 19, jLabel23.getText());
+            setCellString(rowToUpdate, 20, jLabel24.getText());
+            setCellString(rowToUpdate, 21, jLabel25.getText());
+
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(archivo)) {
+                wb.write(fos);
+            }
+
+            guardarTablaEnIntOrden(noOrden);
+
+            JOptionPane.showMessageDialog(this,
+                    "Orden № " + noOrden + " actualizada correctamente.",
+                    "Guardar Cambios", JOptionPane.INFORMATION_MESSAGE);
+            setModoSoloLectura(true);
+
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "Error al guardar cambios de orden", ex);
+            JOptionPane.showMessageDialog(this, "Error al guardar cambios:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /** Utilidad: asigna un valor string a la celda, creándola si no existe */
+    private void setCellString(Row row, int col, String value) {
+        org.apache.poi.ss.usermodel.Cell cell = row.getCell(col);
+        if (cell == null) cell = row.createCell(col);
+        cell.setCellValue(value != null ? value : "");
+    }
+
     private void buscarOrden() {
         String buscar = jTextField6.getText().trim();
         if (buscar.isEmpty()) {
@@ -2422,7 +2566,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 if (cTot != null) { String v = dataFormatter.formatCellValue(cTot).trim(); if (!v.isEmpty()) jLabel25.setText(v); }
 
                 cargarTablaDesdeIntOrden(buscar);
-                setModoSoloLectura(true);
+                boolean esAdmin = "admin".equalsIgnoreCase(INICIARSESION.usuarioActual);
+                setModoSoloLectura(!esAdmin);
                 jButtonSalirOrden.setEnabled(true);
                 return;
             }
@@ -2657,6 +2802,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jTable1.setEnabled(!soloLectura);
         jButton7.setEnabled(!soloLectura);
         jButton3.setEnabled(!soloLectura);
+        // Botón Guardar Cambios: visible solo cuando el admin está editando una orden buscada
+        boolean esAdmin = "admin".equalsIgnoreCase(INICIARSESION.usuarioActual);
+        if (jButtonGuardarCambios != null) {
+            jButtonGuardarCambios.setVisible(esAdmin && !soloLectura);
+        }
     }
 
     public static void main(String args[]) {
@@ -2670,6 +2820,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JCheckBox jCheckBoxDescuento;
     private javax.swing.JTextField jTextFieldDescuentoPct;
     private javax.swing.JButton jButtonSalirOrden;
+    private javax.swing.JButton jButtonGuardarCambios;
     private double subtotalOriginal = 0;
     private double descuentoImporte = 0;
     // Variables declaration - do not modify//GEN-BEGIN:variables

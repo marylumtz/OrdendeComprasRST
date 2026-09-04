@@ -2189,6 +2189,20 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         setModoSoloLectura(false);
     }
 
+    // Agrega ABONADO/ESTATUS a archivos REGISTROC.xlsx creados antes de que existieran estas columnas
+    private void asegurarEncabezadosAbonadoEstatus(Sheet sheet) {
+        Row encabezado = sheet.getRow(0);
+        if (encabezado == null) {
+            encabezado = sheet.createRow(0);
+        }
+        if (encabezado.getCell(22, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null) {
+            encabezado.createCell(22).setCellValue("ABONADO");
+        }
+        if (encabezado.getCell(23, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null) {
+            encabezado.createCell(23).setCellValue("ESTATUS");
+        }
+    }//asegurarEncabezadosAbonadoEstatus
+
     private boolean guardarEnRegistroc() {
         // Verificar si el número de orden ya existe ANTES de pedir más datos
         java.io.File archivo = new java.io.File(RUTA_REGISTROC);
@@ -2231,13 +2245,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     wb = new XSSFWorkbook(fis);
                 }
                 sheet = wb.getSheetAt(0);
+                asegurarEncabezadosAbonadoEstatus(sheet);
             } else {
                 wb = new XSSFWorkbook();
                 sheet = wb.createSheet("REGISTROS");
                 String[] headers = {"NOORDEN","FECHA","DOCUMENTO","COTIZACIÓN","ID_PROVEEDOR",
                     "CFDI","SOLICITUD","PROYECTO","PAGO","FORMAPAGO","METODOPAGO",
                     "ENTREGAINICIO","ENTREGAFINAL","DESCUENTO","IVA","ELABORO","AUTORIZO",
-                    "MONEDA","TIPOCAMBIO","SUBTOTAL","IVA_IMPORTE","TOTAL"};
+                    "MONEDA","TIPOCAMBIO","SUBTOTAL","IVA_IMPORTE","TOTAL","ABONADO","ESTATUS"};
                 Row headerRow = sheet.createRow(0);
                 for (int i = 0; i < headers.length; i++) {
                     headerRow.createCell(i).setCellValue(headers[i]);

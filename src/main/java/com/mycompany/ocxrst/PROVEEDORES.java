@@ -25,12 +25,19 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PROVEEDORES.class.getName());
     private static final String PROVEEDORES_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\PROVEEDORES.xlsx";
     private static final String PROVEEDORES_FILE_RELATIVE = "src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\PROVEEDORES.xlsx";
+    private static final String ORDENES_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\REGISTROC.xlsx";
+    private static final String ORDENES_DETALLE_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INTORDENDECOMPRA.xlsx";
     private static final String[] ENCABEZADOS = {
         "ID_PROVEEDOR", "NOMBRE_RAZON_SOCIAL", "RFC", "TELEFONO", "CORREO",
         "DIRECCION", "CONTACTO", "PAGO", "METODO_PAGO", "TIEMPO_ENTREGA", "FORMA_PAGO", "ACTIVO"
     };
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
     private int filaProveedorActual = -1;
+
+    // Caché de proveedores para autocompletar: id -> "id | nombre"
+    private final java.util.List<String[]> cacheProveedores = new java.util.ArrayList<>();
+    private final javax.swing.JPopupMenu popupProveedores = new javax.swing.JPopupMenu();
+    private boolean seleccionandoProveedor = false;
 
     /**
      * Creates new form PRINCIPAL
@@ -40,6 +47,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
         IconoVentanaUtil.aplicar(this);
         setLocationRelativeTo(null);
         asegurarArchivoProveedores();
+        cargarCacheProveedores();
+        configurarAutocompleteNombre();
         configurarEventos();
     }
 
@@ -58,6 +67,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
+        jLabelId = new javax.swing.JLabel();
+        jTextFieldId = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -89,7 +100,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jButton2.setForeground(new java.awt.Color(255, 255, 255));
         jButton2.setText("EDITAR");
 
-        jButton3.setBackground(new java.awt.Color(0, 95, 131));
+        jButton3.setBackground(java.awt.Color.WHITE);
         jButton3.setForeground(new java.awt.Color(255, 255, 255));
         jButton3.setText("ELIMINAR");
 
@@ -97,6 +108,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jButton6.setForeground(new java.awt.Color(255, 255, 255));
         jButton6.setText("< ATRAS");
         jButton6.addActionListener(this::jButton6ActionPerformed);
+
+        jLabelId.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabelId.setText("ID:");
+
+        jTextFieldId.setEditable(false);
 
         jLabel2.setText("NOMBRE O RAZÓN SOCIAL:");
         jLabel2.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -118,7 +134,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         jButton4.setBackground(new java.awt.Color(0, 95, 131));
         jButton4.setForeground(new java.awt.Color(255, 255, 255));
-        jButton4.setText("BUSCAR");
+        jButton4.setText("HISTORIAL DE COMPRAS");
         jButton4.addActionListener(this::jButton4ActionPerformed);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -143,6 +159,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                 .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addComponent(jLabel2))
+                            .addComponent(jLabelId, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -151,6 +168,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(18, 18, 18)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jTextFieldId)
                                     .addComponent(jTextField2)
                                     .addComponent(jTextField3)
                                     .addComponent(jTextField4)
@@ -174,6 +192,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     .addComponent(jLabel1)
                     .addComponent(jButton6))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabelId)
+                    .addComponent(jTextFieldId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -230,7 +252,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        buscarProveedor();
+        mostrarHistorialCompras();
     }//GEN-LAST:event_jButton4ActionPerformed
 
     /**
@@ -265,6 +287,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabelId;
+    private javax.swing.JTextField jTextFieldId;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -335,7 +359,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     fila = hoja.createRow(nuevaFila);
                 }
 
-                idCreado = generarIdProveedor(hoja, jTextField1.getText());
+                idCreado = generarIdProveedor(hoja, jTextField1.getText().trim());
                 escribirCelda(fila, 0, idCreado);
                 guardarDatosPrincipalesEnFila(fila);
                 completarValoresComercialesPorDefecto(fila);
@@ -346,8 +370,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 actualizarIndicadorEstado("1");
             }
 
+            jTextFieldId.setText(idCreado);
             JOptionPane.showMessageDialog(this, "Proveedor creado.\nID asignado: " + idCreado + "\nEstado: ACTIVO (1)");
             limpiarFormulario(false);
+            cargarCacheProveedores();
         } catch (IOException ex) {
             mostrarError("No se pudo crear el proveedor.", ex);
         }
@@ -384,7 +410,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 }
 
                 if (leerCelda(fila, 0).isEmpty()) {
-                    escribirCelda(fila, 0, generarIdProveedor(hoja, jTextField1.getText()));
+                    escribirCelda(fila, 0, generarIdProveedor(hoja, jTextField1.getText().trim()));
                 }
                 guardarDatosPrincipalesEnFila(fila);
                 completarValoresComercialesPorDefecto(fila);
@@ -398,9 +424,12 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 guardarLibro(libro, archivo);
                 filaProveedorActual = filaIndex;
                 actualizarIndicadorEstado(leerCelda(fila, 11));
+
+                jTextFieldId.setText(leerCelda(fila, 0));
             }
 
             JOptionPane.showMessageDialog(this, "Proveedor actualizado correctamente.");
+            cargarCacheProveedores();
         } catch (IOException ex) {
             mostrarError("No se pudo editar el proveedor.", ex);
         }
@@ -435,10 +464,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 actualizarIndicadorEstado(nuevoEstado);
 
                 filaProveedorActual = filaIndex;
-                String id = leerCelda(fila, 0);
-                String nombre = leerCelda(fila, 1);
-                String mensajeEstado = "1".equals(nuevoEstado) ? "ACTIVADO (1)" : "DESACTIVADO (0)";
-                JOptionPane.showMessageDialog(this, "Proveedor actualizado:\nID: " + id + "\nNombre: " + nombre + "\nEstado: " + mensajeEstado);
             }
         } catch (IOException ex) {
             mostrarError("No se pudo cambiar el estado del proveedor.", ex);
@@ -451,7 +476,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         if (nombre.isEmpty() && rfc.isEmpty()) {
             restablecerIndicadorEstado();
-            JOptionPane.showMessageDialog(this, "Ingresa NOMBRE, RFC o ID para buscar.");
+            JOptionPane.showMessageDialog(this, "Ingresa NOMBRE O RAZÓN SOCIAL, o RFC para buscar.");
             return;
         }
 
@@ -462,14 +487,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 asegurarEncabezados(hoja);
 
                 int filaIndex = -1;
-                if (!rfc.isEmpty()) {
-                    filaIndex = buscarFilaProveedorPorRFC(hoja, rfc);
-                }
-                if (filaIndex < 0 && !nombre.isEmpty()) {
+                if (!nombre.isEmpty()) {
                     filaIndex = buscarFilaProveedorPorNombre(hoja, nombre);
                 }
-                if (filaIndex < 0 && !nombre.isEmpty()) {
-                    filaIndex = buscarFilaProveedorPorId(hoja, nombre);
+                if (filaIndex < 0 && !rfc.isEmpty()) {
+                    filaIndex = buscarFilaProveedorPorRFC(hoja, rfc);
                 }
 
                 if (filaIndex < 0) {
@@ -490,17 +512,441 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 cargarFilaEnFormulario(fila);
                 filaProveedorActual = filaIndex;
 
-                String id = leerCelda(fila, 0);
                 String estado = normalizarEstado(leerCelda(fila, 11));
                 actualizarIndicadorEstado(estado);
-                String estadoTexto = "1".equals(estado) ? "ACTIVO (1)" : "INACTIVO (0)";
-                JOptionPane.showMessageDialog(this, "Proveedor encontrado.\nID: " + id + "\nEstado: " + estadoTexto);
             }
         } catch (IOException ex) {
             restablecerIndicadorEstado();
             mostrarError("No se pudo buscar el proveedor.", ex);
         }
     }//buscarProveedor
+
+    private void mostrarHistorialCompras() {
+        String idProveedor = jTextFieldId.getText().trim();
+
+        java.util.List<Object[]> filas = new java.util.ArrayList<>();
+        double sumaTotal = 0;
+        double sumaAbonado = 0;
+        String simboloMoneda = "$";
+        File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
+        if (archivoOrdenes.exists()) {
+            try (FileInputStream fis = new FileInputStream(archivoOrdenes);
+                 Workbook libro = new XSSFWorkbook(fis)) {
+                Sheet hoja = libro.getSheetAt(0);
+                for (Row row : hoja) {
+                    if (row.getRowNum() == 0) {
+                        continue;
+                    }
+                    String idFila = leerCelda(row, 4);
+                    if (!idProveedor.isEmpty() && !idProveedor.equalsIgnoreCase(idFila)) {
+                        continue;
+                    }
+
+                    String noOrden = leerCelda(row, 0);
+                    java.util.Date fecha = leerFechaCelda(row, 1);
+                    String cotizacion = leerCelda(row, 3);
+                    String solicitante = leerCelda(row, 6);
+                    String total = leerCelda(row, 21);
+                    String abonado = leerCelda(row, 22);
+                    String estatus = leerCelda(row, 23);
+                    String pendiente = calcularPendientePago(total, abonado);
+                    sumaTotal += parseMonto(total);
+                    sumaAbonado += parseMonto(abonado);
+                    if (!total.isEmpty()) {
+                        simboloMoneda = obtenerSimboloMoneda(total);
+                    }
+
+                    String fechaTexto = "";
+                    String diasTexto = "";
+                    if (fecha != null) {
+                        java.time.LocalDate fechaOrden = fecha.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                        fechaTexto = fechaOrden.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        diasTexto = String.valueOf(java.time.temporal.ChronoUnit.DAYS.between(fechaOrden, java.time.LocalDate.now()));
+                    }
+
+                    filas.add(new Object[]{idFila, noOrden, fechaTexto, cotizacion, solicitante, total, abonado, pendiente, diasTexto, estatus});
+                }
+            } catch (Exception ex) {
+                mostrarError("No se pudo leer el historial de ordenes de compra.", ex);
+                return;
+            }
+        }
+
+        String[] columnas = {
+            "ID PROVEEDOR", "NO. ORDEN", "FECHA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO", "PENDIENTE POR PAGAR", "D\u00cdAS TRANSCURRIDOS", "ESTATUS"
+        };
+        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+        for (Object[] fila : filas) {
+            modelo.addRow(fila);
+        }
+
+        javax.swing.JTable tabla = new javax.swing.JTable(modelo);
+        tabla.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        configurarColumnaNoOrdenComoEnlace(tabla);
+        ajustarAnchoColumnas(tabla);
+
+        javax.swing.JLabel etiquetaTotal = new javax.swing.JLabel(
+                (idProveedor.isEmpty() ? "Total de compras: " : "Total de compras del proveedor: ") + filas.size());
+        etiquetaTotal.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 8, 4, 8));
+
+        javax.swing.JPanel panelEncabezado = new javax.swing.JPanel();
+        panelEncabezado.setLayout(new javax.swing.BoxLayout(panelEncabezado, javax.swing.BoxLayout.Y_AXIS));
+        panelEncabezado.add(etiquetaTotal);
+
+        if (!idProveedor.isEmpty()) {
+            javax.swing.JLabel etiquetaSumaTotal = new javax.swing.JLabel(
+                    String.format("Total de todas las órdenes: %s %,.2f", simboloMoneda, sumaTotal));
+            etiquetaSumaTotal.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 8, 4, 8));
+            panelEncabezado.add(etiquetaSumaTotal);
+
+            javax.swing.JLabel etiquetaSumaAbonado = new javax.swing.JLabel(
+                    String.format("Total abonado: %s %,.2f", simboloMoneda, sumaAbonado));
+            etiquetaSumaAbonado.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 8, 8, 8));
+            panelEncabezado.add(etiquetaSumaAbonado);
+        }
+
+        javax.swing.JButton botonAbonar = new javax.swing.JButton("ABONAR");
+        botonAbonar.addActionListener(e -> registrarAbono(tabla));
+        javax.swing.JPanel panelBoton = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panelBoton.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 8, 4, 8));
+        panelBoton.add(botonAbonar, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel panelSuperior = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panelSuperior.add(panelEncabezado, java.awt.BorderLayout.WEST);
+        panelSuperior.add(panelBoton, java.awt.BorderLayout.EAST);
+
+        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panel.add(panelSuperior, java.awt.BorderLayout.NORTH);
+        panel.add(new javax.swing.JScrollPane(tabla), java.awt.BorderLayout.CENTER);
+
+        int anchoTotal = tabla.getColumnModel().getTotalColumnWidth() + 60;
+        int altoTotal = (tabla.getRowCount() + 1) * tabla.getRowHeight() + 120;
+        java.awt.Dimension pantalla = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
+        int anchoPanel = Math.max(1200, Math.min(anchoTotal, pantalla.width - 80));
+        int altoPanel = Math.max(600, Math.min(altoTotal, pantalla.height - 80));
+        panel.setPreferredSize(new java.awt.Dimension(anchoPanel, altoPanel));
+
+        javax.swing.JDialog dialogo = new javax.swing.JDialog(this,
+                idProveedor.isEmpty() ? "Historial de \u00d3rdenes de Compra - Todos los proveedores"
+                        : "Historial de \u00d3rdenes de Compra - " + idProveedor,
+                true);
+        dialogo.getContentPane().add(panel);
+        dialogo.setResizable(true);
+        dialogo.pack();
+        dialogo.setLocationRelativeTo(this);
+        dialogo.setVisible(true);
+    }//mostrarHistorialCompras
+
+    private void registrarAbono(javax.swing.JTable tabla) {
+        int filaSeleccionada = tabla.getSelectedRow();
+        if (filaSeleccionada < 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona una orden de la tabla primero.");
+            return;
+        }
+
+        String noOrden = String.valueOf(tabla.getValueAt(filaSeleccionada, 1)).trim();
+        String totalTexto = String.valueOf(tabla.getValueAt(filaSeleccionada, 5)).trim();
+        String abonadoTexto = String.valueOf(tabla.getValueAt(filaSeleccionada, 6)).trim();
+
+        double totalNumero = parseMonto(totalTexto);
+        double abonadoActual = parseMonto(abonadoTexto);
+        double pendiente = totalNumero - abonadoActual;
+
+        if (pendiente <= 0) {
+            JOptionPane.showMessageDialog(this, "Esta orden ya est\u00e1 totalmente abonada.");
+            return;
+        }
+
+        String simbolo = obtenerSimboloMoneda(totalTexto);
+        String entrada = JOptionPane.showInputDialog(this,
+                String.format("Pendiente por pagar: %s %,.2f%nCaptura la cantidad a abonar:", simbolo, pendiente));
+        if (entrada == null) {
+            return;
+        }
+
+        double monto = parseMonto(entrada);
+        if (monto <= 0) {
+            JOptionPane.showMessageDialog(this, "La cantidad a abonar debe ser mayor a 0.");
+            return;
+        }
+        if (monto > pendiente + 0.001) {
+            JOptionPane.showMessageDialog(this,
+                    String.format("La cantidad no puede exceder el pendiente (%s %,.2f).", simbolo, pendiente));
+            return;
+        }
+
+        double nuevoAbonado = abonadoActual + monto;
+        File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
+        try (FileInputStream fis = new FileInputStream(archivoOrdenes);
+             Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            boolean actualizado = false;
+            for (Row row : hoja) {
+                if (row.getRowNum() == 0) {
+                    continue;
+                }
+                if (noOrden.equalsIgnoreCase(leerCelda(row, 0))) {
+                    escribirCelda(row, 22, String.format("%s %,.2f", simbolo, nuevoAbonado));
+                    actualizado = true;
+                    break;
+                }
+            }
+            if (!actualizado) {
+                JOptionPane.showMessageDialog(this, "No se encontr\u00f3 la orden en el archivo.");
+                return;
+            }
+            try (FileOutputStream fos = new FileOutputStream(archivoOrdenes)) {
+                libro.write(fos);
+            }
+        } catch (Exception ex) {
+            mostrarError("No se pudo registrar el abono.", ex);
+            return;
+        }
+
+        JOptionPane.showMessageDialog(this, "Abono registrado correctamente.");
+        javax.swing.SwingUtilities.getWindowAncestor(tabla).dispose();
+        mostrarHistorialCompras();
+    }//registrarAbono
+
+    private void configurarColumnaNoOrdenComoEnlace(javax.swing.JTable tabla) {
+        final int columnaNoOrden = 1;
+        javax.swing.table.DefaultTableCellRenderer rendererEnlace = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable t, Object valor,
+                    boolean seleccionado, boolean foco, int fila, int columna) {
+                java.awt.Component comp = super.getTableCellRendererComponent(t, valor, seleccionado, foco, fila, columna);
+                java.util.Map<java.awt.font.TextAttribute, Object> atributos = new java.util.HashMap<>(comp.getFont().getAttributes());
+                atributos.put(java.awt.font.TextAttribute.UNDERLINE, java.awt.font.TextAttribute.UNDERLINE_ON);
+                comp.setFont(comp.getFont().deriveFont(atributos));
+                if (!seleccionado) {
+                    comp.setForeground(new java.awt.Color(0, 90, 200));
+                }
+                return comp;
+            }
+        };
+        tabla.getColumnModel().getColumn(columnaNoOrden).setCellRenderer(rendererEnlace);
+
+        tabla.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(java.awt.event.MouseEvent e) {
+                int columna = tabla.columnAtPoint(e.getPoint());
+                tabla.setCursor(columna == columnaNoOrden
+                        ? java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR)
+                        : java.awt.Cursor.getDefaultCursor());
+            }
+        });
+
+        tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int fila = tabla.rowAtPoint(e.getPoint());
+                int columna = tabla.columnAtPoint(e.getPoint());
+                if (fila >= 0 && columna == columnaNoOrden) {
+                    mostrarDetalleOrden(String.valueOf(tabla.getValueAt(fila, columnaNoOrden)).trim());
+                }
+            }
+        });
+    }//configurarColumnaNoOrdenComoEnlace
+
+    private void mostrarDetalleOrden(String noOrden) {
+        if (noOrden.isEmpty()) {
+            return;
+        }
+
+        java.util.Map<String, String> datos = new java.util.LinkedHashMap<>();
+        File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
+        if (archivoOrdenes.exists()) {
+            try (FileInputStream fis = new FileInputStream(archivoOrdenes);
+                 Workbook libro = new XSSFWorkbook(fis)) {
+                Sheet hoja = libro.getSheetAt(0);
+                for (Row row : hoja) {
+                    if (row.getRowNum() == 0) {
+                        continue;
+                    }
+                    if (!noOrden.equalsIgnoreCase(leerCelda(row, 0))) {
+                        continue;
+                    }
+                    datos.put("NO. ORDEN", leerCelda(row, 0));
+                    datos.put("FECHA", formatearFechaCelda(leerFechaCelda(row, 1)));
+                    datos.put("DOCUMENTO", leerCelda(row, 2));
+                    datos.put("COTIZACI\u00d3N", leerCelda(row, 3));
+                    datos.put("ID PROVEEDOR", leerCelda(row, 4));
+                    datos.put("CFDI", leerCelda(row, 5));
+                    datos.put("SOLICITANTE", leerCelda(row, 6));
+                    datos.put("PROYECTO", leerCelda(row, 7));
+                    datos.put("PAGO", leerCelda(row, 8));
+                    datos.put("FORMA DE PAGO", leerCelda(row, 9));
+                    datos.put("M\u00c9TODO DE PAGO", leerCelda(row, 10));
+                    datos.put("ENTREGA INICIO", leerCelda(row, 11));
+                    datos.put("ENTREGA FINAL", leerCelda(row, 12));
+                    datos.put("DESCUENTO", leerCelda(row, 13));
+                    datos.put("IVA", leerCelda(row, 14));
+                    datos.put("ELABOR\u00d3", leerCelda(row, 15));
+                    datos.put("AUTORIZ\u00d3", leerCelda(row, 16));
+                    datos.put("MONEDA", leerCelda(row, 17));
+                    datos.put("TIPO DE CAMBIO", leerCelda(row, 18));
+                    datos.put("SUBTOTAL", leerCelda(row, 19));
+                    datos.put("IVA IMPORTE", leerCelda(row, 20));
+                    datos.put("TOTAL", leerCelda(row, 21));
+                    datos.put("ABONADO", leerCelda(row, 22));
+                    datos.put("PENDIENTE POR PAGAR", calcularPendientePago(leerCelda(row, 21), leerCelda(row, 22)));
+                    datos.put("ESTATUS", leerCelda(row, 23));
+                    break;
+                }
+            } catch (Exception ex) {
+                mostrarError("No se pudo leer la orden de compra.", ex);
+                return;
+            }
+        }
+
+        if (datos.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No se encontr\u00f3 informaci\u00f3n de la orden " + noOrden + ".");
+            return;
+        }
+
+        javax.swing.JPanel panelDatos = new javax.swing.JPanel(new java.awt.GridLayout(0, 2, 8, 4));
+        panelDatos.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        for (java.util.Map.Entry<String, String> dato : datos.entrySet()) {
+            panelDatos.add(new javax.swing.JLabel(dato.getKey() + ":"));
+            javax.swing.JLabel valor = new javax.swing.JLabel(dato.getValue().isEmpty() ? "-" : dato.getValue());
+            valor.setFont(valor.getFont().deriveFont(java.awt.Font.BOLD));
+            panelDatos.add(valor);
+        }
+
+        String[] columnasProductos = {"C\u00d3DIGO", "DESCRIPCI\u00d3N", "UNIDAD", "CANTIDAD", "PRECIO", "IMPORTE"};
+        javax.swing.table.DefaultTableModel modeloProductos = new javax.swing.table.DefaultTableModel(columnasProductos, 0) {
+            @Override
+            public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+
+        File archivoDetalle = new File(ORDENES_DETALLE_FILE_ABSOLUTE);
+        if (archivoDetalle.exists()) {
+            try (FileInputStream fis = new FileInputStream(archivoDetalle);
+                 Workbook libro = new XSSFWorkbook(fis)) {
+                Sheet hoja = libro.getSheetAt(0);
+                for (Row row : hoja) {
+                    if (row.getRowNum() == 0) {
+                        continue;
+                    }
+                    if (noOrden.equalsIgnoreCase(leerCelda(row, 0))) {
+                        modeloProductos.addRow(new Object[]{
+                            leerCelda(row, 1), leerCelda(row, 2), leerCelda(row, 3),
+                            leerCelda(row, 4), leerCelda(row, 5), leerCelda(row, 6)
+                        });
+                    }
+                }
+            } catch (Exception ex) {
+                mostrarError("No se pudo leer los productos de la orden.", ex);
+            }
+        }
+
+        javax.swing.JTable tablaProductos = new javax.swing.JTable(modeloProductos);
+        tablaProductos.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        tablaProductos.setRowHeight(24);
+        tablaProductos.setGridColor(new java.awt.Color(220, 220, 220));
+        tablaProductos.setShowGrid(true);
+        tablaProductos.getTableHeader().setFont(tablaProductos.getTableHeader().getFont().deriveFont(java.awt.Font.BOLD));
+        ajustarAnchoColumnas(tablaProductos);
+
+        javax.swing.JPanel panelProductos = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panelProductos.setBorder(javax.swing.BorderFactory.createTitledBorder("PRODUCTOS"));
+        javax.swing.JScrollPane scrollProductos = new javax.swing.JScrollPane(tablaProductos);
+        scrollProductos.setPreferredSize(new java.awt.Dimension(700, 220));
+        panelProductos.add(scrollProductos, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel panelContenido = new javax.swing.JPanel(new java.awt.BorderLayout(10, 10));
+        panelContenido.add(new javax.swing.JScrollPane(panelDatos), java.awt.BorderLayout.NORTH);
+        panelContenido.add(panelProductos, java.awt.BorderLayout.CENTER);
+        panelContenido.setPreferredSize(new java.awt.Dimension(900, 700));
+
+        javax.swing.JDialog dialogo = new javax.swing.JDialog(this, "Orden de Compra No. " + noOrden, true);
+        dialogo.getContentPane().add(panelContenido);
+        dialogo.setResizable(true);
+        dialogo.pack();
+        dialogo.setLocationRelativeTo(this);
+        dialogo.setVisible(true);
+    }//mostrarDetalleOrden
+
+    private String formatearFechaCelda(java.util.Date fecha) {
+        if (fecha == null) {
+            return "";
+        }
+        return fecha.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+                .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }//formatearFechaCelda
+
+    private void ajustarAnchoColumnas(javax.swing.JTable tabla) {
+        javax.swing.table.TableColumnModel modeloColumnas = tabla.getColumnModel();
+        for (int columna = 0; columna < tabla.getColumnCount(); columna++) {
+            javax.swing.table.TableColumn tableColumn = modeloColumnas.getColumn(columna);
+            javax.swing.table.TableCellRenderer rendererEncabezado = tabla.getTableHeader().getDefaultRenderer();
+            int ancho = rendererEncabezado
+                    .getTableCellRendererComponent(tabla, tableColumn.getHeaderValue(), false, false, 0, columna)
+                    .getPreferredSize().width;
+
+            for (int fila = 0; fila < tabla.getRowCount(); fila++) {
+                javax.swing.table.TableCellRenderer renderer = tabla.getCellRenderer(fila, columna);
+                int anchoCelda = tabla.prepareRenderer(renderer, fila, columna).getPreferredSize().width;
+                ancho = Math.max(ancho, anchoCelda);
+            }
+
+            tableColumn.setPreferredWidth(ancho + 16);
+        }
+    }//ajustarAnchoColumnas
+
+    private String calcularPendientePago(String total, String abonado) {
+        double totalNumero = parseMonto(total);
+        double abonadoNumero = parseMonto(abonado);
+        double pendiente = totalNumero - abonadoNumero;
+        String simbolo = obtenerSimboloMoneda(total);
+        return String.format("%s %,.2f", simbolo, pendiente);
+    }//calcularPendientePago
+
+    private double parseMonto(String texto) {
+        if (texto == null) {
+            return 0;
+        }
+        String limpio = texto.replaceAll("[^0-9.\\-]", "");
+        if (limpio.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Double.parseDouble(limpio);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }//parseMonto
+
+    private String obtenerSimboloMoneda(String texto) {
+        if (texto == null) {
+            return "$";
+        }
+        String simbolo = texto.replaceAll("[0-9.,\\s]", "").trim();
+        return simbolo.isEmpty() ? "$" : simbolo;
+    }//obtenerSimboloMoneda
+
+    private java.util.Date leerFechaCelda(Row row, int columna) {
+        Cell celda = row.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (celda == null) {
+            return null;
+        }
+        try {
+            if (celda.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC
+                    && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(celda)) {
+                return celda.getDateCellValue();
+            }
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo leer fecha de orden", ex);
+        }
+        return null;
+    }//leerFechaCelda
 
     private boolean validarCamposBase() {
         if (jTextField1.getText().trim().isEmpty()) {
@@ -540,11 +986,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
             if (filaPorNombre >= 0) {
                 return filaPorNombre;
             }
-
-            int filaPorId = buscarFilaProveedorPorId(hoja, nombre);
-            if (filaPorId >= 0) {
-                return filaPorId;
-            }
         }
 
         return -1;
@@ -575,6 +1016,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//completarValoresComercialesPorDefecto
 
     private void cargarFilaEnFormulario(Row fila) {
+        jTextFieldId.setText(leerCelda(fila, 0));
         jTextField1.setText(leerCelda(fila, 1));
         jTextField2.setText(leerCelda(fila, 2));
         jTextField3.setText(leerCelda(fila, 3));
@@ -584,6 +1026,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//cargarFilaEnFormulario
 
     private void limpiarFormulario(boolean conservarNombre) {
+        jTextFieldId.setText("");
         if (!conservarNombre) {
             jTextField1.setText("");
         }
@@ -595,6 +1038,86 @@ public class PROVEEDORES extends javax.swing.JFrame {
         filaProveedorActual = -1;
         restablecerIndicadorEstado();
     }//limpiarFormulario
+
+    private void configurarAutocompleteNombre() {
+        jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (!e.isTemporary()) {
+                    popupProveedores.setVisible(false);
+                    if (jTextField1.getText().trim().isEmpty()) {
+                        limpiarFormulario(false);
+                    }
+                }
+            }
+        });
+
+        jTextField1.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedoresNombre(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedoresNombre(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedoresNombre(); }
+        });
+    }//configurarAutocompleteNombre
+
+    private void cargarCacheProveedores() {
+        cacheProveedores.clear();
+        try {
+            File archivo = obtenerArchivoProveedores();
+            try (Workbook libro = cargarLibro(archivo)) {
+                Sheet hoja = obtenerHojaProveedores(libro);
+                for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+                    Row row = hoja.getRow(fila);
+                    if (row == null) {
+                        continue;
+                    }
+                    String id = leerCelda(row, 0);
+                    String nombre = leerCelda(row, 1);
+                    if (!nombre.isEmpty()) {
+                        cacheProveedores.add(new String[]{id, nombre});
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo cargar cache de proveedores", ex);
+        }
+    }//cargarCacheProveedores
+
+    private void filtrarProveedoresNombre() {
+        if (seleccionandoProveedor) {
+            return;
+        }
+        String texto = jTextField1.getText().trim().toLowerCase();
+        popupProveedores.setVisible(false);
+        popupProveedores.removeAll();
+        if (texto.isEmpty()) {
+            return;
+        }
+
+        int count = 0;
+        for (String[] prov : cacheProveedores) {
+            if (prov[1].toLowerCase().contains(texto)) {
+                String etiqueta = prov[0] + "  |  " + prov[1];
+                javax.swing.JMenuItem item = new javax.swing.JMenuItem(etiqueta);
+                final String nombre = prov[1];
+                item.addActionListener(ev -> {
+                    seleccionandoProveedor = true;
+                    popupProveedores.setVisible(false);
+                    jTextField1.setText(nombre);
+                    buscarProveedor();
+                    seleccionandoProveedor = false;
+                });
+                popupProveedores.add(item);
+                if (++count == 10) {
+                    break;
+                }
+            }
+        }
+
+        if (count > 0) {
+            popupProveedores.show(jTextField1, 0, jTextField1.getHeight());
+            jTextField1.requestFocusInWindow();
+        }
+    }//filtrarProveedoresNombre
 
     private int buscarFilaProveedorPorId(Sheet hoja, String id) {
         for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
@@ -789,6 +1312,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
     private void actualizarIndicadorEstado(String estado) {
         String estadoNormalizado = normalizarEstado(estado);
+        jButton3.setBackground(java.awt.Color.WHITE);
         if ("1".equals(estadoNormalizado)) {
             jButton3.setText("DESACTIVAR (ACTIVO)");
             jButton3.setForeground(new java.awt.Color(0, 120, 0));
@@ -803,6 +1327,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
     private void restablecerIndicadorEstado() {
         jButton3.setText("ACTIVAR/DESACTIVAR");
+        jButton3.setBackground(java.awt.Color.WHITE);
         jButton3.setForeground(new java.awt.Color(0, 0, 0));
         jButton3.setToolTipText("Estado actual: sin seleccionar");
     }//restablecerIndicadorEstado

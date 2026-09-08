@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -57,11 +56,11 @@ public class USUARIOS extends javax.swing.JFrame {
         jLabel7 = new javax.swing.JLabel();
         jTextField1 = new javax.swing.JTextField();
         jTextField2 = new javax.swing.JTextField();
+        jTextField3 = new javax.swing.JTextField();
+        jTextField4 = new javax.swing.JTextField();
         jTextField5 = new javax.swing.JTextField();
         jTextField6 = new javax.swing.JTextField();
         jButton4 = new javax.swing.JButton();
-        jComboBox1 = new javax.swing.JComboBox<>();
-        jComboBox2 = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -73,10 +72,13 @@ public class USUARIOS extends javax.swing.JFrame {
         jLabel1.setText("USUARIOS");
 
         jButton1.setText("CREAR");
+        jButton1.addActionListener(this::jButton1ActionPerformed);
 
         jButton2.setText("EDITAR");
+        jButton2.addActionListener(this::jButton2ActionPerformed);
 
         jButton3.setText("ELIMINAR");
+        jButton3.addActionListener(this::jButton3ActionPerformed);
 
         jButton6.setBackground(new java.awt.Color(0, 95, 131));
         jButton6.setForeground(new java.awt.Color(255, 255, 255));
@@ -98,10 +100,6 @@ public class USUARIOS extends javax.swing.JFrame {
 
         jButton4.setText("BUSCAR");
         jButton4.addActionListener(this::jButton4ActionPerformed);
-
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -126,10 +124,10 @@ public class USUARIOS extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jTextField1)
                     .addComponent(jTextField2)
+                    .addComponent(jTextField3)
+                    .addComponent(jTextField4)
                     .addComponent(jTextField5)
-                    .addComponent(jTextField6, javax.swing.GroupLayout.DEFAULT_SIZE, 255, Short.MAX_VALUE)
-                    .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jComboBox2, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jTextField6, javax.swing.GroupLayout.DEFAULT_SIZE, 255, Short.MAX_VALUE))
                 .addGap(60, 60, 60))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(104, 104, 104)
@@ -160,11 +158,11 @@ public class USUARIOS extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
-                    .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -218,10 +216,6 @@ public class USUARIOS extends javax.swing.JFrame {
         eliminarUsuario();
     }//GEN-LAST:event_jButton3ActionPerformed
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        // Evento reservado para NetBeans
-    }//GEN-LAST:event_jComboBox1ActionPerformed
-
     /**
      * @param args the command line arguments
      */
@@ -246,8 +240,6 @@ public class USUARIOS extends javax.swing.JFrame {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton6;
-    private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -258,6 +250,8 @@ public class USUARIOS extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JTextField jTextField2;
+    private javax.swing.JTextField jTextField3;
+    private javax.swing.JTextField jTextField4;
     private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField6;
     // End of variables declaration//GEN-END:variables
@@ -443,12 +437,12 @@ public class USUARIOS extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "NOMBRE COMPLETO es obligatorio.");
             return false;
         }
-        if (seleccionCombo(jComboBox1).isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Selecciona AREA O DEPARTAMENTO.");
+        if (jTextField3.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "AREA O DEPARTAMENTO es obligatorio.");
             return false;
         }
-        if (seleccionCombo(jComboBox2).isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Selecciona PUESTO.");
+        if (jTextField4.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "PUESTO es obligatorio.");
             return false;
         }
         return true;
@@ -465,8 +459,8 @@ public class USUARIOS extends javax.swing.JFrame {
             escribirCelda(fila, 1, contrasenaActual);
         }
         escribirCelda(fila, 2, jTextField2.getText().trim());
-        escribirCelda(fila, 3, seleccionCombo(jComboBox1));
-        escribirCelda(fila, 4, seleccionCombo(jComboBox2));
+        escribirCelda(fila, 3, jTextField3.getText().trim());
+        escribirCelda(fila, 4, jTextField4.getText().trim());
         escribirCelda(fila, 5, jTextField5.getText().trim());
         escribirCelda(fila, 6, jTextField6.getText().trim());
     }//guardarDatosFormularioEnFila
@@ -474,8 +468,8 @@ public class USUARIOS extends javax.swing.JFrame {
     private void cargarFilaEnFormulario(Row fila) {
         jTextField1.setText(leerCelda(fila, 0));
         jTextField2.setText(leerCelda(fila, 2));
-        seleccionarCombo(jComboBox1, leerCelda(fila, 3));
-        seleccionarCombo(jComboBox2, leerCelda(fila, 4));
+        jTextField3.setText(leerCelda(fila, 3));
+        jTextField4.setText(leerCelda(fila, 4));
         jTextField5.setText(leerCelda(fila, 5));
         jTextField6.setText(leerCelda(fila, 6));
     }//cargarFilaEnFormulario
@@ -485,8 +479,8 @@ public class USUARIOS extends javax.swing.JFrame {
             jTextField1.setText("");
         }
         jTextField2.setText("");
-        jComboBox1.setSelectedIndex(0);
-        jComboBox2.setSelectedIndex(0);
+        jTextField3.setText("");
+        jTextField4.setText("");
         jTextField5.setText("");
         jTextField6.setText("");
     }//limpiarFormulario
@@ -605,37 +599,6 @@ public class USUARIOS extends javax.swing.JFrame {
         Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
         celda.setCellValue(valor == null ? "" : valor.trim());
     }//escribirCelda
-
-    private String seleccionCombo(JComboBox<String> combo) {
-        Object item = combo.getSelectedItem();
-        if (item == null) {
-            return "";
-        }
-        String valor = item.toString().trim();
-        if (valor.isEmpty() || valor.startsWith("**")) {
-            return "";
-        }
-        return valor;
-    }//seleccionCombo
-
-    private void seleccionarCombo(JComboBox<String> combo, String valor) {
-        String limpio = valor == null ? "" : valor.trim();
-        if (limpio.isEmpty()) {
-            combo.setSelectedIndex(0);
-            return;
-        }
-
-        for (int i = 0; i < combo.getItemCount(); i++) {
-            String item = combo.getItemAt(i);
-            if (item.equalsIgnoreCase(limpio)) {
-                combo.setSelectedIndex(i);
-                return;
-            }
-        }
-
-        combo.addItem(limpio);
-        combo.setSelectedItem(limpio);
-    }//seleccionarCombo
 
     private void mostrarError(String mensajeUsuario, Exception ex) {
         logger.log(java.util.logging.Level.SEVERE, mensajeUsuario, ex);

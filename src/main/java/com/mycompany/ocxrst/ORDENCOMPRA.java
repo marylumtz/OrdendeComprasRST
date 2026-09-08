@@ -1616,24 +1616,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             PdfWriter  writer = new PdfWriter(ruta);
             PdfDocument pdfDoc = new PdfDocument(writer);
 
-            // Aplicar plantilla de fondo en todas las páginas
-            String rutaPlantilla = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\IMAGENES\\PLANTILLAOCRST.pdf";
-            try {
-                PdfDocument templateDoc = new PdfDocument(new PdfReader(rutaPlantilla));
-                PdfFormXObject plantillaXObj = templateDoc.getFirstPage().copyAsFormXObject(pdfDoc);
-                templateDoc.close();
-                pdfDoc.addEventHandler(PdfDocumentEvent.START_PAGE, event -> {
-                    PdfDocumentEvent docEvent = (PdfDocumentEvent) event;
-                    PdfPage page = docEvent.getPage();
-                    PdfCanvas canvas = new PdfCanvas(page.newContentStreamBefore(), page.getResources(), pdfDoc);
-                    com.itextpdf.kernel.geom.Rectangle pageRect = page.getPageSize();
-                    canvas.addXObjectFittedIntoRectangle(plantillaXObj, pageRect);
-                    canvas.release();
-                });
-            } catch (Exception ePlantilla) {
-                logger.log(java.util.logging.Level.WARNING, "No se pudo cargar la plantilla PDF", ePlantilla);
-            }
-
             Document   doc    = new Document(pdfDoc, PageSize.LETTER);
             doc.setMargins(36, 36, 36, 36);
 

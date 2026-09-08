@@ -2,7 +2,6 @@
 package com.mycompany.ocxrst;
 import java.io.File;
 import java.io.FileInputStream;
-import javax.swing.ImageIcon;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;/*
 /**
@@ -13,6 +12,8 @@ public class INICIARSESION extends javax.swing.JFrame {
 
     /** Usuario que inició sesión actualmente */
     public static String usuarioActual = "";
+    /** Nombre completo asociado al usuario autenticado */
+    public static String nombreUsuarioActual = "";
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(INICIARSESION.class.getName());
 
@@ -84,13 +85,13 @@ public class INICIARSESION extends javax.swing.JFrame {
         salir.addActionListener(this::salirActionPerformed);
         getContentPane().add(salir, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 10, 20, 20));
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/mycompany/ocxrst/IMAGENES/Logo PDF2.jpeg"))); // NOI18N
+        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF2.jpeg")); // NOI18N
         jLabel1.setText("jLabel1");
         getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 50, 260, 120));
 
         LOGO.setBackground(new java.awt.Color(0, 102, 102));
         LOGO.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        LOGO.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/mycompany/ocxrst/IMAGENES/COPA.jpeg"))); // NOI18N
+        LOGO.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/COPA.jpeg")); // NOI18N
         LOGO.setLabelFor(LOGO);
         LOGO.setDoubleBuffered(true);
         LOGO.setFocusCycleRoot(true);
@@ -102,26 +103,32 @@ public class INICIARSESION extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
-        // TODO add your handling code here:
+        autenticar();
     }//GEN-LAST:event_jTextField1ActionPerformed
 
-    
-    
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void autenticar() {
         String usuario = jTextField1.getText();
-    String contraseña = new String(jPasswordField1.getPassword());
+        String contraseña = new String(jPasswordField1.getPassword());
 
-    if (validarUsuarioExcel(usuario, contraseña)) {
-        usuarioActual = usuario;
-        javax.swing.JOptionPane.showMessageDialog(this, "Bienvenido " + usuario);
+        if (validarUsuarioExcel(usuario, contraseña)) {
+            usuarioActual = usuario;
+            nombreUsuarioActual = obtenerNombreUsuarioExcel(usuario, contraseña);
+            String nombreMostrado = nombreUsuarioActual == null || nombreUsuarioActual.isBlank()
+                    ? usuario
+                    : nombreUsuarioActual;
+            javax.swing.JOptionPane.showMessageDialog(this, "Bienvenido " + nombreMostrado);
 
-        PRINCIPAL ventana = new PRINCIPAL();
-        ventana.setVisible(true);
+            PRINCIPAL ventana = new PRINCIPAL();
+            ventana.setVisible(true);
 
-        this.dispose();
-    } else {
-        javax.swing.JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos");
+            this.dispose();
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos");
+        }
     }
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        autenticar();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void salirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_salirActionPerformed
@@ -129,7 +136,7 @@ public class INICIARSESION extends javax.swing.JFrame {
     }//GEN-LAST:event_salirActionPerformed
 
     private void jPasswordField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPasswordField1ActionPerformed
-        // TODO add your handling code here:
+        autenticar();
     }//GEN-LAST:event_jPasswordField1ActionPerformed
 
     /**
@@ -171,39 +178,91 @@ public class INICIARSESION extends javax.swing.JFrame {
 
 
 
-public boolean validarUsuarioExcel(String usuario, String contraseña) {
-    boolean encontrado = false;
+    public static String obtenerNombreUsuarioExcel(String usuario, String contraseña) {
+        try {
+            File archivo = new File("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx");
+            if (!archivo.exists()) {
+                return "";
+            }
 
-    try {
-        File archivo = new File("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx"); // 👈 cambia la ruta
-        FileInputStream fis = new FileInputStream(archivo);
-        Workbook libro = new XSSFWorkbook(fis);
+            try (FileInputStream fis = new FileInputStream(archivo);
+                 Workbook libro = new XSSFWorkbook(fis)) {
+                return obtenerNombreUsuarioExcel(libro, usuario, contraseña);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    public static String obtenerNombreUsuarioExcel(Workbook libro, String usuario, String contraseña) {
+        if (libro == null) {
+            return "";
+        }
+
         Sheet hoja = libro.getSheetAt(0);
-
-        for (int i = 1; i <= hoja.getLastRowNum(); i++) { // empieza en 1 (salta encabezado)
+        for (int i = 1; i <= hoja.getLastRowNum(); i++) {
             Row fila = hoja.getRow(i);
+            if (fila == null) {
+                continue;
+            }
 
-            if (fila != null) {
-                Cell celdaUsuario = fila.getCell(0);
-                Cell celdaPass = fila.getCell(1);
+            String userExcel = obtenerValorCelda(fila, 0);
+            String passExcel = obtenerValorCelda(fila, 1);
+            String nombreExcel = obtenerValorCelda(fila, 2);
 
-                String userExcel = celdaUsuario.toString();
-                String passExcel = celdaPass.toString();
-
-                if (usuario.equals(userExcel) && contraseña.equals(passExcel)) {
-                    encontrado = true;
-                    break;
-                }
+            if (usuario.equals(userExcel) && contraseña.equals(passExcel)) {
+                return nombreExcel;
             }
         }
 
-        libro.close();
-        fis.close();
-
-    } catch (Exception e) {
-        e.printStackTrace();
+        return "";
     }
 
-    return encontrado;
-}
+    private static String obtenerValorCelda(Row fila, int columna) {
+        if (fila == null) {
+            return "";
+        }
+        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (celda == null) {
+            return "";
+        }
+        return celda.toString().trim();
+    }
+
+    public boolean validarUsuarioExcel(String usuario, String contraseña) {
+        boolean encontrado = false;
+
+        try {
+            File archivo = new File("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx");
+            FileInputStream fis = new FileInputStream(archivo);
+            Workbook libro = new XSSFWorkbook(fis);
+            Sheet hoja = libro.getSheetAt(0);
+
+            for (int i = 1; i <= hoja.getLastRowNum(); i++) {
+                Row fila = hoja.getRow(i);
+
+                if (fila != null) {
+                    Cell celdaUsuario = fila.getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                    Cell celdaPass = fila.getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+
+                    String userExcel = celdaUsuario == null ? "" : celdaUsuario.toString();
+                    String passExcel = celdaPass == null ? "" : celdaPass.toString();
+
+                    if (usuario.equals(userExcel) && contraseña.equals(passExcel)) {
+                        encontrado = true;
+                        break;
+                    }
+                }
+            }
+
+            libro.close();
+            fis.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return encontrado;
+    }
 }

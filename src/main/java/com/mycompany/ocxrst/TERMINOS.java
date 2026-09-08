@@ -74,7 +74,7 @@ public class TERMINOS extends javax.swing.JFrame {
 
         jScrollPane1.setViewportView(jTextPane1);
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/mycompany/ocxrst/IMAGENES/Logo PDF2.jpeg"))); // NOI18N
+        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF2.jpeg")); // NOI18N
         jLabel1.setText("jLabel1");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);

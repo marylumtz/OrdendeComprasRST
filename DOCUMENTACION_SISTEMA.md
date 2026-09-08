@@ -28,7 +28,7 @@
 - ✅ Términos y condiciones de la empresa
 
 **Tecnologías utilizadas:**
-- **Lenguaje:** Java 17+
+- **Lenguaje:** Java 25+
 - **Interfaz:** Swing (GUI de escritorio)
 - **Base de datos:** Archivos Excel (.xlsx)
 - **Generación de PDFs:** iText 7

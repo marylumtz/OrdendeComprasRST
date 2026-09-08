@@ -159,4 +159,24 @@ public final class IconoVentanaUtil {
         }
         return new ImageIcon(archivo.getAbsolutePath()).getImage();
     }
+
+    public static ImageIcon obtenerIconoSeguro(String rutaClasspath) {
+        if (rutaClasspath == null || rutaClasspath.isEmpty()) {
+            return new ImageIcon();
+        }
+        URL url = IconoVentanaUtil.class.getResource(rutaClasspath);
+        if (url != null) {
+            return new ImageIcon(url);
+        }
+        String rutaLimpia = rutaClasspath.startsWith("/") ? rutaClasspath.substring(1) : rutaClasspath;
+        File archivo = new File("src/main/java/" + rutaLimpia);
+        if (archivo.exists()) {
+            return new ImageIcon(archivo.getAbsolutePath());
+        }
+        File archivoAbs = new File("C:/OCXRST/OrdendeComprasRST/src/main/java/" + rutaLimpia);
+        if (archivoAbs.exists()) {
+            return new ImageIcon(archivoAbs.getAbsolutePath());
+        }
+        return new ImageIcon();
+    }
 }

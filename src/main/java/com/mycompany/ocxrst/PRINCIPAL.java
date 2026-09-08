@@ -54,7 +54,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         jButton6.setText("SALIR");
         jButton6.addActionListener(this::jButton6ActionPerformed);
 
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/mycompany/ocxrst/IMAGENES/Logo PDF2.jpeg"))); // NOI18N
+        jLabel3.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF2.jpeg")); // NOI18N
         jLabel3.setText("jLabel1");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);

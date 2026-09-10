@@ -2,7 +2,13 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.mycompany.ocxrst;
+package com.mycompany.ocxrst.vistas;
+
+import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.config.AppConfig;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 /**
  *
@@ -24,8 +30,13 @@ public class TERMINOS extends javax.swing.JFrame {
     }
     
     private void cargarTerminos() {
-        try (java.io.InputStream is = getClass().getResourceAsStream("/com/mycompany/ocxrst/TERMINOS/Términos y Condiciones.txt");
-             java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8))) {
+        File archivo = obtenerArchivoTerminos();
+        try (java.io.InputStream is = archivo.exists() ? new java.io.FileInputStream(archivo)
+            : getClass().getResourceAsStream("/com/mycompany/ocxrst/RECURSOS/Términos y Condiciones.txt");
+             java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is, StandardCharsets.UTF_8))) {
+            if (is == null) {
+                throw new java.io.FileNotFoundException("No se encontró el archivo de términos");
+            }
             StringBuilder sb = new StringBuilder();
             String linea;
             while ((linea = reader.readLine()) != null) {
@@ -37,6 +48,25 @@ public class TERMINOS extends javax.swing.JFrame {
             logger.log(java.util.logging.Level.SEVERE, "No se pudo cargar el archivo de términos", ex);
             jTextPane1.setText("No se pudo cargar los Términos y Condiciones.");
         }
+    }
+
+    private File obtenerArchivoTerminos() {
+        File base = AppConfig.terminosFile();
+        if (base.exists()) {
+            return base;
+        }
+
+        Path proyecto = java.nio.file.Paths.get(".").toAbsolutePath().normalize();
+        File fallback = proyecto.resolve("src")
+                .resolve("main")
+                .resolve("java")
+                .resolve("com")
+                .resolve("mycompany")
+                .resolve("ocxrst")
+                .resolve("RECURSOS")
+                .resolve("Términos y Condiciones.txt")
+                .toFile();
+        return fallback;
     }
 
     /**
@@ -141,7 +171,7 @@ public class TERMINOS extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            java.net.URL url = getClass().getResource("/com/mycompany/ocxrst/TERMINOS/Términos y Condiciones.txt");
+            java.net.URL url = getClass().getResource("/com/mycompany/ocxrst/RECURSOS/Términos y Condiciones.txt");
             java.io.File archivoTarget = new java.io.File(url.toURI());
 
             // Guardar en target/classes (cambios inmediatos en ejecución)

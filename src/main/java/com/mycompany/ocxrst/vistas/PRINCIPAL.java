@@ -1,5 +1,7 @@
 
-package com.mycompany.ocxrst;
+package com.mycompany.ocxrst.vistas;
+
+import com.mycompany.ocxrst.IconoVentanaUtil;
 
 public class PRINCIPAL extends javax.swing.JFrame {
     
@@ -8,6 +10,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
     public PRINCIPAL() {
         initComponents();
         IconoVentanaUtil.aplicar(this);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null); 
     }
 
@@ -116,16 +119,16 @@ public class PRINCIPAL extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         PROVEEDORES ventana = new PROVEEDORES();
-        ventana.setVisible(true); // 👉 abre la nueva ventana
-        
-        this.dispose(); 
+        ventana.setLocationRelativeTo(this);
+        ventana.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         USUARIOS ventana = new USUARIOS();
-        ventana.setVisible(true); // 👉 abre la nueva ventana
-        
-        this.dispose(); 
+        ventana.setLocationRelativeTo(this);
+        ventana.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
@@ -141,8 +144,8 @@ public class PRINCIPAL extends javax.swing.JFrame {
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         TERMINOS ventana =  new TERMINOS();
+        ventana.setLocationRelativeTo(this);
         ventana.setVisible(true);
-        
         this.dispose();
     }//GEN-LAST:event_jButton5ActionPerformed
 

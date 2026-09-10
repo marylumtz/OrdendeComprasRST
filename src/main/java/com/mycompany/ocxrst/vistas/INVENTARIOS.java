@@ -2,19 +2,18 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.mycompany.ocxrst;
+package com.mycompany.ocxrst.vistas;
 
+import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.repository.InventarioRepository;
+import com.mycompany.ocxrst.service.InventarioService;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import javax.swing.JOptionPane;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  *
@@ -23,12 +22,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class INVENTARIOS extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(INVENTARIOS.class.getName());
-    private static final String INVENTARIOS_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INVENTARIOS.xlsx";
-    private static final String INVENTARIOS_FILE_RELATIVE = "src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INVENTARIOS.xlsx";
-    private static final String[] ENCABEZADOS = {
-        "CODIGO", "DESCRIPCION", "UNIDAD", "PRECIO_UNITARIO", "CANTIDAD", "ACTIVO"
-    };
-    private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+    private static final String[] ENCABEZADOS = InventarioRepository.ENCABEZADOS;
+    private final InventarioRepository inventarioRepository = new InventarioRepository();
     private int filaInventarioActual = -1;
 
     /**
@@ -262,24 +257,9 @@ public class INVENTARIOS extends javax.swing.JFrame {
     }//configurarEventos
 
     private void asegurarArchivoInventarios() {
-        File archivo = obtenerArchivoInventarios();
-        if (!archivo.exists()) {
-            try (Workbook libro = new XSSFWorkbook()) {
-                Sheet hoja = libro.createSheet("INVENTARIOS");
-                asegurarEncabezados(hoja);
-                guardarLibro(libro, archivo);
-            } catch (IOException ex) {
-                mostrarError("No se pudo crear el archivo de inventarios.", ex);
-            }
-            return;
-        }
-
-        try (Workbook libro = cargarLibro(archivo)) {
-            Sheet hoja = obtenerHojaInventarios(libro);
-            if (asegurarEncabezados(hoja)) {
-                guardarLibro(libro, archivo);
-            }
-        } catch (IOException ex) {
+        try {
+            inventarioRepository.asegurarArchivoInventarios();
+        } catch (IllegalStateException ex) {
             mostrarError("No se pudo preparar el archivo de inventarios.", ex);
         }
     }//asegurarArchivoInventarios
@@ -605,109 +585,35 @@ public class INVENTARIOS extends javax.swing.JFrame {
     }//generarIdInventario
 
     private boolean asegurarEncabezados(Sheet hoja) {
-        boolean huboCambios = false;
-        Row filaEncabezado = hoja.getRow(0);
-        if (filaEncabezado == null) {
-            filaEncabezado = hoja.createRow(0);
-            huboCambios = true;
-        }
-        for (int columna = 0; columna < ENCABEZADOS.length; columna++) {
-            Cell celda = filaEncabezado.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-            String valorEsperado = ENCABEZADOS[columna];
-            if (celda == null) {
-                celda = filaEncabezado.createCell(columna);
-                celda.setCellValue(valorEsperado);
-                huboCambios = true;
-                continue;
-            }
-            String valorActual = DATA_FORMATTER.formatCellValue(celda).trim();
-            if (!valorEsperado.equalsIgnoreCase(valorActual)) {
-                celda.setCellValue(valorEsperado);
-                huboCambios = true;
-            }
-        }
-        return huboCambios;
+        return inventarioRepository.asegurarEncabezados(hoja);
     }//asegurarEncabezados
 
     private Sheet obtenerHojaInventarios(Workbook libro) {
-        if (libro.getNumberOfSheets() == 0) {
-            return libro.createSheet("INVENTARIOS");
-        }
-        return libro.getSheetAt(0);
+        return inventarioRepository.obtenerHojaInventarios(libro);
     }//obtenerHojaInventarios
 
     private Workbook cargarLibro(File archivo) throws IOException {
-        if (!archivo.exists()) {
-            Workbook libroNuevo = new XSSFWorkbook();
-            Sheet hojaNueva = libroNuevo.createSheet("INVENTARIOS");
-            asegurarEncabezados(hojaNueva);
-            guardarLibro(libroNuevo, archivo);
-            return libroNuevo;
-        }
-        try (FileInputStream fis = new FileInputStream(archivo)) {
-            return new XSSFWorkbook(fis);
-        }
+        return inventarioRepository.cargarLibro(archivo);
     }//cargarLibro
 
     private void guardarLibro(Workbook libro, File archivo) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(archivo)) {
-            libro.write(fos);
-        }
+        inventarioRepository.guardarLibro(libro, archivo);
     }//guardarLibro
 
     private File obtenerArchivoInventarios() {
-        File archivoAbsoluto = new File(INVENTARIOS_FILE_ABSOLUTE);
-        if (archivoAbsoluto.exists()) {
-            return archivoAbsoluto;
-        }
-        File archivoRelativo = new File(INVENTARIOS_FILE_RELATIVE);
-        if (archivoRelativo.exists()) {
-            return archivoRelativo;
-        }
-        File parent = archivoAbsoluto.getParentFile();
-        if (parent != null && !parent.exists()) {
-            parent.mkdirs();
-        }
-        return archivoAbsoluto;
+        return inventarioRepository.obtenerArchivoInventarios();
     }//obtenerArchivoInventarios
 
     private String leerCelda(Row fila, int columna) {
-        if (fila == null) {
-            return "";
-        }
-        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-        if (celda == null) {
-            return "";
-        }
-        return DATA_FORMATTER.formatCellValue(celda).trim();
+        return inventarioRepository.leerCelda(fila, columna);
     }//leerCelda
 
     private void escribirCelda(Row fila, int columna, String valor) {
-        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-        celda.setCellValue(valor == null ? "" : valor.trim());
+        inventarioRepository.escribirCelda(fila, columna, valor);
     }//escribirCelda
 
     private String normalizarEstado(String valor) {
-        String limpio = valor == null ? "" : valor.trim();
-        if (limpio.isEmpty()) {
-            return "1";
-        }
-        if ("1".equals(limpio)) {
-            return "1";
-        }
-        if ("0".equals(limpio)) {
-            return "0";
-        }
-        try {
-            return Double.parseDouble(limpio) > 0 ? "1" : "0";
-        } catch (NumberFormatException ex) {
-            if ("ACTIVO".equalsIgnoreCase(limpio)
-                    || "SI".equalsIgnoreCase(limpio)
-                    || "TRUE".equalsIgnoreCase(limpio)) {
-                return "1";
-            }
-            return "0";
-        }
+        return InventarioService.normalizarEstado(valor);
     }//normalizarEstado
 
     private void actualizarIndicadorEstado(String estado) {

@@ -1,9 +1,12 @@
 
-package com.mycompany.ocxrst;
+package com.mycompany.ocxrst.vistas;
+
+import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.config.AppConfig;
 import java.io.File;
 import java.io.FileInputStream;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;/*
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 /**
  *
  * @author Maria Luisa Martinez
@@ -24,6 +27,7 @@ public class INICIARSESION extends javax.swing.JFrame {
         initComponents();
         IconoVentanaUtil.aplicar(this);
         setLocationRelativeTo(null); 
+        java.awt.EventQueue.invokeLater(() -> jTextField1.requestFocusInWindow());
     
     }
 
@@ -72,13 +76,15 @@ public class INICIARSESION extends javax.swing.JFrame {
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(0, 95, 131));
-        jLabel4.setText("CONTRASEÑA:");
-        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 200, -1, -1));
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel4.setText("USUARIO:");
+        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(155, 200, 140, 20));
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jLabel3.setForeground(new java.awt.Color(0, 95, 131));
-        jLabel3.setText("USUARIO:");
-        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 240, -1, -1));
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel3.setText("CONTRASEÑA:");
+        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(155, 240, 140, 20));
 
         salir.setText("X");
         salir.setBorder(javax.swing.BorderFactory.createEtchedBorder());
@@ -180,7 +186,7 @@ public class INICIARSESION extends javax.swing.JFrame {
 
     public static String obtenerNombreUsuarioExcel(String usuario, String contraseña) {
         try {
-            File archivo = new File("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx");
+            File archivo = AppConfig.resolveBaseFile("USUARIOS.xlsx");
             if (!archivo.exists()) {
                 return "";
             }
@@ -234,7 +240,7 @@ public class INICIARSESION extends javax.swing.JFrame {
         boolean encontrado = false;
 
         try {
-            File archivo = new File("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx");
+            File archivo = AppConfig.resolveBaseFile("USUARIOS.xlsx");
             FileInputStream fis = new FileInputStream(archivo);
             Workbook libro = new XSSFWorkbook(fis);
             Sheet hoja = libro.getSheetAt(0);

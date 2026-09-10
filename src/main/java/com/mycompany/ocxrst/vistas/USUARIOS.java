@@ -2,8 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.mycompany.ocxrst;
+package com.mycompany.ocxrst.vistas;
 
+import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.repository.UsuarioRepository;
+import com.mycompany.ocxrst.service.UsuarioService;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,10 +26,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class USUARIOS extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(USUARIOS.class.getName());
-    private static final String USUARIOS_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx";
-    private static final String USUARIOS_FILE_RELATIVE = "src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx";
-    private static final String[] ENCABEZADOS = {"USUARIO", "CONTRASENA", "NOMBRE", "AREA", "PUESTO", "CORREO", "FIRMA"};
-    private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+    private static final String[] ENCABEZADOS = UsuarioRepository.ENCABEZADOS;
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     /**
      * Creates new form PRINCIPAL
@@ -196,6 +197,7 @@ public class USUARIOS extends javax.swing.JFrame {
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         PRINCIPAL ventana = new PRINCIPAL();
+        ventana.setLocationRelativeTo(this);
         ventana.setVisible(true);
         this.dispose();
     }//GEN-LAST:event_jButton6ActionPerformed
@@ -257,24 +259,9 @@ public class USUARIOS extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
     private void asegurarArchivoUsuarios() {
-        File archivo = obtenerArchivoUsuarios();
-        if (!archivo.exists()) {
-            try (Workbook libro = new XSSFWorkbook()) {
-                Sheet hoja = libro.createSheet("USUARIOS");
-                asegurarEncabezados(hoja);
-                guardarLibro(libro, archivo);
-            } catch (IOException ex) {
-                mostrarError("No se pudo crear el archivo de usuarios.", ex);
-            }
-            return;
-        }
-
-        try (Workbook libro = cargarLibro(archivo)) {
-            Sheet hoja = obtenerHojaUsuarios(libro);
-            if (asegurarEncabezados(hoja)) {
-                guardarLibro(libro, archivo);
-            }
-        } catch (IOException ex) {
+        try {
+            usuarioRepository.asegurarArchivoUsuarios();
+        } catch (IllegalStateException ex) {
             mostrarError("No se pudo preparar el archivo de usuarios.", ex);
         }
     }//asegurarArchivoUsuarios
@@ -511,93 +498,31 @@ public class USUARIOS extends javax.swing.JFrame {
     }//primeraFilaDisponible
 
     private boolean asegurarEncabezados(Sheet hoja) {
-        boolean huboCambios = false;
-        Row filaEncabezado = hoja.getRow(0);
-        if (filaEncabezado == null) {
-            filaEncabezado = hoja.createRow(0);
-            huboCambios = true;
-        }
-
-        for (int columna = 0; columna < ENCABEZADOS.length; columna++) {
-            Cell celda = filaEncabezado.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-            String valorEsperado = ENCABEZADOS[columna];
-
-            if (celda == null) {
-                celda = filaEncabezado.createCell(columna);
-                celda.setCellValue(valorEsperado);
-                huboCambios = true;
-                continue;
-            }
-
-            String valorActual = DATA_FORMATTER.formatCellValue(celda).trim();
-            if (!valorEsperado.equalsIgnoreCase(valorActual)) {
-                celda.setCellValue(valorEsperado);
-                huboCambios = true;
-            }
-        }
-
-        return huboCambios;
+        return usuarioRepository.asegurarEncabezados(hoja);
     }//asegurarEncabezados
 
     private Sheet obtenerHojaUsuarios(Workbook libro) {
-        if (libro.getNumberOfSheets() == 0) {
-            return libro.createSheet("USUARIOS");
-        }
-        return libro.getSheetAt(0);
+        return usuarioRepository.obtenerHojaUsuarios(libro);
     }//obtenerHojaUsuarios
 
     private Workbook cargarLibro(File archivo) throws IOException {
-        if (!archivo.exists()) {
-            Workbook libroNuevo = new XSSFWorkbook();
-            Sheet hojaNueva = libroNuevo.createSheet("USUARIOS");
-            asegurarEncabezados(hojaNueva);
-            guardarLibro(libroNuevo, archivo);
-            return libroNuevo;
-        }
-
-        try (FileInputStream fis = new FileInputStream(archivo)) {
-            return new XSSFWorkbook(fis);
-        }
+        return usuarioRepository.cargarLibro(archivo);
     }//cargarLibro
 
     private void guardarLibro(Workbook libro, File archivo) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(archivo)) {
-            libro.write(fos);
-        }
+        usuarioRepository.guardarLibro(libro, archivo);
     }//guardarLibro
 
     private File obtenerArchivoUsuarios() {
-        File archivoAbsoluto = new File(USUARIOS_FILE_ABSOLUTE);
-        if (archivoAbsoluto.exists()) {
-            return archivoAbsoluto;
-        }
-
-        File archivoRelativo = new File(USUARIOS_FILE_RELATIVE);
-        if (archivoRelativo.exists()) {
-            return archivoRelativo;
-        }
-
-        File parent = archivoAbsoluto.getParentFile();
-        if (parent != null && !parent.exists()) {
-            parent.mkdirs();
-        }
-        return archivoAbsoluto;
+        return usuarioRepository.obtenerArchivoUsuarios();
     }//obtenerArchivoUsuarios
 
     private String leerCelda(Row fila, int columna) {
-        if (fila == null) {
-            return "";
-        }
-        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-        if (celda == null) {
-            return "";
-        }
-        return DATA_FORMATTER.formatCellValue(celda).trim();
+        return usuarioRepository.leerCelda(fila, columna);
     }//leerCelda
 
     private void escribirCelda(Row fila, int columna, String valor) {
-        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-        celda.setCellValue(valor == null ? "" : valor.trim());
+        usuarioRepository.escribirCelda(fila, columna, valor);
     }//escribirCelda
 
     private void mostrarError(String mensajeUsuario, Exception ex) {

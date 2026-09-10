@@ -2,8 +2,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.mycompany.ocxrst;
+package com.mycompany.ocxrst.vistas;
 
+import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.config.AppConfig;
+import com.mycompany.ocxrst.repository.ProveedorRepository;
+import com.mycompany.ocxrst.service.ProveedorService;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,15 +27,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class PROVEEDORES extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PROVEEDORES.class.getName());
-    private static final String PROVEEDORES_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\PROVEEDORES.xlsx";
-    private static final String PROVEEDORES_FILE_RELATIVE = "src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\PROVEEDORES.xlsx";
-    private static final String ORDENES_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\REGISTROC.xlsx";
-    private static final String ORDENES_DETALLE_FILE_ABSOLUTE = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INTORDENDECOMPRA.xlsx";
-    private static final String[] ENCABEZADOS = {
-        "ID_PROVEEDOR", "NOMBRE_RAZON_SOCIAL", "RFC", "TELEFONO", "CORREO",
-        "DIRECCION", "CONTACTO", "PAGO", "METODO_PAGO", "TIEMPO_ENTREGA", "FORMA_PAGO", "ACTIVO"
-    };
-    private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+    private static final String ORDENES_FILE_ABSOLUTE = AppConfig.registroCFile().getAbsolutePath();
+    private static final String ORDENES_DETALLE_FILE_ABSOLUTE = AppConfig.intOrdenCompraFile().getAbsolutePath();
+    private static final String[] ENCABEZADOS = ProveedorRepository.ENCABEZADOS;
+    private final ProveedorRepository proveedorRepository = new ProveedorRepository();
     private int filaProveedorActual = -1;
 
     // Caché de proveedores para autocompletar: id -> "id | nombre"
@@ -312,24 +311,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//configurarEventos
 
     private void asegurarArchivoProveedores() {
-        File archivo = obtenerArchivoProveedores();
-        if (!archivo.exists()) {
-            try (Workbook libro = new XSSFWorkbook()) {
-                Sheet hoja = libro.createSheet("PROVEEDORES");
-                asegurarEncabezados(hoja);
-                guardarLibro(libro, archivo);
-            } catch (IOException ex) {
-                mostrarError("No se pudo crear el archivo de proveedores.", ex);
-            }
-            return;
-        }
-
-        try (Workbook libro = cargarLibro(archivo)) {
-            Sheet hoja = obtenerHojaProveedores(libro);
-            if (asegurarEncabezados(hoja)) {
-                guardarLibro(libro, archivo);
-            }
-        } catch (IOException ex) {
+        try {
+            proveedorRepository.asegurarArchivoProveedores();
+        } catch (IllegalStateException ex) {
             mostrarError("No se pudo preparar el archivo de proveedores.", ex);
         }
     }//asegurarArchivoProveedores
@@ -1197,117 +1181,35 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//generarIdProveedor
 
     private boolean asegurarEncabezados(Sheet hoja) {
-        boolean huboCambios = false;
-        Row filaEncabezado = hoja.getRow(0);
-        if (filaEncabezado == null) {
-            filaEncabezado = hoja.createRow(0);
-            huboCambios = true;
-        }
-
-        for (int columna = 0; columna < ENCABEZADOS.length; columna++) {
-            Cell celda = filaEncabezado.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-            String valorEsperado = ENCABEZADOS[columna];
-
-            if (celda == null) {
-                celda = filaEncabezado.createCell(columna);
-                celda.setCellValue(valorEsperado);
-                huboCambios = true;
-                continue;
-            }
-
-            String valorActual = DATA_FORMATTER.formatCellValue(celda).trim();
-            if (!valorEsperado.equalsIgnoreCase(valorActual)) {
-                celda.setCellValue(valorEsperado);
-                huboCambios = true;
-            }
-        }
-
-        return huboCambios;
+        return proveedorRepository.asegurarEncabezados(hoja);
     }//asegurarEncabezados
 
     private Sheet obtenerHojaProveedores(Workbook libro) {
-        if (libro.getNumberOfSheets() == 0) {
-            return libro.createSheet("PROVEEDORES");
-        }
-        return libro.getSheetAt(0);
+        return proveedorRepository.obtenerHojaProveedores(libro);
     }//obtenerHojaProveedores
 
     private Workbook cargarLibro(File archivo) throws IOException {
-        if (!archivo.exists()) {
-            Workbook libroNuevo = new XSSFWorkbook();
-            Sheet hojaNueva = libroNuevo.createSheet("PROVEEDORES");
-            asegurarEncabezados(hojaNueva);
-            guardarLibro(libroNuevo, archivo);
-            return libroNuevo;
-        }
-
-        try (FileInputStream fis = new FileInputStream(archivo)) {
-            return new XSSFWorkbook(fis);
-        }
+        return proveedorRepository.cargarLibro(archivo);
     }//cargarLibro
 
     private void guardarLibro(Workbook libro, File archivo) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(archivo)) {
-            libro.write(fos);
-        }
+        proveedorRepository.guardarLibro(libro, archivo);
     }//guardarLibro
 
     private File obtenerArchivoProveedores() {
-        File archivoAbsoluto = new File(PROVEEDORES_FILE_ABSOLUTE);
-        if (archivoAbsoluto.exists()) {
-            return archivoAbsoluto;
-        }
-
-        File archivoRelativo = new File(PROVEEDORES_FILE_RELATIVE);
-        if (archivoRelativo.exists()) {
-            return archivoRelativo;
-        }
-
-        File parent = archivoAbsoluto.getParentFile();
-        if (parent != null && !parent.exists()) {
-            parent.mkdirs();
-        }
-        return archivoAbsoluto;
+        return proveedorRepository.obtenerArchivoProveedores();
     }//obtenerArchivoProveedores
 
     private String leerCelda(Row fila, int columna) {
-        if (fila == null) {
-            return "";
-        }
-        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-        if (celda == null) {
-            return "";
-        }
-        return DATA_FORMATTER.formatCellValue(celda).trim();
+        return proveedorRepository.leerCelda(fila, columna);
     }//leerCelda
 
     private void escribirCelda(Row fila, int columna, String valor) {
-        Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-        celda.setCellValue(valor == null ? "" : valor.trim());
+        proveedorRepository.escribirCelda(fila, columna, valor);
     }//escribirCelda
 
     private String normalizarEstado(String valor) {
-        String limpio = valor == null ? "" : valor.trim();
-        if (limpio.isEmpty()) {
-            return "1";
-        }
-        if ("1".equals(limpio)) {
-            return "1";
-        }
-        if ("0".equals(limpio)) {
-            return "0";
-        }
-
-        try {
-            return Double.parseDouble(limpio) > 0 ? "1" : "0";
-        } catch (NumberFormatException ex) {
-            if ("ACTIVO".equalsIgnoreCase(limpio)
-                    || "SI".equalsIgnoreCase(limpio)
-                    || "TRUE".equalsIgnoreCase(limpio)) {
-                return "1";
-            }
-            return "0";
-        }
+        return ProveedorService.normalizarEstado(valor);
     }//normalizarEstado
 
     private void actualizarIndicadorEstado(String estado) {

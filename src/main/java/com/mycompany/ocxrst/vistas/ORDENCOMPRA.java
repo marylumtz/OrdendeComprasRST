@@ -2,8 +2,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.mycompany.ocxrst;
+package com.mycompany.ocxrst.vistas;
 
+import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.config.AppConfig;
+import com.mycompany.ocxrst.repository.OrdenCompraRepository;
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.ColorConstants;
@@ -32,6 +35,7 @@ import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.properties.AreaBreakType;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -43,7 +47,16 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 public class ORDENCOMPRA extends javax.swing.JFrame {
 
-    private static final String RUTA_INVENTARIOS = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INVENTARIOS.xlsx";
+    private static final String RUTA_INVENTARIOS = AppConfig.inventariosFile().getAbsolutePath();
+    private static final String RUTA_PROVEEDORES = AppConfig.proveedoresFile().getAbsolutePath();
+    private static final String RUTA_USUARIOS = AppConfig.usuariosFile().getAbsolutePath();
+    private static final String RUTA_PAGOS = AppConfig.pagosFile().getAbsolutePath();
+    private static final String RUTA_FORMAPAGO = AppConfig.formaPagoFile().getAbsolutePath();
+    private static final String RUTA_METODOPAGO = AppConfig.metodoPagoFile().getAbsolutePath();
+    private static final String RUTA_DIAS = AppConfig.diasFile().getAbsolutePath();
+    private static final String RUTA_CFDI = AppConfig.cfdiFile().getAbsolutePath();
+    private static final String RUTA_TIPOMONEDA = AppConfig.tipoMonedaFile().getAbsolutePath();
+    private static final OrdenCompraRepository ORDEN_COMPRA_REPOSITORY = new OrdenCompraRepository();
     private final DataFormatter dataFormatter = new DataFormatter();
     private final java.util.Map<String, String> monedaDescMap = new java.util.HashMap<>();
 
@@ -59,6 +72,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private final javax.swing.JPopupMenu popupProveedores = new javax.swing.JPopupMenu();
     private boolean seleccionandoProveedor = false;
     private boolean modoCrear = false;
+    private String estadoOrdenCargada;
 
     public ORDENCOMPRA() {
         initComponents();
@@ -148,7 +162,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (sel != null) {
             String desc = monedaDescMap.getOrDefault(sel.toString(), "");
             jLabel37.setText(desc);
-            boolean mostrarCambio = sel.toString().equalsIgnoreCase("USD") || sel.toString().equalsIgnoreCase("EUR");
+            boolean mostrarCambio = sel.toString().equalsIgnoreCase("USD") || sel.toString().equalsIgnoreCase("EUR") || sel.toString().equalsIgnoreCase("CAD");
             jTextField5.setVisible(mostrarCambio);
             jLabel38.setVisible(mostrarCambio);
             actualizarTotales();
@@ -162,7 +176,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     // Visibilidad inicial de tipo de cambio según moneda seleccionada
     {
         Object sel = jComboBox2.getSelectedItem();
-        boolean mostrarCambio = sel != null && (sel.toString().equalsIgnoreCase("USD") || sel.toString().equalsIgnoreCase("EUR"));
+        boolean mostrarCambio = sel != null && (sel.toString().equalsIgnoreCase("USD") || sel.toString().equalsIgnoreCase("EUR") || sel.toString().equalsIgnoreCase("CAD"));
         jTextField5.setVisible(mostrarCambio);
         jLabel38.setVisible(mostrarCambio);
     }
@@ -197,18 +211,45 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jPanel1.add(jCheckBoxDescuento);
     jPanel1.add(jTextFieldDescuentoPct);
 
-    // Usar el mismo x de referencia (jLabel20) para alinear ambos checkboxes
-    java.awt.Rectangle rSub = jLabel20.getBounds();
-    java.awt.Rectangle rIVA = jLabel21.getBounds();
-    int checkX = Math.min(rSub.x, rIVA.x) - 220;
-    int fieldH = Math.max(rSub.height + 4, 26);
-    jCheckBoxDescuento.setBounds(checkX, rSub.y - 1, 106, fieldH);
-    jTextFieldDescuentoPct.setBounds(checkX + 108, rSub.y - 1, 65, fieldH);
-    jCheckBoxIVA.setBounds(checkX, rIVA.y - 1, 140, fieldH);
+    // Checkbox para aplicar ISR como una retencion adicional al descuento
+    jCheckBoxISR = new javax.swing.JCheckBox("ISR %:");
+    jCheckBoxISR.setSelected(false);
+    jCheckBoxISR.setBackground(jPanel1.getBackground());
+    jTextFieldISRPercent = new javax.swing.JTextField("0");
+    jTextFieldISRPercent.setFont(jTextFieldISRPercent.getFont().deriveFont(java.awt.Font.BOLD, 15f));
+    jTextFieldISRPercent.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+    jTextFieldISRPercent.setVisible(false);
+    jCheckBoxISR.addActionListener(e -> {
+        jTextFieldISRPercent.setVisible(jCheckBoxISR.isSelected());
+        jPanel1.repaint();
+        actualizarTotales();
+    });
+    jPanel1.add(jCheckBoxISR);
+    jPanel1.add(jTextFieldISRPercent);
+
+    // Colocar las casillas a la derecha de las opciones de ELABORO y AUTORIZO
+    java.awt.Rectangle rElaboro = jComboBox4.getBounds();
+    java.awt.Rectangle rAutorizo = jComboBox5.getBounds();
+    int checkX = Math.max(rElaboro.x + rElaboro.width, rAutorizo.x + rAutorizo.width) + 15;
+    int fieldH = Math.max(rElaboro.height, 26);
+    int descuentoY = rElaboro.y - 12;
+    jCheckBoxDescuento.setBounds(checkX, descuentoY, 106, fieldH);
+    jTextFieldDescuentoPct.setBounds(checkX + 108, descuentoY, 65, fieldH);
+    int isrY = rAutorizo.y - 12;
+    jCheckBoxISR.setBounds(checkX, isrY, 106, fieldH);
+    jTextFieldISRPercent.setBounds(checkX + 108, isrY, 65, fieldH);
+    jCheckBoxIVA.setBounds(checkX, isrY + fieldH + 4, 140, fieldH);
     jPanel1.setComponentZOrder(jCheckBoxIVA, 0);
+    jPanel1.setComponentZOrder(jCheckBoxISR, 0);
+    jPanel1.setComponentZOrder(jTextFieldISRPercent, 0);
     jPanel1.setComponentZOrder(jCheckBoxDescuento, 0);
     jPanel1.setComponentZOrder(jTextFieldDescuentoPct, 0);
     jTextFieldDescuentoPct.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+        public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizarTotales(); }
+        public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarTotales(); }
+        public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarTotales(); }
+    });
+    jTextFieldISRPercent.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
         public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizarTotales(); }
         public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarTotales(); }
         public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarTotales(); }
@@ -251,6 +292,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jButtonSalirOrden.setBounds(rBtn1.x + rBtn1.width + 10, rBtn1.y, 140, rBtn1.height);
     jButtonSalirOrden.addActionListener(e -> salirDeOrden());
     jButtonSalirOrden.setEnabled(false);
+    jButtonSalirOrden.setVisible(false);
     jPanel1.add(jButtonSalirOrden);
     jPanel1.setComponentZOrder(jButtonSalirOrden, 0);
 
@@ -873,51 +915,46 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
    
 
     public void buscarProveedor(String idBuscado) {
-    try {
-        FileInputStream file = new FileInputStream("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\proveedores.xlsx");
-        Workbook workbook = new XSSFWorkbook(file);
-        Sheet sheet = workbook.getSheetAt(0);
+        try {
+            File archivo = AppConfig.proveedoresFile();
+            try (FileInputStream file = new FileInputStream(archivo);
+                 Workbook workbook = new XSSFWorkbook(file)) {
+                Sheet sheet = workbook.getSheetAt(0);
 
-        for (Row row : sheet) {
+                for (Row row : sheet) {
+                    if (row.getRowNum() == 0) {
+                        continue;
+                    }
 
-            if (row.getRowNum() == 0) continue;
+                    org.apache.poi.ss.usermodel.Cell celdaId = row.getCell(0);
+                    if (celdaId != null) {
+                        String valorCelda = celdaId.toString();
+                        if (valorCelda.equalsIgnoreCase(idBuscado)) {
+                            String nombre = obtenerTextoCelda(row.getCell(1));
+                            String RFC = obtenerTextoCelda(row.getCell(2));
+                            String telefono = obtenerTextoCelda(row.getCell(3));
+                            String correo = obtenerTextoCelda(row.getCell(4));
+                            String direccion = obtenerTextoCelda(row.getCell(5));
+                            String contacto = obtenerTextoCelda(row.getCell(6));
 
-            org.apache.poi.ss.usermodel.Cell celdaId = row.getCell(0);
-
-            if (celdaId != null) {
-
-                String valorCelda = celdaId.toString();
-
-                if (valorCelda.equalsIgnoreCase(idBuscado)) {
-                    String nombre       = obtenerTextoCelda(row.getCell(1));
-                    String RFC          = obtenerTextoCelda(row.getCell(2));
-                    String telefono     = obtenerTextoCelda(row.getCell(3));
-                    String correo       = obtenerTextoCelda(row.getCell(4));
-                    String direccion    = obtenerTextoCelda(row.getCell(5));
-                    String contacto     = obtenerTextoCelda(row.getCell(6));
-                    workbook.close();
-
-                    proveedorTelefono = telefono;
-                    proveedorCorreo   = correo;
-                    jLabel8.setText(nombre);
-                    jLabel15.setText("<html>" + direccion + "</html>");
-                    jLabel30.setText("<html>" + RFC + "</html>");
-                    jLabel32.setText("<html>" + contacto + "</html>");
-
-                    return;
+                            proveedorTelefono = telefono;
+                            proveedorCorreo = correo;
+                            jLabel8.setText(nombre);
+                            jLabel15.setText("<html>" + direccion + "</html>");
+                            jLabel30.setText("<html>" + RFC + "</html>");
+                            jLabel32.setText("<html>" + contacto + "</html>");
+                            return;
+                        }
+                    }
                 }
+
+                jLabel8.setText("Proveedor no encontrado");
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            jLabel8.setText("Error");
         }
-
-        jLabel8.setText("Proveedor no encontrado");
-
-        workbook.close();
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        jLabel8.setText("Error");
     }
-}
 
     private void configurarTablaProductos() {
     jTable1.setModel(new DefaultTableModel(
@@ -955,6 +992,33 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             super.setValueAt(aValue, row, column);
         }
     });
+
+    javax.swing.table.TableCellRenderer rendererTextoAjustable = new javax.swing.table.TableCellRenderer() {
+        private final javax.swing.JTextArea areaTexto = new javax.swing.JTextArea();
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(
+                javax.swing.JTable tabla, Object valor, boolean seleccionado, boolean tieneFoco,
+                int fila, int columna) {
+            areaTexto.setText(valor == null ? "" : valor.toString());
+            areaTexto.setLineWrap(true);
+            areaTexto.setWrapStyleWord(true);
+            areaTexto.setFont(tabla.getFont());
+            areaTexto.setForeground(seleccionado ? tabla.getSelectionForeground() : tabla.getForeground());
+            areaTexto.setBackground(seleccionado ? tabla.getSelectionBackground() : tabla.getBackground());
+            areaTexto.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 4, 2, 4));
+
+            int ancho = tabla.getColumnModel().getColumn(columna).getWidth();
+            areaTexto.setSize(Math.max(ancho, 1), Short.MAX_VALUE);
+            int alturaNecesaria = areaTexto.getPreferredSize().height;
+            if (tabla.getRowHeight(fila) < alturaNecesaria) {
+                tabla.setRowHeight(fila, alturaNecesaria);
+            }
+            return areaTexto;
+        }
+    };
+    jTable1.getColumnModel().getColumn(1).setCellRenderer(rendererTextoAjustable);
+    jTable1.getColumnModel().getColumn(2).setCellRenderer(rendererTextoAjustable);
 }
 
     private int parseCantidad(Object valor) {
@@ -991,25 +1055,21 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     private void cargarCacheInventario() {
         cacheInventario.clear();
-        try (FileInputStream file = new FileInputStream(RUTA_INVENTARIOS);
-             Workbook workbook = new XSSFWorkbook(file)) {
-            Sheet sheet = workbook.getSheetAt(0);
-            for (Row row : sheet) {
-                if (row.getRowNum() == 0) continue;
-                String codigo = obtenerTextoCelda(row.getCell(0));
-                String desc   = obtenerTextoCelda(row.getCell(1));
-                if (!codigo.isEmpty()) {
-                    cacheInventario.add(new String[]{codigo, desc});
+        try {
+            for (String[] item : ORDEN_COMPRA_REPOSITORY.cargarCatalogo(new File(RUTA_INVENTARIOS), 0, 1)) {
+                if (!item[0].isEmpty()) {
+                    cacheInventario.add(item);
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.log(java.util.logging.Level.WARNING, "No se pudo cargar caché de inventario", e);
         }
     }
 
     private void cargarCacheProveedores() {
         cacheProveedores.clear();
-        try (FileInputStream file = new FileInputStream("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\proveedores.xlsx");
+        File archivo = AppConfig.proveedoresFile();
+        try (FileInputStream file = new FileInputStream(archivo);
              Workbook workbook = new XSSFWorkbook(file)) {
             Sheet sheet = workbook.getSheetAt(0);
             for (Row row : sheet) {
@@ -1199,9 +1259,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         base += importe;
     }
 
-    // Aplicar tipo de cambio si la moneda seleccionada es USD o EUR
+    // Aplicar tipo de cambio si la moneda seleccionada requiere conversión
     Object moneda = jComboBox2.getSelectedItem();
-    if (moneda != null && (moneda.toString().equalsIgnoreCase("USD") || moneda.toString().equalsIgnoreCase("EUR"))) {
+    if (moneda != null && (moneda.toString().equalsIgnoreCase("USD") || moneda.toString().equalsIgnoreCase("EUR") || moneda.toString().equalsIgnoreCase("CAD"))) {
         double tipoCambio = parseNumero(jTextField5.getText());
         if (tipoCambio > 0) {
             base = base / tipoCambio;
@@ -1212,6 +1272,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     // Aplicar descuento si el checkbox está activo
     descuentoImporte = 0;
+    isrImporte = 0;
     double subtotal = base;
     boolean aplicarDescuento = jCheckBoxDescuento != null && jCheckBoxDescuento.isSelected();
     if (aplicarDescuento) {
@@ -1222,10 +1283,21 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    // Aplicar ISR debajo del descuento, con el mismo comportamiento de porcentaje
+    boolean aplicarISR = jCheckBoxISR != null && jCheckBoxISR.isSelected();
+    if (aplicarISR) {
+        double pctISR = parseNumero(jTextFieldISRPercent.getText());
+        if (pctISR > 0 && pctISR <= 100) {
+            isrImporte = subtotal * pctISR / 100.0;
+            subtotal -= isrImporte;
+        }
+    }
+
     // Actualizar texto del label SUB TOTAL con porcentaje si aplica
-    if (aplicarDescuento && descuentoImporte > 0) {
-        double pct = parseNumero(jTextFieldDescuentoPct.getText());
-        jLabel20.setText(String.format("SUB TOTAL (-%.0f%%):", pct));
+    if ((aplicarDescuento && descuentoImporte > 0) || (aplicarISR && isrImporte > 0)) {
+        double pctDescuento = aplicarDescuento ? parseNumero(jTextFieldDescuentoPct.getText()) : 0;
+        double pctISR = aplicarISR ? parseNumero(jTextFieldISRPercent.getText()) : 0;
+        jLabel20.setText(String.format("SUB TOTAL (-%.0f%% - ISR %.0f%%):", pctDescuento, pctISR));
     } else {
         jLabel20.setText("SUB TOTAL:");
     }
@@ -1266,10 +1338,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
     
     public void cargarPagos() {
-    try {
-        FileInputStream file = new FileInputStream(
-            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\PAGOS.xlsx"
-        );
+    try (FileInputStream file = new FileInputStream(RUTA_PAGOS)) {
 
         Workbook workbook = new XSSFWorkbook(file);
         Sheet sheet = workbook.getSheetAt(0);
@@ -1298,10 +1367,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
 
     public void cargarFormaPago() {
-    try {
-        FileInputStream file = new FileInputStream(
-            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\FORMAPAGO.xlsx"
-        );
+    try (FileInputStream file = new FileInputStream(RUTA_FORMAPAGO)) {
 
         Workbook workbook = new XSSFWorkbook(file);
         Sheet sheet = workbook.getSheetAt(0);
@@ -1330,10 +1396,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
 
     public void cargarMetodoPago() {
-    try {
-        FileInputStream file = new FileInputStream(
-            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\METODOPAGO.xlsx"
-        );
+    try (FileInputStream file = new FileInputStream(RUTA_METODOPAGO)) {
 
         Workbook workbook = new XSSFWorkbook(file);
         Sheet sheet = workbook.getSheetAt(0);
@@ -1362,10 +1425,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
 
     public void cargarDias() {
-    try {
-        FileInputStream file = new FileInputStream(
-            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\DIAS.xlsx"
-        );
+    try (FileInputStream file = new FileInputStream(RUTA_DIAS)) {
 
         Workbook workbook = new XSSFWorkbook(file);
         Sheet sheet = workbook.getSheetAt(0);
@@ -1405,10 +1465,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
 
     public void cargarCFDI() {
-    try {
-        FileInputStream file = new FileInputStream(
-            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\CFDI.xlsx"
-        );
+    try (FileInputStream file = new FileInputStream(RUTA_CFDI)) {
 
         Workbook workbook = new XSSFWorkbook(file);
         Sheet sheet = workbook.getSheetAt(0);
@@ -1440,10 +1497,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
      
       public void cargarUsuario() {
-    try {
-        FileInputStream User = new FileInputStream(
-            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx"
-        );
+    try (FileInputStream User = new FileInputStream(RUTA_USUARIOS)) {
 
         Workbook workbook = new XSSFWorkbook(User);
         Sheet sheet = workbook.getSheetAt(0);
@@ -1480,10 +1534,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
     
     public void cargarMoneda() {
-    try {
-        FileInputStream file = new FileInputStream(
-            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\TIPOMONEDA.xlsx"
-        );
+    try (FileInputStream file = new FileInputStream(RUTA_TIPOMONEDA)) {
 
         Workbook workbook = new XSSFWorkbook(file);
         Sheet sheet = workbook.getSheetAt(0);
@@ -1527,9 +1578,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
 
       public void buscarArea(String idBuscado) {
-    try {
-        FileInputStream file = new FileInputStream("C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\USUARIOS.xlsx");
-        Workbook workbook = new XSSFWorkbook(file);
+    try (FileInputStream file = new FileInputStream(RUTA_USUARIOS);
+         Workbook workbook = new XSSFWorkbook(file)) {
         Sheet sheet = workbook.getSheetAt(0);
         for (Row row : sheet) {
             if (row.getRowNum() == 0) continue;
@@ -1740,7 +1790,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             doc.add(seccionTitulo("PRODUCTOS / SERVICIOS", bold, azul));
 
             Table prodTbl = new Table(UnitValue.createPercentArray(new float[]{1.5f, 4f, 2f, 1f, 1.5f, 1.5f}))
-                    .useAllAvailableWidth().setMarginBottom(2);
+                    .useAllAvailableWidth().setMarginBottom(2)
+                    .setKeepTogether(false);
 
             String[] colHeaders = {"CÓDIGO", "DESCRIPCIÓN", "UNIDAD DE MEDIDA", "CANT.", "PRECIO UNIT.", "IMPORTE"};
             TextAlignment[] colAligns = {
@@ -1781,9 +1832,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 default:    simboloPDF = "$";     break;
             }
             boolean mostrarDescuento = jCheckBoxDescuento != null && jCheckBoxDescuento.isSelected() && descuentoImporte > 0;
-            int filasTot = mostrarDescuento ? 4 : 3;
+            boolean mostrarISR = jCheckBoxISR != null && jCheckBoxISR.isSelected() && isrImporte > 0;
+            int filasTot = 3 + (mostrarDescuento ? 1 : 0) + (mostrarISR ? 1 : 0);
             Table totTbl = new Table(UnitValue.createPercentArray(new float[]{6, 2.5f, 1.5f}))
-                    .useAllAvailableWidth().setMarginTop(2);
+                    .useAllAvailableWidth().setMarginTop(2)
+                    .setKeepTogether(true);
             totTbl.addCell(new Cell(filasTot, 1).setBorder(Border.NO_BORDER));  // espacio izq.
 
             // Subtotal
@@ -1814,6 +1867,24 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                         .setBorderTop(Border.NO_BORDER)
                         .setBorderBottom(new SolidBorder(azul, 1)).setPadding(3));
             }
+
+                    // ISR (si aplica)
+                    if (mostrarISR) {
+                    totTbl.addCell(new Cell()
+                        .add(new Paragraph("ISR:").setFont(bold).setFontSize(8))
+                        .setTextAlignment(TextAlignment.RIGHT).setBackgroundColor(azulClaro)
+                        .setBorderLeft(new SolidBorder(azul, 1))
+                        .setBorderRight(new SolidBorder(azul, 1))
+                        .setBorderTop(Border.NO_BORDER)
+                        .setBorderBottom(new SolidBorder(azul, 1)).setPadding(3));
+                    totTbl.addCell(new Cell()
+                        .add(new Paragraph(String.format(simboloPDF + " -%,.2f", isrImporte)).setFont(bold).setFontSize(8))
+                        .setTextAlignment(TextAlignment.RIGHT).setBackgroundColor(azulClaro)
+                        .setBorderLeft(Border.NO_BORDER)
+                        .setBorderRight(new SolidBorder(azul, 1))
+                        .setBorderTop(Border.NO_BORDER)
+                        .setBorderBottom(new SolidBorder(azul, 1)).setPadding(3));
+                    }
 
             // IVA
             totTbl.addCell(new Cell()
@@ -1901,16 +1972,19 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     .setFont(plain).setFontSize(8).setMarginBottom(6)
                     .setTextAlignment(TextAlignment.CENTER));
 
-            // ── FIRMAS (pie de primera página) ─────────────────────────────
-            // Posición fija: 36pt del margen izquierdo, 50pt del margen inferior, ancho de página menos márgenes
+                // ── FIRMAS ─────────────────────────────────────────────────────
+                // Las firmas siguen a los totales; si la tabla ocupó otra página,
+                // permanecen en esa misma página sin superponerse al contenido.
             float pageWidth  = PageSize.LETTER.getWidth();
             float marginLR   = 36f;
             float tblWidth   = pageWidth - marginLR * 2;
             String elaboro   = jComboBox4.getSelectedItem() != null ? jComboBox4.getSelectedItem().toString() : "";
             String autorizo  = jComboBox5.getSelectedItem() != null ? jComboBox5.getSelectedItem().toString() : "";
             Table firmasTbl = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
+                    .useAllAvailableWidth()
                     .setWidth(tblWidth)
-                    .setFixedPosition(1, marginLR, 50f, tblWidth);
+                    .setKeepTogether(true)
+                    .setMarginTop(12);
             for (String[] par : new String[][]{{"ELABORÓ", elaboro}, {"AUTORIZÓ", autorizo}}) {
                 firmasTbl.addCell(new Cell()
                         .add(new Paragraph("___________________________")
@@ -1929,10 +2003,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             // ── SEGUNDA HOJA: TÉRMINOS Y CONDICIONES ─────────────────────────
             doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             doc.add(seccionTitulo("TÉRMINOS Y CONDICIONES", bold, azul));
-            String rutaTermTxt = "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\TERMINOS\\Términos y Condiciones.txt";
             String contenidoTerminos;
             try {
-                byte[] bytesT = java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(rutaTermTxt));
+                byte[] bytesT = java.nio.file.Files.readAllBytes(AppConfig.terminosFile().toPath());
                 contenidoTerminos = new String(bytesT, java.nio.charset.StandardCharsets.UTF_8);
             } catch (Exception exT) {
                 contenidoTerminos = "(No se pudo cargar el archivo de términos y condiciones)";
@@ -2080,6 +2153,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (!esSeleccionValida(jComboBox10)) {
             faltantes.add("• TIEMPO DE ENTREGA (fin)");
         }
+        if (esSeleccionValida(jComboBox9) && esSeleccionValida(jComboBox10)
+                && jComboBox9.getSelectedItem().toString().trim()
+                        .equals(jComboBox10.getSelectedItem().toString().trim())) {
+            faltantes.add("• TIEMPO DE ENTREGA: el inicio y el fin no pueden ser iguales. Selecciona un rango diferente.");
+        }
 
         // Tipo de moneda
         if (!esSeleccionValida(jComboBox2)) {
@@ -2121,11 +2199,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 + String.join("\n", faltantes);
     }
 
-    private static final String RUTA_REGISTROC =
-        "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\REGISTROC.xlsx";
+    private static final String RUTA_REGISTROC = AppConfig.registroCFile().getAbsolutePath();
 
-    private static final String RUTA_INTORDENDECOMPRA =
-        "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\BASES\\INTORDENDECOMPRA.xlsx";
+    private static final String RUTA_INTORDENDECOMPRA = AppConfig.intOrdenCompraFile().getAbsolutePath();
 
     /**
      * Genera el siguiente número de orden único consultando REGISTROC.xlsx.
@@ -2190,8 +2266,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         java.io.File archivo = new java.io.File(RUTA_REGISTROC);
         if (archivo.exists()) {
             String noOrdenBuscar = jTextField6.getText().trim();
-            try (FileInputStream fisPre = new FileInputStream(archivo);
-                 Workbook wbPre = new XSSFWorkbook(fisPre)) {
+              try (Workbook wbPre = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
                 Sheet sheetPre = wbPre.getSheetAt(0);
                 for (Row r : sheetPre) {
                     if (r.getRowNum() == 0) continue;
@@ -2223,14 +2298,12 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         Sheet sheet;
         try {
             if (archivo.exists()) {
-                try (FileInputStream fis = new FileInputStream(archivo)) {
-                    wb = new XSSFWorkbook(fis);
-                }
+                wb = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo);
                 sheet = wb.getSheetAt(0);
                 asegurarEncabezadosAbonadoEstatus(sheet);
             } else {
-                wb = new XSSFWorkbook();
-                sheet = wb.createSheet("REGISTROS");
+                wb = ORDEN_COMPRA_REPOSITORY.abrirOCrearWorkbook(archivo, "REGISTROS");
+                sheet = wb.getSheetAt(0);
                 String[] headers = {"NOORDEN","FECHA","DOCUMENTO","COTIZACIÓN","ID_PROVEEDOR",
                     "CFDI","SOLICITUD","PROYECTO","PAGO","FORMAPAGO","METODOPAGO",
                     "ENTREGAINICIO","ENTREGAFINAL","DESCUENTO","IVA","ELABORO","AUTORIZO",
@@ -2315,9 +2388,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             // TOTAL
             row.createCell(21).setCellValue(jLabel25.getText());
 
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(archivo)) {
-                wb.write(fos);
-            }
+            ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
             wb.close();
             guardarTablaEnIntOrden(jTextField6.getText().trim());
             JOptionPane.showMessageDialog(this,
@@ -2337,21 +2408,27 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     /** Actualiza la orden buscada en REGISTROC.xlsx (solo accesible para admin) */
-    private void guardarCambiosOrden() {
+    private boolean guardarCambiosOrden() {
         String noOrden = jTextField6.getText().trim();
         if (noOrden.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No hay ninguna orden cargada para guardar.", "Guardar Cambios", JOptionPane.WARNING_MESSAGE);
-            return;
+            return false;
+        }
+
+        String errorValidacion = validarCampos();
+        if (errorValidacion != null) {
+            JOptionPane.showMessageDialog(this, errorValidacion,
+                    "Campos incompletos", JOptionPane.WARNING_MESSAGE);
+            return false;
         }
 
         java.io.File archivo = new java.io.File(RUTA_REGISTROC);
         if (!archivo.exists()) {
             JOptionPane.showMessageDialog(this, "No se encontró el archivo de registros.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+            return false;
         }
 
-        try (FileInputStream fis = new FileInputStream(archivo);
-             Workbook wb = new XSSFWorkbook(fis)) {
+        try (Workbook wb = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
 
             Sheet sheet = wb.getSheetAt(0);
             Row rowToUpdate = null;
@@ -2371,7 +2448,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
             if (rowToUpdate == null) {
                 JOptionPane.showMessageDialog(this, "No se encontró la orden № " + noOrden + " para actualizar.", "Guardar Cambios", JOptionPane.WARNING_MESSAGE);
-                return;
+                return false;
             }
 
             // FECHA
@@ -2425,9 +2502,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             setCellString(rowToUpdate, 20, jLabel24.getText());
             setCellString(rowToUpdate, 21, jLabel25.getText());
 
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(archivo)) {
-                wb.write(fos);
-            }
+            ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
 
             guardarTablaEnIntOrden(noOrden);
 
@@ -2435,10 +2510,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     "Orden № " + noOrden + " actualizada correctamente.",
                     "Guardar Cambios", JOptionPane.INFORMATION_MESSAGE);
             setModoSoloLectura(true);
+            estadoOrdenCargada = obtenerEstadoOrden();
+            return true;
 
         } catch (Exception ex) {
             logger.log(java.util.logging.Level.WARNING, "Error al guardar cambios de orden", ex);
             JOptionPane.showMessageDialog(this, "Error al guardar cambios:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
@@ -2566,6 +2644,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 boolean esAdmin = "admin".equalsIgnoreCase(INICIARSESION.usuarioActual);
                 setModoSoloLectura(!esAdmin);
                 jButtonSalirOrden.setEnabled(true);
+                jButtonSalirOrden.setVisible(true);
+                estadoOrdenCargada = obtenerEstadoOrden();
                 return;
             }
 
@@ -2584,9 +2664,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         Sheet sheet;
         try {
             if (archivo.exists()) {
-                try (FileInputStream fis = new FileInputStream(archivo)) {
-                    wb = new XSSFWorkbook(fis);
-                }
+                wb = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo);
                 sheet = wb.getSheetAt(0);
                 // Eliminar filas existentes de esta orden para evitar duplicados
                 for (int i = sheet.getLastRowNum(); i >= 1; i--) {
@@ -2602,8 +2680,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     }
                 }
             } else {
-                wb = new XSSFWorkbook();
-                sheet = wb.createSheet("INTORDEN");
+                wb = ORDEN_COMPRA_REPOSITORY.abrirOCrearWorkbook(archivo, "INTORDEN");
+                sheet = wb.getSheetAt(0);
                 String[] headers = {"NOORDEN", "CODIGO", "DESCRIPCION", "UNIDAD", "CANTIDAD", "PRECIO", "IMPORTE"};
                 Row headerRow = sheet.createRow(0);
                 for (int i = 0; i < headers.length; i++) {
@@ -2639,9 +2717,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 fila.createCell(6).setCellValue(importe instanceof Number n ? n.doubleValue() : parseNumero(importe));
             }
 
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(archivo)) {
-                wb.write(fos);
-            }
+            ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
             wb.close();
         } catch (Exception ex) {
             logger.log(java.util.logging.Level.WARNING, "No se pudo guardar en INTORDENDECOMPRA.xlsx", ex);
@@ -2697,8 +2773,52 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    private String obtenerEstadoOrden() {
+        StringBuilder estado = new StringBuilder();
+        estado.append(jTextField6.getText()).append('|')
+                .append(jTextField4.getText()).append('|')
+                .append(jTextField1.getText()).append('|')
+                .append(jTextField2.getText()).append('|')
+                .append(jTextField3.getText()).append('|')
+                .append(jTextField5.getText()).append('|')
+                .append(jDateChooser2.getDate() == null ? "" : jDateChooser2.getDate().getTime()).append('|');
+        javax.swing.JComboBox<?>[] combos = {
+            jComboBox1, jComboBox2, jComboBox3, jComboBox4, jComboBox5,
+            jComboBox6, jComboBox7, jComboBox8, jComboBox9, jComboBox10
+        };
+        for (javax.swing.JComboBox<?> combo : combos) {
+            estado.append(combo.getSelectedItem()).append('|');
+        }
+        estado.append(jCheckBoxIVA != null && jCheckBoxIVA.isSelected()).append('|')
+                .append(jCheckBoxDescuento != null && jCheckBoxDescuento.isSelected()).append('|')
+                .append(jTextFieldDescuentoPct == null ? "" : jTextFieldDescuentoPct.getText()).append('|')
+                .append(jCheckBoxISR != null && jCheckBoxISR.isSelected()).append('|')
+                .append(jTextFieldISRPercent == null ? "" : jTextFieldISRPercent.getText()).append('|');
+        DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+        for (int fila = 0; fila < modelo.getRowCount(); fila++) {
+            for (int columna = 0; columna < modelo.getColumnCount(); columna++) {
+                estado.append(modelo.getValueAt(fila, columna)).append('|');
+            }
+        }
+        return estado.toString();
+    }
+
     /** Limpia el formulario y habilita la creación de una nueva orden */
     private void salirDeOrden() {
+        if (estadoOrdenCargada != null && !estadoOrdenCargada.equals(obtenerEstadoOrden())) {
+            int respuesta = JOptionPane.showConfirmDialog(this,
+                    "Hay cambios sin guardar. ¿Deseas guardarlos antes de salir?",
+                    "Cambios sin guardar",
+                    JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (respuesta == JOptionPane.CANCEL_OPTION || respuesta == JOptionPane.CLOSED_OPTION) {
+                return;
+            }
+            if (respuesta == JOptionPane.YES_OPTION && !guardarCambiosOrden()) {
+                return;
+            }
+        }
+
         // ── Campos de texto ───────────────────────────────────────────────
         seleccionandoProveedor = true;
         jTextField1.setText("");
@@ -2740,7 +2860,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             jComboBox2.setSelectedIndex(0);
             String clave = jComboBox2.getSelectedItem().toString();
             jLabel37.setText(monedaDescMap.getOrDefault(clave, ""));
-            boolean mostrarCambio = clave.equalsIgnoreCase("USD") || clave.equalsIgnoreCase("EUR");
+            boolean mostrarCambio = clave.equalsIgnoreCase("USD") || clave.equalsIgnoreCase("EUR") || clave.equalsIgnoreCase("CAD");
             jTextField5.setVisible(mostrarCambio);
             jLabel38.setVisible(mostrarCambio);
         }
@@ -2752,6 +2872,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             if (jTextFieldDescuentoPct != null) {
                 jTextFieldDescuentoPct.setText("0");
                 jTextFieldDescuentoPct.setVisible(false);
+            }
+        }
+        if (jCheckBoxISR != null) {
+            jCheckBoxISR.setSelected(false);
+            if (jTextFieldISRPercent != null) {
+                jTextFieldISRPercent.setText("0");
+                jTextFieldISRPercent.setVisible(false);
             }
         }
 
@@ -2767,7 +2894,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         // ── Generar nuevo número de orden y re-habilitar edición ──────────
         generarNumeroOrden();
+        estadoOrdenCargada = null;
         jButtonSalirOrden.setEnabled(false);
+        jButtonSalirOrden.setVisible(false);
     }
 
     /** Habilita o deshabilita la edición de todos los campos del formulario */
@@ -2796,6 +2925,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (jCheckBoxIVA != null) jCheckBoxIVA.setEnabled(!soloLectura);
         if (jCheckBoxDescuento != null) jCheckBoxDescuento.setEnabled(!soloLectura);
         if (jTextFieldDescuentoPct != null) jTextFieldDescuentoPct.setEditable(!soloLectura);
+        if (jCheckBoxISR != null) jCheckBoxISR.setEnabled(!soloLectura);
+        if (jTextFieldISRPercent != null) jTextFieldISRPercent.setEditable(!soloLectura);
         jTable1.setEnabled(!soloLectura);
         jButton7.setEnabled(!soloLectura);
         jButton3.setEnabled(!soloLectura);
@@ -2812,14 +2943,17 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private javax.swing.JCheckBox jCheckBoxIVA;
+    private javax.swing.JCheckBox jCheckBoxISR;
     private String proveedorTelefono = "";
     private String proveedorCorreo = "";
     private javax.swing.JCheckBox jCheckBoxDescuento;
     private javax.swing.JTextField jTextFieldDescuentoPct;
+    private javax.swing.JTextField jTextFieldISRPercent;
     private javax.swing.JButton jButtonSalirOrden;
     private javax.swing.JButton jButtonGuardarCambios;
     private double subtotalOriginal = 0;
     private double descuentoImporte = 0;
+    private double isrImporte = 0;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;

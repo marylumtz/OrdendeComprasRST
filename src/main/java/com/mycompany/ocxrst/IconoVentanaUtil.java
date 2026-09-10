@@ -173,10 +173,6 @@ public final class IconoVentanaUtil {
         if (archivo.exists()) {
             return new ImageIcon(archivo.getAbsolutePath());
         }
-        File archivoAbs = new File("C:/OCXRST/OrdendeComprasRST/src/main/java/" + rutaLimpia);
-        if (archivoAbs.exists()) {
-            return new ImageIcon(archivoAbs.getAbsolutePath());
-        }
         return new ImageIcon();
     }
 }

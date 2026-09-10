@@ -175,4 +175,32 @@ public final class IconoVentanaUtil {
         }
         return new ImageIcon();
     }
+
+    public static ImageIcon obtenerIconoAjustado(String rutaClasspath, int ancho, int alto) {
+        ImageIcon icono = obtenerIconoSeguro(rutaClasspath);
+        if (ancho <= 0 || alto <= 0 || icono.getIconWidth() <= 0 || icono.getIconHeight() <= 0) {
+            return icono;
+        }
+
+        BufferedImage origen = convertirABuffered(icono.getImage());
+        if (origen == null) {
+            return icono;
+        }
+
+        BufferedImage salida = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = salida.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        double escala = Math.min((double) ancho / origen.getWidth(), (double) alto / origen.getHeight());
+        int anchoDestino = Math.max(1, (int) Math.round(origen.getWidth() * escala));
+        int altoDestino = Math.max(1, (int) Math.round(origen.getHeight() * escala));
+        int x = (ancho - anchoDestino) / 2;
+        int y = (alto - altoDestino) / 2;
+
+        g2.drawImage(origen, x, y, anchoDestino, altoDestino, null);
+        g2.dispose();
+        return new ImageIcon(salida);
+    }
 }

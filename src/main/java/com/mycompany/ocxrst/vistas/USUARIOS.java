@@ -6,18 +6,12 @@ package com.mycompany.ocxrst.vistas;
 
 import com.mycompany.ocxrst.IconoVentanaUtil;
 import com.mycompany.ocxrst.repository.UsuarioRepository;
-import com.mycompany.ocxrst.service.UsuarioService;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import javax.swing.JOptionPane;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  *
@@ -26,7 +20,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class USUARIOS extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(USUARIOS.class.getName());
-    private static final String[] ENCABEZADOS = UsuarioRepository.ENCABEZADOS;
     private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
     /**
@@ -39,7 +32,6 @@ public class USUARIOS extends javax.swing.JFrame {
         asegurarArchivoUsuarios();
     }
 
-    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 

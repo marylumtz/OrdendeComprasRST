@@ -4,17 +4,40 @@ package com.mycompany.ocxrst.vistas;
 import com.mycompany.ocxrst.IconoVentanaUtil;
 
 public class PRINCIPAL extends javax.swing.JFrame {
-    
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PRINCIPAL.class.getName());
+
+    private static boolean alertaEntregasMostradaEnSesion = false;
 
     public PRINCIPAL() {
         initComponents();
+        jLabel3.setIcon(IconoVentanaUtil.obtenerIconoAjustado("/com/mycompany/ocxrst/IMAGENES/Logo PDF.png", 250, 120));
+        actualizarBotonNotificaciones();
         IconoVentanaUtil.aplicar(this);
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null); 
+        mostrarAlertaEntregasUnaVezPorSesion();
     }
 
-    @SuppressWarnings("unchecked")
+    public static void reiniciarAlertaEntregasSesion() {
+        alertaEntregasMostradaEnSesion = false;
+    }
+
+    private void mostrarAlertaEntregasUnaVezPorSesion() {
+        if (alertaEntregasMostradaEnSesion) {
+            return;
+        }
+        alertaEntregasMostradaEnSesion = true;
+        java.awt.EventQueue.invokeLater(() -> PROVEEDORES.mostrarAlertaEntregasPendientes(this));
+    }
+
+    private void actualizarBotonNotificaciones() {
+        int notificaciones = PROVEEDORES.contarAlertasEntregasPendientes();
+        jButtonNotificaciones.setText("NOTIFICACIONES (" + notificaciones + ")");
+        jButtonNotificaciones.setBackground(notificaciones > 0
+                ? new java.awt.Color(180, 0, 0)
+                : new java.awt.Color(0, 95, 131));
+        jButtonNotificaciones.setForeground(java.awt.Color.WHITE);
+    }
+
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -25,6 +48,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
+        jButtonNotificaciones = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
 
@@ -52,12 +76,17 @@ public class PRINCIPAL extends javax.swing.JFrame {
         jButton5.setText("TERMINOS Y CONDICIONES");
         jButton5.addActionListener(this::jButton5ActionPerformed);
 
+        jButtonNotificaciones.setBackground(new java.awt.Color(0, 95, 131));
+        jButtonNotificaciones.setForeground(new java.awt.Color(255, 255, 255));
+        jButtonNotificaciones.setText("NOTIFICACIONES");
+        jButtonNotificaciones.addActionListener(this::jButtonNotificacionesActionPerformed);
+
         jButton6.setBackground(new java.awt.Color(0, 95, 131));
         jButton6.setForeground(new java.awt.Color(255, 255, 255));
         jButton6.setText("SALIR");
         jButton6.addActionListener(this::jButton6ActionPerformed);
 
-        jLabel3.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF2.jpeg")); // NOI18N
+        jLabel3.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF.png")); // NOI18N
         jLabel3.setText("jLabel1");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -67,11 +96,13 @@ public class PRINCIPAL extends javax.swing.JFrame {
             .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap(91, Short.MAX_VALUE)
-                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButtonNotificaciones))
                 .addGap(61, 61, 61)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jButton2)
                     .addComponent(jButton1)
+                    .addComponent(jButton2)
                     .addComponent(jButton3)
                     .addComponent(jButton4)
                     .addComponent(jButton5)
@@ -84,21 +115,24 @@ public class PRINCIPAL extends javax.swing.JFrame {
                 .addGap(21, 21, 21)
                 .addComponent(jLabel1)
                 .addGap(18, 18, 18)
-                .addComponent(jButton1)
-                .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButtonNotificaciones))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jButton1)
+                        .addGap(18, 18, 18)
                         .addComponent(jButton2)
                         .addGap(18, 18, 18)
                         .addComponent(jButton3)
                         .addGap(18, 18, 18)
-                        .addComponent(jButton4))
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(jButton5)
-                .addGap(18, 18, 18)
-                .addComponent(jButton6)
-                .addContainerGap(27, Short.MAX_VALUE))
+                        .addComponent(jButton4)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton5)
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton6)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -156,6 +190,11 @@ public class PRINCIPAL extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void jButtonNotificacionesActionPerformed(java.awt.event.ActionEvent evt) {
+        actualizarBotonNotificaciones();
+        PROVEEDORES.mostrarAlertaEntregasPendientes(this);
+    }//jButtonNotificacionesActionPerformed
+
     public static void main(String args[]) {
 
         java.awt.EventQueue.invokeLater(() -> new PRINCIPAL().setVisible(true));
@@ -168,6 +207,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
     private javax.swing.JButton jButton6;
+    private javax.swing.JButton jButtonNotificaciones;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;

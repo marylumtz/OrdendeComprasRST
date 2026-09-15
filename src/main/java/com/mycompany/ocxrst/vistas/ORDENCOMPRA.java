@@ -255,6 +255,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     // Fecha actual en el selector de fecha
     jDateChooser2.setDate(new java.util.Date());
+    configurarPermisosFechas(false);
 
     // Quitar negrita de todos los JLabel y JCheckBox del panel
     for (java.awt.Component c : jPanel1.getComponents()) {
@@ -288,29 +289,32 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jPanel1.add(jButtonSalirOrden);
     jPanel1.setComponentZOrder(jButtonSalirOrden, 0);
 
-    // Botón GUARDAR CAMBIOS — esquina superior derecha (solo visible para admin)
+    // Botones de edición — esquina superior derecha (solo visibles para admin)
+    jButtonEditar = new javax.swing.JButton("EDITAR");
+    jButtonEditar.setBackground(new java.awt.Color(0, 90, 180));
+    jButtonEditar.setForeground(java.awt.Color.WHITE);
+    java.awt.Rectangle rBtn6 = jButton6.getBounds();
+    jButtonEditar.setBounds(jPanel1.getPreferredSize().width - 170, rBtn6.y, 155, rBtn6.height);
+    jButtonEditar.addActionListener(e -> activarEdicionOrden());
+    jButtonEditar.setVisible(false);
+    jPanel1.add(jButtonEditar);
+    jPanel1.setComponentZOrder(jButtonEditar, 0);
+
     jButtonGuardarCambios = new javax.swing.JButton("Guardar Cambios");
     jButtonGuardarCambios.setBackground(new java.awt.Color(0, 128, 0));
     jButtonGuardarCambios.setForeground(java.awt.Color.WHITE);
-    java.awt.Rectangle rBtn6 = jButton6.getBounds();
-    // Posicionar en la esquina superior derecha alineado verticalmente con < ATRÁS
-    jButtonGuardarCambios.setBounds(jPanel1.getPreferredSize().width - 170, rBtn6.y, 155, rBtn6.height);
-    jButtonGuardarCambios.addComponentListener(new java.awt.event.ComponentAdapter() {
-        @Override public void componentResized(java.awt.event.ComponentEvent e) {
-            // reposicionar si el panel cambia de tamaño
-            int panelW = jPanel1.getWidth();
-            if (panelW > 0) {
-                java.awt.Rectangle r = jButtonGuardarCambios.getBounds();
-                jButtonGuardarCambios.setLocation(panelW - 170, r.y);
-            }
-        }
-    });
+    jButtonGuardarCambios.setBounds(jPanel1.getPreferredSize().width - 170,
+            rBtn6.y + rBtn6.height + 8, 155, rBtn6.height);
     jPanel1.addComponentListener(new java.awt.event.ComponentAdapter() {
         @Override public void componentResized(java.awt.event.ComponentEvent e) {
             int panelW = jPanel1.getWidth();
-            if (panelW > 0 && jButtonGuardarCambios != null) {
-                java.awt.Rectangle r = jButtonGuardarCambios.getBounds();
-                jButtonGuardarCambios.setLocation(panelW - 170, r.y);
+            if (panelW > 0) {
+                if (jButtonEditar != null) {
+                    jButtonEditar.setLocation(panelW - 170, jButtonEditar.getY());
+                }
+                if (jButtonGuardarCambios != null) {
+                    jButtonGuardarCambios.setLocation(panelW - 170, jButtonGuardarCambios.getY());
+                }
             }
         }
     });
@@ -318,6 +322,20 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jButtonGuardarCambios.setVisible(false);
     jPanel1.add(jButtonGuardarCambios);
     jPanel1.setComponentZOrder(jButtonGuardarCambios, 0);
+    }
+
+    private javax.swing.JPanel crearPanelConFondo() {
+        java.awt.Image fondo = IconoVentanaUtil.obtenerIconoSeguro(
+                "/com/mycompany/ocxrst/IMAGENES/FONDO SECUNDARIO.png").getImage();
+        return new javax.swing.JPanel() {
+            @Override
+            protected void paintComponent(java.awt.Graphics graphics) {
+                super.paintComponent(graphics);
+                if (fondo != null) {
+                    graphics.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
     }
 
     /**
@@ -328,7 +346,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = crearPanelConFondo();
         jLabel1 = new javax.swing.JLabel();
         jButton6 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
@@ -696,6 +714,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 666, javax.swing.GroupLayout.PREFERRED_SIZE))))
                                     .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addGap(90, 90, 90)
                                         .addComponent(jButton6)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 674, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -746,7 +765,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(70, 70, 70)
                 .addComponent(jLabel5)
                 .addGap(9, 9, 9)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2096,6 +2115,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (jDateChooserPago.getDate() == null) {
             faltantes.add("• DÍAS DE PAGO");
         }
+        if (!esAdministrador()) {
+            if (esFechaAnteriorAHoy(jDateChooserEntrega.getDate())) {
+                faltantes.add("• FECHA DE ENTREGA (no puede ser anterior a hoy)");
+            }
+            if (esFechaAnteriorAHoy(jDateChooserPago.getDate())) {
+                faltantes.add("• DÍAS DE PAGO (no puede ser anterior a hoy)");
+            }
+        }
 
         // Tipo de moneda
         if (!esSeleccionValida(jComboBox2)) {
@@ -2135,6 +2162,32 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         return "Por favor, complete los siguientes campos antes de continuar:\n\n"
                 + String.join("\n", faltantes);
+    }
+
+    private boolean esAdministrador() {
+        return "admin".equalsIgnoreCase(INICIARSESION.usuarioActual);
+    }
+
+    private boolean esFechaAnteriorAHoy(java.util.Date fecha) {
+        if (fecha == null) {
+            return false;
+        }
+        java.time.LocalDate fechaSeleccionada = fecha.toInstant()
+                .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        return fechaSeleccionada.isBefore(java.time.LocalDate.now());
+    }
+
+    private void configurarPermisosFechas(boolean soloLectura) {
+        boolean administrador = esAdministrador();
+        jDateChooser2.setEnabled(!soloLectura && administrador);
+        jDateChooserEntrega.setEnabled(!soloLectura);
+        jDateChooserPago.setEnabled(!soloLectura);
+
+        java.util.Date fechaMinima = !soloLectura && !administrador
+                ? java.sql.Date.valueOf(java.time.LocalDate.now())
+                : null;
+        jDateChooserEntrega.setMinSelectableDate(fechaMinima);
+        jDateChooserPago.setMinSelectableDate(fechaMinima);
     }
 
     private static final String RUTA_REGISTROC = AppConfig.registroCFile().getAbsolutePath();
@@ -2327,6 +2380,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
             wb.close();
             guardarTablaEnIntOrden(jTextField6.getText().trim());
+            PRINCIPAL.actualizarAlarmasEnTiempoReal();
             JOptionPane.showMessageDialog(this,
                     "Orden de compra No. " + jTextField6.getText().trim() + " guardada correctamente.",
                     "Guardado exitoso", JOptionPane.INFORMATION_MESSAGE);
@@ -2440,11 +2494,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
 
             guardarTablaEnIntOrden(noOrden);
+            PRINCIPAL.actualizarAlarmasEnTiempoReal();
 
             JOptionPane.showMessageDialog(this,
                     "Orden № " + noOrden + " actualizada correctamente.",
                     "Guardar Cambios", JOptionPane.INFORMATION_MESSAGE);
             setModoSoloLectura(true);
+                actualizarBotonesEdicion(true, false);
             estadoOrdenCargada = obtenerEstadoOrden();
             return true;
 
@@ -2614,11 +2670,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 if (cTot != null) { String v = dataFormatter.formatCellValue(cTot).trim(); if (!v.isEmpty()) jLabel25.setText(v); }
 
                 cargarTablaDesdeIntOrden(buscar);
-                boolean esAdmin = "admin".equalsIgnoreCase(INICIARSESION.usuarioActual);
-                setModoSoloLectura(!esAdmin);
+                setModoSoloLectura(true);
                 jButtonSalirOrden.setEnabled(true);
                 jButtonSalirOrden.setVisible(true);
                 estadoOrdenCargada = obtenerEstadoOrden();
+                actualizarBotonesEdicion(true, false);
                 return;
             }
 
@@ -2872,6 +2928,22 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         estadoOrdenCargada = null;
         jButtonSalirOrden.setEnabled(false);
         jButtonSalirOrden.setVisible(false);
+        actualizarBotonesEdicion(false, false);
+    }
+
+    private void activarEdicionOrden() {
+        setModoSoloLectura(false);
+        actualizarBotonesEdicion(true, true);
+    }
+
+    private void actualizarBotonesEdicion(boolean ordenCargada, boolean editando) {
+        boolean mostrar = esAdministrador() && ordenCargada;
+        if (jButtonEditar != null) {
+            jButtonEditar.setVisible(mostrar && !editando);
+        }
+        if (jButtonGuardarCambios != null) {
+            jButtonGuardarCambios.setVisible(mostrar && editando);
+        }
     }
 
     /** Habilita o deshabilita la edición de todos los campos del formulario */
@@ -2882,9 +2954,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jTextField3.setEditable(!soloLectura);
         jTextField4.setEditable(!soloLectura);
         jTextField5.setEditable(!soloLectura);
-        jDateChooser2.setEnabled(!soloLectura);
-        jDateChooserEntrega.setEnabled(!soloLectura);
-        jDateChooserPago.setEnabled(!soloLectura);
+        configurarPermisosFechas(soloLectura);
         jComboBox1.setEnabled(!soloLectura);
         jComboBox2.setEnabled(!soloLectura);
         jComboBox3.setEnabled(!soloLectura);
@@ -2904,11 +2974,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jTable1.setEnabled(!soloLectura);
         jButton7.setEnabled(!soloLectura);
         jButton3.setEnabled(!soloLectura);
-        // Botón Guardar Cambios: visible solo cuando el admin está editando una orden buscada
-        boolean esAdmin = "admin".equalsIgnoreCase(INICIARSESION.usuarioActual);
-        if (jButtonGuardarCambios != null) {
-            jButtonGuardarCambios.setVisible(esAdmin && !soloLectura);
-        }
     }
 
     public static void main(String args[]) {
@@ -2924,6 +2989,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JTextField jTextFieldDescuentoPct;
     private javax.swing.JTextField jTextFieldISRPercent;
     private javax.swing.JButton jButtonSalirOrden;
+    private javax.swing.JButton jButtonEditar;
     private javax.swing.JButton jButtonGuardarCambios;
     private double subtotalOriginal = 0;
     private double descuentoImporte = 0;

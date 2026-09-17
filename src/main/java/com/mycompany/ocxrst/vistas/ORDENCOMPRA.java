@@ -70,6 +70,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     public ORDENCOMPRA() {
         initComponents();
+        aplicarDisenoReferencia();
+        configurarDesplazamiento();
         IconoVentanaUtil.aplicar(this);
         configurarTablaProductos();
         cargarCFDI();
@@ -219,18 +221,16 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jPanel1.add(jCheckBoxISR);
     jPanel1.add(jTextFieldISRPercent);
 
-    // Colocar las casillas a la derecha de las opciones de ELABORO y AUTORIZO
-    java.awt.Rectangle rElaboro = jComboBox4.getBounds();
-    java.awt.Rectangle rAutorizo = jComboBox5.getBounds();
-    int checkX = Math.max(rElaboro.x + rElaboro.width, rAutorizo.x + rAutorizo.width) + 15;
-    int fieldH = Math.max(rElaboro.height, 26);
-    int descuentoY = rElaboro.y - 12;
-    jCheckBoxDescuento.setBounds(checkX, descuentoY, 106, fieldH);
-    jTextFieldDescuentoPct.setBounds(checkX + 108, descuentoY, 65, fieldH);
-    int isrY = rAutorizo.y - 12;
-    jCheckBoxISR.setBounds(checkX, isrY, 106, fieldH);
-    jTextFieldISRPercent.setBounds(checkX + 108, isrY, 65, fieldH);
-    jCheckBoxIVA.setBounds(checkX, isrY + fieldH + 4, 140, fieldH);
+    // Mantener las casillas dentro de la sección 7 del formulario.
+    int fieldH = 26;
+    int checkX = 370;
+    int descuentoY = 613;
+    jCheckBoxDescuento.setBounds(checkX, descuentoY, 125, fieldH);
+    jTextFieldDescuentoPct.setBounds(checkX + 126, descuentoY, 55, fieldH);
+    int isrY = 641;
+    jCheckBoxISR.setBounds(checkX, isrY, 125, fieldH);
+    jTextFieldISRPercent.setBounds(checkX + 126, isrY, 55, fieldH);
+    jCheckBoxIVA.setBounds(checkX, 669, 150, fieldH);
     jPanel1.setComponentZOrder(jCheckBoxIVA, 0);
     jPanel1.setComponentZOrder(jCheckBoxISR, 0);
     jPanel1.setComponentZOrder(jTextFieldISRPercent, 0);
@@ -334,8 +334,133 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 if (fondo != null) {
                     graphics.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
                 }
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                dibujarSeccion(g2, 48, 112, 866, 80, "1. DATOS GENERALES");
+                dibujarSeccion(g2, 48, 200, 485, 125, "2. PROVEEDOR");
+                dibujarSeccion(g2, 544, 200, 370, 125, "3. SOLICITANTE / PROYECTO");
+                dibujarSeccion(g2, 48, 333, 866, 113, "4. CONDICIONES DE COMPRA");
+                dibujarSeccion(g2, 48, 453, 866, 139, "5. PRODUCTOS");
+                dibujarSeccion(g2, 48, 599, 300, 101, "6. AUTORIZACIONES");
+                dibujarSeccion(g2, 359, 599, 267, 101, "7. IMPUESTOS Y DESCUENTOS");
+                dibujarSeccion(g2, 637, 599, 277, 101, "8. TOTALES");
+                g2.dispose();
             }
         };
+    }
+
+    private void dibujarSeccion(java.awt.Graphics2D graphics, int x, int y, int ancho,
+                                int alto, String titulo) {
+        graphics.setColor(new java.awt.Color(255, 255, 255, 224));
+        graphics.fillRoundRect(x, y, ancho, alto, 10, 10);
+        graphics.setColor(new java.awt.Color(90, 178, 220));
+        graphics.fillRoundRect(x, y, ancho, 22, 10, 10);
+        graphics.fillRect(x, y + 11, ancho, 11);
+        graphics.setColor(new java.awt.Color(145, 204, 238));
+        graphics.drawRoundRect(x, y, ancho, alto, 10, 10);
+        graphics.setColor(java.awt.Color.WHITE);
+        graphics.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        graphics.drawString(titulo, x + 14, y + 16);
+    }
+
+    /** Orden visual de la ventana según el formato de la orden impresa. */
+    private void aplicarDisenoReferencia() {
+        jPanel1.setLayout(null);
+        jPanel1.setPreferredSize(new java.awt.Dimension(962, 735));
+        setResizable(true);
+
+        posicionar(jButton6, 50, 74, 80, 28);
+        posicionar(jLabel5, 430, 64, 100, 22);
+        posicionar(jLabel1, 280, 78, 400, 38);
+        posicionar(jLabel9, 70, 140, 90, 22);
+        posicionar(jTextField6, 174, 140, 158, 24);
+        posicionar(jLabel11, 450, 140, 90, 22);
+        posicionar(jTextField4, 552, 140, 292, 24);
+        posicionar(jLabel6, 62, 168, 105, 22);
+        posicionar(jTextField1, 174, 168, 122, 24);
+        posicionar(jLabel3, 330, 168, 62, 22);
+        posicionar(jDateChooser2, 400, 168, 125, 24);
+        posicionar(jLabel17, 552, 168, 78, 22);
+        posicionar(jComboBox3, 638, 168, 206, 24);
+
+        posicionar(jLabel2, 70, 227, 90, 22);
+        posicionar(jLabel8, 174, 227, 330, 22);
+        posicionar(jLabel29, 70, 254, 90, 22);
+        posicionar(jLabel30, 174, 254, 330, 22);
+        posicionar(jLabel14, 70, 281, 90, 22);
+        posicionar(jLabel15, 174, 281, 330, 38);
+        posicionar(jLabel31, 70, 309, 90, 22);
+        posicionar(jLabel32, 174, 309, 330, 22);
+        posicionar(jLabel7, 560, 227, 90, 22);
+        posicionar(jComboBox1, 660, 227, 228, 24);
+        posicionar(jLabel4, 560, 254, 90, 22);
+        posicionar(jLabel26, 660, 254, 228, 22);
+        posicionar(jLabel13, 560, 281, 90, 22);
+        posicionar(jTextField2, 660, 281, 228, 24);
+
+        posicionar(jLabel36, 62, 359, 125, 22);
+        posicionar(jComboBox2, 195, 359, 125, 24);
+        posicionar(jLabel37, 310, 359, 170, 22);
+        posicionar(jLabel18, 62, 391, 125, 22);
+        posicionar(jComboBox6, 195, 391, 170, 24);
+        posicionar(jLabel19, 62, 423, 125, 22);
+        posicionar(jComboBox8, 195, 423, 170, 24);
+        posicionar(jLabel38, 475, 359, 125, 22);
+        posicionar(jTextField5, 610, 359, 120, 24);
+        posicionar(jLabel34, 475, 391, 125, 22);
+        posicionar(jComboBox7, 610, 391, 258, 24);
+        posicionar(jLabel12, 350, 423, 140, 22);
+        posicionar(jDateChooserEntrega, 495, 423, 120, 24);
+        posicionar(jLabel27, 625, 423, 90, 22);
+        posicionar(jDateChooserPago, 720, 423, 120, 24);
+
+        posicionar(jLabel16, 70, 478, 90, 22);
+        posicionar(jTextField3, 164, 478, 180, 24);
+        posicionar(jButton7, 352, 478, 82, 24);
+        posicionar(jScrollPane1, 60, 508, 842, 76);
+        posicionar(jLabel39, 70, 625, 70, 22);
+        posicionar(jComboBox4, 145, 625, 180, 24);
+        posicionar(jLabel40, 70, 662, 70, 22);
+        posicionar(jComboBox5, 145, 662, 180, 24);
+        posicionar(jLabel20, 650, 620, 105, 22);
+        posicionar(jLabel23, 765, 620, 135, 22);
+        posicionar(jLabel21, 650, 646, 105, 22);
+        posicionar(jLabel24, 765, 646, 135, 22);
+        posicionar(jLabel22, 650, 672, 105, 22);
+        posicionar(jLabel25, 765, 672, 135, 22);
+        posicionar(jButton3, 48, 710, 276, 40);
+        posicionar(jButton2, 342, 710, 276, 40);
+        posicionar(jButton1, 636, 710, 278, 40);
+        pack();
+        jPanel1.revalidate();
+        jPanel1.repaint();
+    }
+
+    private void configurarDesplazamiento() {
+        javax.swing.JScrollPane desplazamiento = new javax.swing.JScrollPane(jPanel1);
+        desplazamiento.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        desplazamiento.setHorizontalScrollBarPolicy(
+                javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        desplazamiento.setVerticalScrollBarPolicy(
+                javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        desplazamiento.getVerticalScrollBar().setUnitIncrement(18);
+        desplazamiento.getViewport().setBackground(java.awt.Color.WHITE);
+
+        getContentPane().removeAll();
+        getContentPane().setLayout(new java.awt.BorderLayout());
+        getContentPane().add(desplazamiento, java.awt.BorderLayout.CENTER);
+        setSize(962, 735);
+        setMinimumSize(new java.awt.Dimension(520, 420));
+        setLocationRelativeTo(null);
+    }
+
+    private void posicionar(java.awt.Component componente, int x, int y, int ancho, int alto) {
+        componente.setBounds(x, y, ancho, alto);
+        if (componente instanceof javax.swing.JLabel etiqueta
+                && etiqueta.getText() != null && etiqueta.getText().endsWith(":")) {
+            etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        }
     }
 
     /**
@@ -587,7 +712,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jComboBox8.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jLabel27.setForeground(new java.awt.Color(0, 95, 131));
-        jLabel27.setText("DÍAS DE PAGO:");
+        jLabel27.setText("FECHA DE PAGO:");
 
         jDateChooserEntrega.setDateFormatString("dd/MM/yyyy");
 
@@ -1019,6 +1144,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     };
     jTable1.getColumnModel().getColumn(1).setCellRenderer(rendererTextoAjustable);
     jTable1.getColumnModel().getColumn(2).setCellRenderer(rendererTextoAjustable);
+    int[] anchosColumnas = {105, 225, 135, 100, 125, 140};
+    for (int columna = 0; columna < anchosColumnas.length; columna++) {
+        javax.swing.table.TableColumn tableColumn = jTable1.getColumnModel().getColumn(columna);
+        tableColumn.setPreferredWidth(anchosColumnas[columna]);
+        tableColumn.setMinWidth(anchosColumnas[columna]);
+    }
+    jTable1.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
 }
 
     private int parseCantidad(Object valor) {
@@ -1726,7 +1858,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     "PAGO:", jComboBox6.getSelectedItem() != null ? jComboBox6.getSelectedItem().toString() : "",
                     "FECHA DE ENTREGA:", formatearFecha(jDateChooserEntrega.getDate()));
                 addFilaPDF(condTbl, bold, plain, azul,
-                    "DÍAS DE PAGO:", formatearFecha(jDateChooserPago.getDate()),
+                    "FECHA DE PAGO:", formatearFecha(jDateChooserPago.getDate()),
                     "", "");
             String tipoCambioTexto = jTextField5.getText().trim();
             if (jTextField5.isVisible() && !tipoCambioTexto.isEmpty()) {
@@ -2113,14 +2245,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             faltantes.add("• FECHA DE ENTREGA");
         }
         if (jDateChooserPago.getDate() == null) {
-            faltantes.add("• DÍAS DE PAGO");
+                faltantes.add("• FECHA DE PAGO");
         }
         if (!esAdministrador()) {
             if (esFechaAnteriorAHoy(jDateChooserEntrega.getDate())) {
                 faltantes.add("• FECHA DE ENTREGA (no puede ser anterior a hoy)");
             }
             if (esFechaAnteriorAHoy(jDateChooserPago.getDate())) {
-                faltantes.add("• DÍAS DE PAGO (no puede ser anterior a hoy)");
+                faltantes.add("• FECHA DE PAGO (no puede ser anterior a hoy)");
             }
         }
 

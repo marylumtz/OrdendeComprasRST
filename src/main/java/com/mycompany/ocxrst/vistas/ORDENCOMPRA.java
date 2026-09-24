@@ -5,8 +5,10 @@
 package com.mycompany.ocxrst.vistas;
 
 import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.config.AppConfig;
 import com.mycompany.ocxrst.repository.OrdenCompraRepository;
+import com.mycompany.ocxrst.service.InventarioService;
 import com.mycompany.ocxrst.service.ProveedorService;
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -56,6 +58,17 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ORDENCOMPRA.class.getName());
     private final java.util.Map<String, String> monedaLeyendaMap = new java.util.HashMap<>();
+    private boolean ultimoProductoDesactivado;
+    private static final int DESPLAZAMIENTO_X = -14;
+    private static final int DESPLAZAMIENTO_Y = 16;
+    private static final int ALTO_EXTRA_PRODUCTOS = 70;
+    /** Espacio adicional agregado a la sección 4 (Condiciones de compra) y
+     *  desplazamiento aplicado a todas las secciones siguientes para que
+     *  quepan sin encimarse. */
+    private static final int EXTRA_ESPACIO_SECCION4 = 10;
+    /** Alto reservado para la nueva sección "Observaciones", ubicada debajo
+     *  de la tabla de productos y antes de Autorizaciones/Impuestos/Totales. */
+    private static final int ALTO_OBSERVACIONES = 110;
 
     // Caché de inventario: código -> "código | descripción"
     private final java.util.List<String[]> cacheInventario = new java.util.ArrayList<>();
@@ -69,7 +82,23 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private String estadoOrdenCargada;
 
     public ORDENCOMPRA() {
+        EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
+
+        // Campo libre de observaciones/notas de la orden. Se crea aquí, antes de
+        // aplicarDisenoReferencia(), porque ese método necesita posicionar estos
+        // componentes y por lo tanto deben existir antes de invocarlo.
+        jLabelObservaciones = new javax.swing.JLabel("Observaciones:");
+        jLabelObservaciones.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jTextAreaObservaciones = new javax.swing.JTextArea();
+        jTextAreaObservaciones.setLineWrap(true);
+        jTextAreaObservaciones.setWrapStyleWord(true);
+        jTextAreaObservaciones.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(198, 210, 225)));
+        jScrollPaneObservaciones = new javax.swing.JScrollPane(jTextAreaObservaciones);
+        jScrollPaneObservaciones.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        jPanel1.add(jLabelObservaciones);
+        jPanel1.add(jScrollPaneObservaciones);
+
         aplicarDisenoReferencia();
         configurarDesplazamiento();
         IconoVentanaUtil.aplicar(this);
@@ -164,7 +193,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     });
 
     jButton7.addActionListener(e -> eliminarFilaSeleccionada());
-    jButton2.addActionListener(e -> buscarOrden());
+    jButton2.addActionListener(e -> buscarOSalirOrden());
     jButton3.addActionListener(e -> guardarEnRegistroc());
 
     // Visibilidad inicial de tipo de cambio según moneda seleccionada
@@ -221,16 +250,16 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jPanel1.add(jCheckBoxISR);
     jPanel1.add(jTextFieldISRPercent);
 
-    // Mantener las casillas dentro de la sección 7 del formulario.
+    // Mantener las casillas dentro de la sección 8 (Impuestos y descuentos) del formulario.
     int fieldH = 26;
     int checkX = 370;
-    int descuentoY = 613;
-    jCheckBoxDescuento.setBounds(checkX, descuentoY, 125, fieldH);
-    jTextFieldDescuentoPct.setBounds(checkX + 126, descuentoY, 55, fieldH);
-    int isrY = 641;
-    jCheckBoxISR.setBounds(checkX, isrY, 125, fieldH);
-    jTextFieldISRPercent.setBounds(checkX + 126, isrY, 55, fieldH);
-    jCheckBoxIVA.setBounds(checkX, 669, 150, fieldH);
+    int descuentoY = 613 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES;
+    jCheckBoxDescuento.setBounds(checkX + DESPLAZAMIENTO_X, descuentoY + DESPLAZAMIENTO_Y, 125, fieldH);
+    jTextFieldDescuentoPct.setBounds(checkX + 126 + DESPLAZAMIENTO_X, descuentoY + DESPLAZAMIENTO_Y, 55, fieldH);
+    int isrY = 641 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES;
+    jCheckBoxISR.setBounds(checkX + DESPLAZAMIENTO_X, isrY + DESPLAZAMIENTO_Y, 125, fieldH);
+    jTextFieldISRPercent.setBounds(checkX + 126 + DESPLAZAMIENTO_X, isrY + DESPLAZAMIENTO_Y, 55, fieldH);
+    jCheckBoxIVA.setBounds(checkX + DESPLAZAMIENTO_X, 669 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES + DESPLAZAMIENTO_Y, 150, fieldH);
     jPanel1.setComponentZOrder(jCheckBoxIVA, 0);
     jPanel1.setComponentZOrder(jCheckBoxISR, 0);
     jPanel1.setComponentZOrder(jTextFieldISRPercent, 0);
@@ -276,52 +305,29 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
         }
     }
+    // El rótulo de la sección Observaciones se mantiene alineado a la izquierda.
+    jLabelObservaciones.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
 
-    // Botón SALIR DE ORDEN — a la derecha de IMPRIMIR PDF
-    jButtonSalirOrden = new javax.swing.JButton("SALIR DE ORDEN");
-    jButtonSalirOrden.setBackground(new java.awt.Color(139, 0, 0));
-    jButtonSalirOrden.setForeground(java.awt.Color.WHITE);
-    java.awt.Rectangle rBtn1 = jButton1.getBounds();
-    jButtonSalirOrden.setBounds(rBtn1.x + rBtn1.width + 10, rBtn1.y, 140, rBtn1.height);
-    jButtonSalirOrden.addActionListener(e -> salirDeOrden());
-    jButtonSalirOrden.setEnabled(false);
-    jButtonSalirOrden.setVisible(false);
-    jPanel1.add(jButtonSalirOrden);
-    jPanel1.setComponentZOrder(jButtonSalirOrden, 0);
-
-    // Botones de edición — esquina superior derecha (solo visibles para admin)
+    // Botón de edición — esquina superior derecha (solo visible para admin).
+    // Un único botón alterna entre "EDITAR" y "GUARDAR CAMBIOS" según el modo actual.
     jButtonEditar = new javax.swing.JButton("EDITAR");
     jButtonEditar.setBackground(new java.awt.Color(0, 90, 180));
     jButtonEditar.setForeground(java.awt.Color.WHITE);
     java.awt.Rectangle rBtn6 = jButton6.getBounds();
-    jButtonEditar.setBounds(jPanel1.getPreferredSize().width - 170, rBtn6.y, 155, rBtn6.height);
-    jButtonEditar.addActionListener(e -> activarEdicionOrden());
+    jButtonEditar.setBounds(jPanel1.getPreferredSize().width - 195, rBtn6.y, 155, rBtn6.height);
+    jButtonEditar.addActionListener(e -> onBotonEditarGuardarClick());
     jButtonEditar.setVisible(false);
     jPanel1.add(jButtonEditar);
     jPanel1.setComponentZOrder(jButtonEditar, 0);
 
-    jButtonGuardarCambios = new javax.swing.JButton("Guardar Cambios");
-    jButtonGuardarCambios.setBackground(new java.awt.Color(0, 128, 0));
-    jButtonGuardarCambios.setForeground(java.awt.Color.WHITE);
-    jButtonGuardarCambios.setBounds(jPanel1.getPreferredSize().width - 170,
-            rBtn6.y + rBtn6.height + 8, 155, rBtn6.height);
     jPanel1.addComponentListener(new java.awt.event.ComponentAdapter() {
         @Override public void componentResized(java.awt.event.ComponentEvent e) {
             int panelW = jPanel1.getWidth();
-            if (panelW > 0) {
-                if (jButtonEditar != null) {
-                    jButtonEditar.setLocation(panelW - 170, jButtonEditar.getY());
-                }
-                if (jButtonGuardarCambios != null) {
-                    jButtonGuardarCambios.setLocation(panelW - 170, jButtonGuardarCambios.getY());
-                }
+            if (panelW > 0 && jButtonEditar != null) {
+                jButtonEditar.setLocation(panelW - 195, jButtonEditar.getY());
             }
         }
     });
-    jButtonGuardarCambios.addActionListener(e -> guardarCambiosOrden());
-    jButtonGuardarCambios.setVisible(false);
-    jPanel1.add(jButtonGuardarCambios);
-    jPanel1.setComponentZOrder(jButtonGuardarCambios, 0);
     }
 
     private javax.swing.JPanel crearPanelConFondo() {
@@ -340,11 +346,12 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 dibujarSeccion(g2, 48, 112, 866, 80, "1. DATOS GENERALES");
                 dibujarSeccion(g2, 48, 200, 485, 125, "2. PROVEEDOR");
                 dibujarSeccion(g2, 544, 200, 370, 125, "3. SOLICITANTE / PROYECTO");
-                dibujarSeccion(g2, 48, 333, 866, 113, "4. CONDICIONES DE COMPRA");
-                dibujarSeccion(g2, 48, 453, 866, 139, "5. PRODUCTOS");
-                dibujarSeccion(g2, 48, 599, 300, 101, "6. AUTORIZACIONES");
-                dibujarSeccion(g2, 359, 599, 267, 101, "7. IMPUESTOS Y DESCUENTOS");
-                dibujarSeccion(g2, 637, 599, 277, 101, "8. TOTALES");
+                dibujarSeccion(g2, 48, 333, 866, 113 + EXTRA_ESPACIO_SECCION4, "4. CONDICIONES DE COMPRA");
+                dibujarSeccion(g2, 48, 453 + EXTRA_ESPACIO_SECCION4, 866, 139 + ALTO_EXTRA_PRODUCTOS, "5. PRODUCTOS");
+                dibujarSeccion(g2, 48, 599 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4, 866, ALTO_OBSERVACIONES, "6. OBSERVACIONES");
+                dibujarSeccion(g2, 48, 599 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 300, 101, "7. AUTORIZACIONES");
+                dibujarSeccion(g2, 359, 599 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 267, 101, "8. IMPUESTOS Y DESCUENTOS");
+                dibujarSeccion(g2, 637, 599 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 277, 101, "9. TOTALES");
                 g2.dispose();
             }
         };
@@ -352,6 +359,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     private void dibujarSeccion(java.awt.Graphics2D graphics, int x, int y, int ancho,
                                 int alto, String titulo) {
+        x += DESPLAZAMIENTO_X;
+        y += DESPLAZAMIENTO_Y;
         graphics.setColor(new java.awt.Color(255, 255, 255, 224));
         graphics.fillRoundRect(x, y, ancho, alto, 10, 10);
         graphics.setColor(new java.awt.Color(90, 178, 220));
@@ -412,29 +421,47 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         posicionar(jComboBox7, 610, 391, 258, 24);
         posicionar(jLabel12, 350, 423, 140, 22);
         posicionar(jDateChooserEntrega, 495, 423, 120, 24);
-        posicionar(jLabel27, 625, 423, 90, 22);
-        posicionar(jDateChooserPago, 720, 423, 120, 24);
+        posicionar(jLabel27, 625, 423, 115, 22);
+        posicionar(jDateChooserPago, 745, 423, 120, 24);
 
-        posicionar(jLabel16, 70, 478, 90, 22);
-        posicionar(jTextField3, 164, 478, 180, 24);
-        posicionar(jButton7, 352, 478, 82, 24);
-        posicionar(jScrollPane1, 60, 508, 842, 76);
-        posicionar(jLabel39, 70, 625, 70, 22);
-        posicionar(jComboBox4, 145, 625, 180, 24);
-        posicionar(jLabel40, 70, 662, 70, 22);
-        posicionar(jComboBox5, 145, 662, 180, 24);
-        posicionar(jLabel20, 650, 620, 105, 22);
-        posicionar(jLabel23, 765, 620, 135, 22);
-        posicionar(jLabel21, 650, 646, 105, 22);
-        posicionar(jLabel24, 765, 646, 135, 22);
-        posicionar(jLabel22, 650, 672, 105, 22);
-        posicionar(jLabel25, 765, 672, 135, 22);
-        posicionar(jButton3, 48, 710, 276, 40);
-        posicionar(jButton2, 342, 710, 276, 40);
-        posicionar(jButton1, 636, 710, 278, 40);
+        posicionar(jLabel16, 70, 478 + EXTRA_ESPACIO_SECCION4, 90, 22);
+        posicionar(jTextField3, 164, 478 + EXTRA_ESPACIO_SECCION4, 180, 24);
+        posicionar(jButton7, 352, 478 + EXTRA_ESPACIO_SECCION4, 82, 24);
+        posicionar(jScrollPane1, 60, 508 + EXTRA_ESPACIO_SECCION4, 842, 76 + ALTO_EXTRA_PRODUCTOS);
+        posicionar(jLabelObservaciones, 60, 625 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4, 200, 22);
+        jLabelObservaciones.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        posicionar(jScrollPaneObservaciones, 60, 649 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4, 842, ALTO_OBSERVACIONES - 58);
+        posicionar(jLabel39, 70, 625 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 70, 22);
+        posicionar(jComboBox4, 145, 625 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 180, 24);
+        posicionar(jLabel40, 70, 662 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 70, 22);
+        posicionar(jComboBox5, 145, 662 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 180, 24);
+        posicionar(jLabel20, 650, 620 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 105, 22);
+        posicionar(jLabel23, 765, 620 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 135, 22);
+        posicionar(jLabel21, 650, 646 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 105, 22);
+        posicionar(jLabel24, 765, 646 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 135, 22);
+        posicionar(jLabel22, 650, 672 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 105, 22);
+        posicionar(jLabel25, 765, 672 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 135, 22);
+        posicionar(jButton3, 48, 710 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 276, 40);
+        posicionar(jButton2, 342, 710 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 276, 40);
+        posicionar(jButton1, 636, 710 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 278, 40);
+        ajustarTamanoPanelAlContenido();
         pack();
         jPanel1.revalidate();
         jPanel1.repaint();
+    }
+
+    private void ajustarTamanoPanelAlContenido() {
+        int margenInferior = 24;
+        int margenDerecho = 24;
+        int ancho = 962;
+        int alto = 735;
+        for (java.awt.Component componente : jPanel1.getComponents()) {
+            java.awt.Rectangle limites = componente.getBounds();
+            ancho = Math.max(ancho, limites.x + limites.width + margenDerecho);
+            alto = Math.max(alto, limites.y + limites.height + margenInferior);
+        }
+        jPanel1.setPreferredSize(new java.awt.Dimension(ancho, alto));
+        jPanel1.setMinimumSize(new java.awt.Dimension(ancho, alto));
     }
 
     private void configurarDesplazamiento() {
@@ -456,7 +483,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private void posicionar(java.awt.Component componente, int x, int y, int ancho, int alto) {
-        componente.setBounds(x, y, ancho, alto);
+        componente.setBounds(x + DESPLAZAMIENTO_X, y + DESPLAZAMIENTO_Y, ancho, alto);
         if (componente instanceof javax.swing.JLabel etiqueta
                 && etiqueta.getText() != null && etiqueta.getText().endsWith(":")) {
             etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
@@ -469,7 +496,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
      * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+     private void initComponents() {
 
         jPanel1 = crearPanelConFondo();
         jLabel1 = new javax.swing.JLabel();
@@ -1301,7 +1328,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     if (buscarProducto(codigoBuscado)) {
         jTextField3.setText("");
-    } else {
+    } else if (!ultimoProductoDesactivado) {
         JOptionPane.showMessageDialog(this, "Producto no encontrado en INVENTARIOS.", "Inventarios", JOptionPane.WARNING_MESSAGE);
         jTextField3.requestFocus();
         jTextField3.selectAll();
@@ -1309,6 +1336,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 }
     
     public boolean buscarProducto(String codigoBuscado) {
+    ultimoProductoDesactivado = false;
     try (FileInputStream file = new FileInputStream(RUTA_INVENTARIOS);
          Workbook workbook = new XSSFWorkbook(file)) {
 
@@ -1322,6 +1350,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             String codigo = obtenerTextoCelda(row.getCell(0));
 
             if (codigo.equalsIgnoreCase(codigoBuscado.trim())) {
+                String estado = obtenerTextoCelda(row.getCell(5));
+                if (!"1".equals(InventarioService.normalizarEstado(estado))) {
+                    ultimoProductoDesactivado = true;
+                    JOptionPane.showMessageDialog(this,
+                            "El producto \"" + codigo + "\" está desactivado y no puede seleccionarse.",
+                            "Producto desactivado", JOptionPane.WARNING_MESSAGE);
+                    return false;
+                }
                 String descripcion = obtenerTextoCelda(row.getCell(1));
                 String unidad = obtenerTextoCelda(row.getCell(2));
                 double precio = obtenerNumeroCelda(row.getCell(3));
@@ -1750,10 +1786,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         File archivoPDF = new File(ruta);
         if (archivoPDF.exists()) {
-            JOptionPane.showMessageDialog(this,
-                "El PDF '" + archivoPDF.getName() + "' ya existe y no se generará de nuevo.",
-                "PDF ya generado", JOptionPane.INFORMATION_MESSAGE);
-            return;
+            int reemplazar = JOptionPane.showConfirmDialog(this,
+                    "El PDF '" + archivoPDF.getName() + "' ya existe.\n¿Deseas reemplazarlo?",
+                    "Confirmar reemplazo", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+            if (reemplazar != JOptionPane.YES_OPTION) {
+                return;
+            }
         }
 
         try {
@@ -2011,6 +2050,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
             // Línea separadora azul (debajo de totales)
             doc.add(new Paragraph("").setBorderBottom(new SolidBorder(separadorColor, 2)).setMarginBottom(3));
+
+            // ── OBSERVACIONES ──────────────────────────────────────────────────
+            String textoObservaciones = jTextAreaObservaciones.getText().trim();
+            if (!textoObservaciones.isEmpty()) {
+                doc.add(new Paragraph("OBSERVACIONES:").setFont(bold).setFontSize(8).setFontColor(azul).setMarginBottom(2));
+                doc.add(new Paragraph(textoObservaciones).setFont(plain).setFontSize(8).setMarginBottom(4));
+                doc.add(new Paragraph("").setBorderBottom(new SolidBorder(separadorColor, 2)).setMarginBottom(3));
+            }
 
             // ── INFORMACIÓN DE FACTURA ────────────────────────────────────────
             doc.add(new Paragraph("La generación de la factura debe incluir la siguiente información:")
@@ -2384,6 +2431,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (encabezado.getCell(23, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null) {
             encabezado.createCell(23).setCellValue("ESTATUS");
         }
+        if (encabezado.getCell(24, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null) {
+            encabezado.createCell(24).setCellValue("OBSERVACIONES");
+        }
     }//asegurarEncabezadosAbonadoEstatus
 
     private boolean guardarEnRegistroc() {
@@ -2432,7 +2482,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 String[] headers = {"NOORDEN","FECHA","DOCUMENTO","COTIZACIÓN","ID_PROVEEDOR",
                     "CFDI","SOLICITUD","PROYECTO","PAGO","FORMAPAGO","METODOPAGO",
                     "FECHA_ENTREGA","DIAS_PAGO","DESCUENTO","IVA","ELABORO","AUTORIZO",
-                    "MONEDA","TIPOCAMBIO","SUBTOTAL","IVA_IMPORTE","TOTAL","ABONADO","ESTATUS"};
+                    "MONEDA","TIPOCAMBIO","SUBTOTAL","IVA_IMPORTE","TOTAL","ABONADO","ESTATUS","OBSERVACIONES"};
                 Row headerRow = sheet.createRow(0);
                 for (int i = 0; i < headers.length; i++) {
                     headerRow.createCell(i).setCellValue(headers[i]);
@@ -2508,6 +2558,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             row.createCell(20).setCellValue(jLabel24.getText());
             // TOTAL
             row.createCell(21).setCellValue(jLabel25.getText());
+            // ABONADO: toda orden nueva comienza sin pagos registrados.
+            row.createCell(22).setCellValue("0");
+            row.createCell(23).setCellValue("PENDIENTE");
+            // OBSERVACIONES
+            row.createCell(24).setCellValue(jTextAreaObservaciones.getText().trim());
 
             ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
             wb.close();
@@ -2622,6 +2677,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             setCellString(rowToUpdate, 19, jLabel23.getText());
             setCellString(rowToUpdate, 20, jLabel24.getText());
             setCellString(rowToUpdate, 21, jLabel25.getText());
+            // OBSERVACIONES
+            setCellString(rowToUpdate, 24, jTextAreaObservaciones.getText().trim());
 
             ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
 
@@ -2689,6 +2746,21 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     private String formatearFecha(java.util.Date fecha) {
         return fecha == null ? "" : new SimpleDateFormat("dd/MM/yyyy").format(fecha);
+    }
+
+    private void buscarOSalirOrden() {
+        if (estadoOrdenCargada != null) {
+            salirDeOrden();
+            return;
+        }
+        buscarOrden();
+    }
+
+    private void actualizarBotonBuscar(boolean ordenCargada) {
+        jButton2.setText(ordenCargada ? "SALIR" : "BUSCAR");
+        jButton2.setBackground(ordenCargada
+                ? new java.awt.Color(139, 0, 0)
+                : new java.awt.Color(0, 204, 51));
     }
 
     private void buscarOrden() {
@@ -2801,11 +2873,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 org.apache.poi.ss.usermodel.Cell cTot = row.getCell(21);
                 if (cTot != null) { String v = dataFormatter.formatCellValue(cTot).trim(); if (!v.isEmpty()) jLabel25.setText(v); }
 
+                // Col 24 - OBSERVACIONES
+                org.apache.poi.ss.usermodel.Cell cObs = row.getCell(24);
+                jTextAreaObservaciones.setText(cObs != null ? dataFormatter.formatCellValue(cObs).trim() : "");
+
                 cargarTablaDesdeIntOrden(buscar);
                 setModoSoloLectura(true);
-                jButtonSalirOrden.setEnabled(true);
-                jButtonSalirOrden.setVisible(true);
                 estadoOrdenCargada = obtenerEstadoOrden();
+                actualizarBotonBuscar(true);
                 actualizarBotonesEdicion(true, false);
                 return;
             }
@@ -2989,6 +3064,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jTextField2.setText("");
         jTextField3.setText("");
         jTextField5.setText("");
+        jTextAreaObservaciones.setText("");
 
         // Restaurar cotización con fecha de hoy
         java.time.LocalDate hoy = java.time.LocalDate.now();
@@ -3058,8 +3134,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         // ── Generar nuevo número de orden y re-habilitar edición ──────────
         generarNumeroOrden();
         estadoOrdenCargada = null;
-        jButtonSalirOrden.setEnabled(false);
-        jButtonSalirOrden.setVisible(false);
+        actualizarBotonBuscar(false);
         actualizarBotonesEdicion(false, false);
     }
 
@@ -3068,13 +3143,29 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         actualizarBotonesEdicion(true, true);
     }
 
+    /** Maneja el clic del botón único: en modo lectura activa la edición, en modo edición guarda los cambios. */
+    private void onBotonEditarGuardarClick() {
+        if (jButtonEditar == null) {
+            return;
+        }
+        if (modoCrear) {
+            guardarCambiosOrden();
+        } else {
+            activarEdicionOrden();
+        }
+    }
+
     private void actualizarBotonesEdicion(boolean ordenCargada, boolean editando) {
         boolean mostrar = esAdministrador() && ordenCargada;
         if (jButtonEditar != null) {
-            jButtonEditar.setVisible(mostrar && !editando);
-        }
-        if (jButtonGuardarCambios != null) {
-            jButtonGuardarCambios.setVisible(mostrar && editando);
+            jButtonEditar.setVisible(mostrar);
+            if (editando) {
+                jButtonEditar.setText("GUARDAR CAMBIOS");
+                jButtonEditar.setBackground(new java.awt.Color(0, 128, 0));
+            } else {
+                jButtonEditar.setText("EDITAR");
+                jButtonEditar.setBackground(new java.awt.Color(0, 90, 180));
+            }
         }
     }
 
@@ -3105,7 +3196,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (jTextFieldISRPercent != null) jTextFieldISRPercent.setEditable(!soloLectura);
         jTable1.setEnabled(!soloLectura);
         jButton7.setEnabled(!soloLectura);
-        jButton3.setEnabled(!soloLectura);
+        jButton3.setEnabled(true);
+        jTextAreaObservaciones.setEditable(!soloLectura);
     }
 
     public static void main(String args[]) {
@@ -3120,9 +3212,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JCheckBox jCheckBoxDescuento;
     private javax.swing.JTextField jTextFieldDescuentoPct;
     private javax.swing.JTextField jTextFieldISRPercent;
-    private javax.swing.JButton jButtonSalirOrden;
     private javax.swing.JButton jButtonEditar;
-    private javax.swing.JButton jButtonGuardarCambios;
+    private javax.swing.JLabel jLabelObservaciones;
+    private javax.swing.JTextArea jTextAreaObservaciones;
+    private javax.swing.JScrollPane jScrollPaneObservaciones;
     private double subtotalOriginal = 0;
     private double descuentoImporte = 0;
     private double isrImporte = 0;

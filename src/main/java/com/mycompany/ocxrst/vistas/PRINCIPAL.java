@@ -2,13 +2,17 @@
 package com.mycompany.ocxrst.vistas;
 
 import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.EstiloAplicacion;
 
 public class PRINCIPAL extends javax.swing.JFrame {
 
     private static boolean alertaEntregasMostradaEnSesion = false;
     private final java.util.Map<String, javax.swing.JLabel> etiquetasValorIndicadores = new java.util.HashMap<>();
+    private boolean notificacionesEnHover;
+    private int totalNotificaciones;
 
     public PRINCIPAL() {
+        EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
         setSize(800, 550);
         setResizable(false);
@@ -26,9 +30,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
         javax.swing.JMenuItem cerrarSesion = new javax.swing.JMenuItem("CERRAR SESION");
         cerrarSesion.addActionListener(e -> cerrarSesion());
         menuSesion.add(cerrarSesion);
-        javax.swing.JMenuItem salirPrograma = new javax.swing.JMenuItem("SALIR DEL PROGRAMA");
-        salirPrograma.addActionListener(e -> salirDelPrograma());
-        menuSesion.add(salirPrograma);
 
         String nombreUsuario = INICIARSESION.nombreUsuarioActual == null
             || INICIARSESION.nombreUsuarioActual.isBlank()
@@ -60,11 +61,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
         dispose();
     }
 
-    private void salirDelPrograma() {
-        dispose();
-        System.exit(0);
-    }
-
     public static void reiniciarAlertaEntregasSesion() {
         alertaEntregasMostradaEnSesion = false;
     }
@@ -93,9 +89,11 @@ public class PRINCIPAL extends javax.swing.JFrame {
     }
 
     private void actualizarBotonNotificaciones() {
-        int notificaciones = PROVEEDORES.contarAlertasEntregasPendientes();
-        jButtonNotificaciones.setText("NOTIFICACIONES (" + notificaciones + ")");
-        jButtonNotificaciones.setBackground(notificaciones > 0
+        totalNotificaciones = PROVEEDORES.contarAlertasEntregasPendientes();
+        jButtonNotificaciones.setText(notificacionesEnHover
+                ? "<html><u>NOTIFICACIONES (" + totalNotificaciones + ")</u></html>"
+                : "NOTIFICACIONES (" + totalNotificaciones + ")");
+        jButtonNotificaciones.setBackground(totalNotificaciones > 0
                 ? new java.awt.Color(180, 0, 0)
                 : new java.awt.Color(0, 95, 131));
         jButtonNotificaciones.setForeground(java.awt.Color.WHITE);
@@ -132,6 +130,20 @@ public class PRINCIPAL extends javax.swing.JFrame {
         jButtonNotificaciones.setFocusPainted(false);
         jButtonNotificaciones.setContentAreaFilled(false);
         jButtonNotificaciones.setOpaque(false);
+        jButtonNotificaciones.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        jButtonNotificaciones.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                notificacionesEnHover = true;
+                actualizarBotonNotificaciones();
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                notificacionesEnHover = false;
+                actualizarBotonNotificaciones();
+            }
+        });
         jButtonNotificaciones.addActionListener(this::jButtonNotificacionesActionPerformed);
         encabezado.add(jButtonNotificaciones, java.awt.BorderLayout.CENTER);
 

@@ -40,6 +40,10 @@ public final class AppConfig {
         return resolveBaseFile("PROVEEDORES.xlsx");
     }
 
+    public static File productoProveedorFile() {
+        return resolveBaseFile("PRODUCTOPROVEEDORES.xlsx");
+    }
+
     public static File usuariosFile() {
         return resolveBaseFile("USUARIOS.xlsx");
     }

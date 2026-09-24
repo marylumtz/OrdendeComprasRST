@@ -1,7 +1,9 @@
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\config\AppConfig.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\EstiloAplicacion.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\IconoVentanaUtil.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\repository\InventarioRepository.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\repository\OrdenCompraRepository.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\repository\ProductoProveedorRepository.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\repository\ProveedorRepository.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\repository\UsuarioRepository.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\service\InventarioService.java

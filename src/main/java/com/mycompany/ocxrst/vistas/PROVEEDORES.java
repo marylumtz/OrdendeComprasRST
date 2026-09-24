@@ -5,6 +5,7 @@
 package com.mycompany.ocxrst.vistas;
 
 import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.config.AppConfig;
 import com.mycompany.ocxrst.repository.InventarioRepository;
 import com.mycompany.ocxrst.repository.ProveedorRepository;
@@ -262,13 +263,587 @@ public class PROVEEDORES extends javax.swing.JFrame {
      * Creates new form PRINCIPAL
      */
     public PROVEEDORES() {
+        EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
+        configurarDisenoVisual();
         IconoVentanaUtil.aplicar(this);
+        setSize(800, 520);
+        setResizable(false);
         setLocationRelativeTo(null);
         asegurarArchivoProveedores();
         cargarCacheProveedores();
         configurarAutocompleteNombre();
         configurarEventos();
+    }
+
+    private static final java.awt.Color COLOR_AZUL_OSCURO = new java.awt.Color(28, 82, 132);
+    private static final java.awt.Color COLOR_AZUL = new java.awt.Color(31, 112, 184);
+    private static final java.awt.Color COLOR_FONDO = new java.awt.Color(237, 245, 253);
+    private static final java.awt.Color COLOR_BORDE_CAMPO = new java.awt.Color(198, 210, 225);
+    private static final java.awt.Color COLOR_VERDE = new java.awt.Color(0, 130, 60);
+    private static final java.awt.Color COLOR_ROJO = new java.awt.Color(190, 0, 0);
+    private static final java.awt.Color COLOR_GRIS = new java.awt.Color(90, 100, 110);
+    private static final java.awt.Color COLOR_AZUL_CLARO = new java.awt.Color(219, 234, 248);
+    private static final java.awt.Color COLOR_AZUL_PALIDO = new java.awt.Color(240, 246, 253);
+    private static final java.awt.Color COLOR_TEXTO_GRIS = new java.awt.Color(110, 122, 138);
+    private static final java.awt.Color COLOR_NARANJA = new java.awt.Color(196, 118, 0);
+    private static final java.awt.Color COLOR_NARANJA_CLARO = new java.awt.Color(255, 240, 219);
+    private static final java.awt.Color COLOR_VERDE_CLARO = new java.awt.Color(224, 246, 233);
+    private static final java.awt.Color COLOR_ROJO_CLARO = new java.awt.Color(253, 226, 226);
+    private static final java.awt.Color COLOR_GRIS_CLARO = new java.awt.Color(236, 239, 243);
+    private static final java.awt.Color COLOR_VERDE_EXCEL = new java.awt.Color(33, 140, 87);
+    private static final java.awt.Color COLOR_ROJO_PDF = new java.awt.Color(199, 47, 47);
+
+    private void configurarDisenoVisual() {
+        jPanel1.removeAll();
+        jPanel1.setOpaque(true);
+        jPanel1.setBackground(COLOR_FONDO);
+        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 20, 18, 20));
+        jPanel1.setLayout(new java.awt.BorderLayout(0, 14));
+
+        // ----- Encabezado -----
+        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        encabezado.setOpaque(false);
+
+        javax.swing.JPanel titulo = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
+        titulo.setOpaque(false);
+        javax.swing.JLabel iconoGrupo = new javax.swing.JLabel(iconoGrupo(COLOR_AZUL_OSCURO, 34));
+        titulo.add(iconoGrupo, java.awt.BorderLayout.WEST);
+
+        javax.swing.JPanel textoTitulo = new javax.swing.JPanel();
+        textoTitulo.setOpaque(false);
+        textoTitulo.setLayout(new javax.swing.BoxLayout(textoTitulo, javax.swing.BoxLayout.Y_AXIS));
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabel1.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
+        jLabel1.setForeground(COLOR_AZUL_OSCURO);
+        jLabel1.setText("PROVEEDORES");
+        javax.swing.JLabel subtitulo = new javax.swing.JLabel("Administra la información de tus proveedores");
+        subtitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        subtitulo.setForeground(COLOR_AZUL_OSCURO);
+        textoTitulo.add(jLabel1);
+        textoTitulo.add(subtitulo);
+        titulo.add(textoTitulo, java.awt.BorderLayout.CENTER);
+        encabezado.add(titulo, java.awt.BorderLayout.WEST);
+
+        javax.swing.JLabel lema = new javax.swing.JLabel(
+                "<html><div style='text-align:right'>SOLUCIONES HOY<br>CONEXIONES MAÑANA</div></html>");
+        lema.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 9));
+        lema.setForeground(new java.awt.Color(133, 157, 185));
+        encabezado.add(lema, java.awt.BorderLayout.EAST);
+        jPanel1.add(encabezado, java.awt.BorderLayout.NORTH);
+
+        // ----- Tarjeta principal -----
+        RoundedPanel tarjeta = new RoundedPanel(14, java.awt.Color.WHITE);
+        tarjeta.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 22, 16, 22));
+        tarjeta.setLayout(new java.awt.BorderLayout(0, 14));
+
+        javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout());
+        barra.setOpaque(false);
+        prepararBoton(jButton6, "ATRÁS", iconoChevronIzquierda(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
+        barra.add(jButton6, java.awt.BorderLayout.WEST);
+
+        javax.swing.JLabel registro = new javax.swing.JLabel("REGISTRO DE PROVEEDOR",
+                iconoEdificio(COLOR_AZUL_OSCURO, 20), javax.swing.SwingConstants.LEFT);
+        registro.setIconTextGap(8);
+        registro.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        registro.setForeground(COLOR_AZUL_OSCURO);
+        javax.swing.JPanel contenedorRegistro = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
+        contenedorRegistro.setOpaque(false);
+        contenedorRegistro.add(registro);
+        barra.add(contenedorRegistro, java.awt.BorderLayout.EAST);
+        tarjeta.add(barra, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        formulario.setOpaque(false);
+        agregarCampo(formulario, 0, iconoId(COLOR_AZUL_OSCURO), "ID:", jTextFieldId,
+                "Ingrese el ID del proveedor", true);
+        agregarCampo(formulario, 1, iconoEdificio(COLOR_AZUL_OSCURO, 18), "NOMBRE O RAZÓN SOCIAL:", jTextField1,
+                "Nombre o razón social", false);
+        agregarCampo(formulario, 2, iconoDocumento(COLOR_AZUL_OSCURO), "RFC:", jTextField2,
+                "RFC (Ej. XAXX010101000)", false);
+        agregarCampo(formulario, 3, iconoTelefono(COLOR_AZUL_OSCURO), "TELÉFONO:", jTextField3,
+                "Número telefónico", false);
+        agregarCampo(formulario, 4, iconoCorreo(COLOR_AZUL_OSCURO), "CORREO:", jTextField4,
+                "correo@ejemplo.com", false);
+        agregarCampo(formulario, 5, iconoUbicacion(COLOR_AZUL_OSCURO), "DIRECCIÓN:", jTextField5,
+                "Dirección completa", false);
+        agregarCampo(formulario, 6, iconoContacto(COLOR_AZUL_OSCURO), "CONTACTO:", jTextField6,
+                "Nombre del contacto", false);
+        tarjeta.add(formulario, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel acciones = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 10, 0));
+        acciones.setOpaque(false);
+        prepararBoton(jButton4, "HISTORIAL DE COMPRAS", iconoHistorial(COLOR_AZUL), java.awt.Color.WHITE,
+                COLOR_AZUL, COLOR_AZUL);
+        prepararBoton(jButton1, "CREAR", iconoMas(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
+        prepararBoton(jButton2, "EDITAR", iconoEditar(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
+        acciones.add(jButton4);
+        acciones.add(jButton1);
+        acciones.add(jButton2);
+        acciones.add(jButton3);
+        tarjeta.add(acciones, java.awt.BorderLayout.SOUTH);
+        jPanel1.add(tarjeta, java.awt.BorderLayout.CENTER);
+
+        restablecerIndicadorEstado();
+
+        getContentPane().setBackground(COLOR_FONDO);
+        getContentPane().removeAll();
+        getContentPane().setLayout(new java.awt.BorderLayout());
+        getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
+        getContentPane().revalidate();
+        getContentPane().repaint();
+    }
+
+    private void agregarCampo(javax.swing.JPanel formulario, int fila, javax.swing.Icon icono, String etiqueta,
+            javax.swing.JTextField campo, String textoAyuda, boolean soloLectura) {
+        javax.swing.JLabel iconoLabel = new javax.swing.JLabel(icono);
+
+        javax.swing.JPanel contenedorEtiqueta = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 3, 0));
+        contenedorEtiqueta.setOpaque(false);
+        contenedorEtiqueta.setPreferredSize(new java.awt.Dimension(215, 20));
+        javax.swing.JLabel etiquetaLabel = new javax.swing.JLabel(etiqueta);
+        etiquetaLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        etiquetaLabel.setForeground(new java.awt.Color(34, 76, 119));
+        javax.swing.JLabel asteriscoLabel = new javax.swing.JLabel("*");
+        asteriscoLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        asteriscoLabel.setForeground(new java.awt.Color(217, 43, 43));
+        contenedorEtiqueta.add(etiquetaLabel);
+        contenedorEtiqueta.add(asteriscoLabel);
+
+        campo.setToolTipText(textoAyuda);
+        campo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        campo.setPreferredSize(new java.awt.Dimension(120, 30));
+        campo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                javax.swing.BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+        campo.setBackground(soloLectura ? new java.awt.Color(247, 250, 253) : java.awt.Color.WHITE);
+        campo.setEditable(!soloLectura);
+
+        java.awt.GridBagConstraints c = new java.awt.GridBagConstraints();
+        c.gridy = fila;
+        c.insets = new java.awt.Insets(4, 0, 4, 10);
+        c.anchor = java.awt.GridBagConstraints.CENTER;
+        c.gridx = 0;
+        c.weightx = 0;
+        formulario.add(iconoLabel, c);
+        c.gridx = 1;
+        c.anchor = java.awt.GridBagConstraints.LINE_END;
+        c.insets = new java.awt.Insets(4, 0, 4, 14);
+        formulario.add(contenedorEtiqueta, c);
+        c.gridx = 2;
+        c.weightx = 1;
+        c.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        c.insets = new java.awt.Insets(4, 0, 4, 0);
+        formulario.add(campo, c);
+    }
+
+    private void prepararBoton(javax.swing.JButton boton, String texto, javax.swing.Icon icono,
+            java.awt.Color fondo, java.awt.Color textoColor, java.awt.Color colorBorde) {
+        boton.setUI(new BotonPlanoUI());
+        boton.setText(texto);
+        boton.setIcon(icono);
+        boton.setIconTextGap(8);
+        boton.setBackground(fondo);
+        boton.setForeground(textoColor);
+        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        boton.setFocusPainted(false);
+        boton.setContentAreaFilled(false);
+        boton.setOpaque(false);
+        boton.setRolloverEnabled(true);
+        boton.setBorderPainted(colorBorde != null);
+        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                new BordeRedondeado(9, colorBorde, 1.4f),
+                javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
+        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
+    private static java.awt.Color mezclarColor(java.awt.Color base, java.awt.Color destino, float proporcion) {
+        int r = base.getRed() + Math.round((destino.getRed() - base.getRed()) * proporcion);
+        int g = base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion);
+        int b = base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion);
+        return new java.awt.Color(
+                Math.max(0, Math.min(255, r)),
+                Math.max(0, Math.min(255, g)),
+                Math.max(0, Math.min(255, b)));
+    }
+
+    /**
+     * ButtonUI plano que sustituye el bisel nativo de Windows (que generaba un
+     * doble contorno al combinarse con nuestro borde personalizado) por un
+     * relleno redondeado propio con retroalimentación sutil de hover/press.
+     */
+    private static final class BotonPlanoUI extends javax.swing.plaf.basic.BasicButtonUI {
+        @Override
+        public void paint(java.awt.Graphics g, javax.swing.JComponent c) {
+            javax.swing.AbstractButton boton = (javax.swing.AbstractButton) c;
+            javax.swing.ButtonModel modelo = boton.getModel();
+            java.awt.Color fondo = boton.getBackground();
+            if (modelo.isPressed()) {
+                fondo = mezclarColor(fondo, java.awt.Color.BLACK, 0.16f);
+            } else if (modelo.isRollover()) {
+                fondo = mezclarColor(fondo, java.awt.Color.BLACK, 0.07f);
+            }
+
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(fondo);
+            g2.fillRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, 9, 9);
+            g2.dispose();
+
+            super.paint(g, c);
+        }
+    }
+
+    /**
+     * Borde redondeado de una sola línea. Si el color es {@code null} no se
+     * dibuja nada, pero conserva el mismo espaciado interno para que todos
+     * los botones mantengan la misma altura.
+     */
+    private static final class BordeRedondeado extends javax.swing.border.AbstractBorder {
+        private final int radio;
+        private final java.awt.Color color;
+        private final float grosor;
+
+        BordeRedondeado(int radio, java.awt.Color color, float grosor) {
+            this.radio = radio;
+            this.color = color;
+            this.grosor = grosor;
+        }
+
+        @Override
+        public void paintBorder(java.awt.Component c, java.awt.Graphics g, int x, int y, int w, int h) {
+            if (color == null) {
+                return;
+            }
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.setStroke(new java.awt.BasicStroke(grosor));
+            int mitad = Math.round(grosor / 2);
+            int grosorEntero = Math.round(grosor);
+            g2.drawRoundRect(x + mitad, y + mitad, w - grosorEntero - 1, h - grosorEntero - 1, radio, radio);
+            g2.dispose();
+        }
+
+        @Override
+        public java.awt.Insets getBorderInsets(java.awt.Component c) {
+            return new java.awt.Insets(2, 2, 2, 2);
+        }
+
+        @Override
+        public boolean isBorderOpaque() {
+            return false;
+        }
+    }
+
+    private static final class RoundedPanel extends javax.swing.JPanel {
+        private final int radio;
+        private final java.awt.Color color;
+
+        RoundedPanel(int radio, java.awt.Color color) {
+            this.radio = radio;
+            this.color = color;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(java.awt.Graphics g) {
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new java.awt.Color(180, 196, 213, 90));
+            g2.fillRoundRect(1, 2, getWidth() - 2, getHeight() - 2, radio, radio);
+            g2.setColor(color);
+            g2.fillRoundRect(0, 0, getWidth() - 2, getHeight() - 3, radio, radio);
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    // ===================== Iconos vectoriales (Java2D) =====================
+    // Se dibujan con Graphics2D en vez de usar caracteres Unicode como "iconos",
+    // ya que algunos glifos no están disponibles en todas las fuentes/instalaciones
+    // de Windows y se mostraban como cuadros ("tofu").
+
+    @FunctionalInterface
+    private interface DibujoIcono {
+        void dibujar(java.awt.Graphics2D g2, int tamano);
+    }
+
+    private static final class VectorIcon implements javax.swing.Icon {
+        private final int tamano;
+        private final java.awt.Color color;
+        private final DibujoIcono dibujo;
+
+        VectorIcon(int tamano, java.awt.Color color, DibujoIcono dibujo) {
+            this.tamano = tamano;
+            this.color = color;
+            this.dibujo = dibujo;
+        }
+
+        @Override
+        public void paintIcon(java.awt.Component c, java.awt.Graphics g, int x, int y) {
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+            g2.translate(x, y);
+            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.setStroke(new java.awt.BasicStroke(1.6f,
+                    java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+            dibujo.dibujar(g2, tamano);
+            g2.dispose();
+        }
+
+        @Override
+        public int getIconWidth() {
+            return tamano;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return tamano;
+        }
+    }
+
+    private static javax.swing.Icon iconoId(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            int celda = 7;
+            g2.drawRoundRect(1, 1, celda, celda, 2, 2);
+            g2.drawRoundRect(t - celda - 3, 1, celda, celda, 2, 2);
+            g2.drawRoundRect(1, t - celda - 3, celda, celda, 2, 2);
+            g2.drawRoundRect(t - celda - 3, t - celda - 3, celda, celda, 2, 2);
+        });
+    }
+
+    private static javax.swing.Icon iconoEdificio(java.awt.Color color, int tamano) {
+        return new VectorIcon(tamano, color, (g2, t) -> {
+            g2.drawRoundRect(2, 1, t - 6, t - 3, 2, 2);
+            for (int fila = 0; fila < 3; fila++) {
+                for (int col = 0; col < 2; col++) {
+                    g2.drawRect(4 + col * 5, 3 + fila * 4, 2, 2);
+                }
+            }
+            g2.drawLine(1, t - 2, t - 2, t - 2);
+        });
+    }
+
+    private static javax.swing.Icon iconoDocumento(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawRoundRect(3, 1, t - 8, t - 2, 2, 2);
+            for (int i = 0; i < 3; i++) {
+                int y = 5 + i * 3;
+                g2.drawLine(5, y, t - 7, y);
+            }
+        });
+    }
+
+    private static javax.swing.Icon iconoTelefono(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            java.awt.geom.AffineTransform original = g2.getTransform();
+            g2.rotate(Math.toRadians(45), t / 2.0, t / 2.0);
+            g2.drawRoundRect(t / 2 - 6, t / 2 - 2, 12, 4, 3, 3);
+            g2.fillOval(t / 2 - 7, t / 2 - 2, 4, 4);
+            g2.fillOval(t / 2 + 3, t / 2 - 2, 4, 4);
+            g2.setTransform(original);
+        });
+    }
+
+    private static javax.swing.Icon iconoCorreo(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawRoundRect(1, 3, t - 3, t - 7, 2, 2);
+            g2.drawLine(1, 3, t / 2, t / 2);
+            g2.drawLine(t - 2, 3, t / 2, t / 2);
+        });
+    }
+
+    private static javax.swing.Icon iconoUbicacion(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawOval(t / 2 - 5, 1, 10, 10);
+            g2.fillOval(t / 2 - 2, 4, 4, 4);
+            java.awt.geom.GeneralPath punta = new java.awt.geom.GeneralPath();
+            punta.moveTo(t / 2 - 4, 8);
+            punta.lineTo(t / 2.0, t - 1);
+            punta.lineTo(t / 2 + 4, 8);
+            g2.draw(punta);
+        });
+    }
+
+    private static javax.swing.Icon iconoContacto(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawOval(t / 2 - 3, 1, 6, 6);
+            java.awt.geom.Arc2D cuerpo = new java.awt.geom.Arc2D.Double(2, 8, t - 4, 11, 0, 180, java.awt.geom.Arc2D.OPEN);
+            g2.draw(cuerpo);
+        });
+    }
+
+    private static javax.swing.Icon iconoGrupo(java.awt.Color color, int tamano) {
+        return new VectorIcon(tamano, color, (g2, t) -> {
+            int r = t / 3;
+            g2.fillOval(1, t / 2 - r / 2, r, r);
+            g2.fillOval(t / 2, t / 2 - r / 2, r, r);
+            java.awt.geom.Arc2D cuerpoIzq = new java.awt.geom.Arc2D.Double(-t / 6.0, t / 2.0 + r / 2.0 - 2,
+                    t * 0.7, t * 0.6, 0, 180, java.awt.geom.Arc2D.OPEN);
+            java.awt.geom.Arc2D cuerpoDer = new java.awt.geom.Arc2D.Double(t / 3.0, t / 2.0 + r / 2.0 - 2,
+                    t * 0.7, t * 0.6, 0, 180, java.awt.geom.Arc2D.OPEN);
+            g2.draw(cuerpoIzq);
+            g2.draw(cuerpoDer);
+        });
+    }
+
+    private static javax.swing.Icon iconoChevronIzquierda(java.awt.Color color) {
+        return new VectorIcon(10, color, (g2, t) -> {
+            g2.drawLine(t - 3, 1, 2, t / 2);
+            g2.drawLine(2, t / 2, t - 3, t - 1);
+        });
+    }
+
+    private static javax.swing.Icon iconoHistorial(java.awt.Color color) {
+        return new VectorIcon(16, color, (g2, t) -> {
+            g2.drawOval(1, 1, t - 2, t - 2);
+            g2.drawLine(t / 2, t / 2, t / 2, 4);
+            g2.drawLine(t / 2, t / 2, t - 4, t / 2);
+        });
+    }
+
+    private static javax.swing.Icon iconoMas(java.awt.Color color) {
+        return new VectorIcon(14, color, (g2, t) -> {
+            g2.drawLine(t / 2, 1, t / 2, t - 1);
+            g2.drawLine(1, t / 2, t - 1, t / 2);
+        });
+    }
+
+    private static javax.swing.Icon iconoEditar(java.awt.Color color) {
+        return new VectorIcon(15, color, (g2, t) -> {
+            java.awt.geom.GeneralPath lapiz = new java.awt.geom.GeneralPath();
+            lapiz.moveTo(3, t - 2);
+            lapiz.lineTo(2, t - 4);
+            lapiz.lineTo(t - 5, 2);
+            lapiz.lineTo(t - 2, 5);
+            lapiz.lineTo(5, t - 1);
+            lapiz.closePath();
+            g2.draw(lapiz);
+        });
+    }
+
+    private static javax.swing.Icon iconoPower(java.awt.Color color) {
+        return new VectorIcon(15, color, (g2, t) -> {
+            g2.drawArc(1, 3, t - 2, t - 4, -60, 300);
+            g2.drawLine(t / 2, 1, t / 2, t / 2);
+        });
+    }
+
+    private static javax.swing.Icon iconoCarrito(java.awt.Color color, int tamano) {
+        return new VectorIcon(tamano, color, (g2, t) -> {
+            java.awt.geom.GeneralPath canasta = new java.awt.geom.GeneralPath();
+            canasta.moveTo(1, 2);
+            canasta.lineTo(4, 2);
+            canasta.lineTo(t * 0.32, t * 0.62);
+            canasta.lineTo(t - 3, t * 0.62);
+            canasta.lineTo(t - 1, t * 0.28);
+            canasta.lineTo(5, t * 0.28);
+            g2.draw(canasta);
+            g2.fillOval((int) (t * 0.34), (int) (t * 0.74), 3, 3);
+            g2.fillOval((int) (t * 0.72), (int) (t * 0.74), 3, 3);
+        });
+    }
+
+    private static javax.swing.Icon iconoDolar(java.awt.Color color, int tamano) {
+        return new VectorIcon(tamano, color, (g2, t) -> {
+            g2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, (int) Math.round(t * 0.85)));
+            java.awt.font.FontRenderContext contexto = g2.getFontRenderContext();
+            java.awt.geom.Rectangle2D limites = g2.getFont().getStringBounds("$", contexto);
+            float x = (float) ((t - limites.getWidth()) / 2.0);
+            float y = (float) ((t - limites.getHeight()) / 2.0 - limites.getY());
+            g2.drawString("$", x, y);
+        });
+    }
+
+    private static javax.swing.Icon iconoTarjeta(java.awt.Color color, int tamano) {
+        return new VectorIcon(tamano, color, (g2, t) -> {
+            g2.drawRoundRect(1, (int) (t * 0.2), t - 2, (int) (t * 0.6), 2, 2);
+            g2.drawLine(1, (int) (t * 0.4), t - 1, (int) (t * 0.4));
+            g2.drawLine(3, (int) (t * 0.62), (int) (t * 0.4), (int) (t * 0.62));
+        });
+    }
+
+    private static javax.swing.Icon iconoBuscar(java.awt.Color color) {
+        return new VectorIcon(16, color, (g2, t) -> {
+            g2.drawOval(1, 1, (int) (t * 0.65), (int) (t * 0.65));
+            g2.drawLine((int) (t * 0.6), (int) (t * 0.6), t - 1, t - 1);
+        });
+    }
+
+    private static javax.swing.Icon iconoCalendario(java.awt.Color color) {
+        return new VectorIcon(16, color, (g2, t) -> {
+            g2.drawRoundRect(1, 3, t - 2, t - 4, 2, 2);
+            g2.drawLine(1, (int) (t * 0.45), t - 1, (int) (t * 0.45));
+            g2.drawLine((int) (t * 0.3), 1, (int) (t * 0.3), 5);
+            g2.drawLine((int) (t * 0.7), 1, (int) (t * 0.7), 5);
+        });
+    }
+
+    private static javax.swing.Icon iconoFiltro(java.awt.Color color) {
+        return new VectorIcon(14, color, (g2, t) -> {
+            java.awt.geom.GeneralPath embudo = new java.awt.geom.GeneralPath();
+            embudo.moveTo(1, 1);
+            embudo.lineTo(t - 1, 1);
+            embudo.lineTo(t * 0.62f, t * 0.55f);
+            embudo.lineTo(t * 0.62f, t - 1);
+            embudo.lineTo(t * 0.38f, t * 0.8f);
+            embudo.lineTo(t * 0.38f, t * 0.55f);
+            embudo.closePath();
+            g2.draw(embudo);
+        });
+    }
+
+    private static javax.swing.Icon iconoDocumentoAdjunto(java.awt.Color color) {
+        return new VectorIcon(15, color, (g2, t) -> {
+            g2.drawRoundRect(3, 1, t - 7, t - 2, 2, 2);
+            g2.drawLine(5, 5, t - 6, 5);
+            g2.drawLine(5, 8, t - 6, 8);
+            g2.drawLine(5, 11, (int) (t * 0.55), 11);
+        });
+    }
+
+    private static javax.swing.Icon iconoCerrarX(java.awt.Color color) {
+        return new VectorIcon(12, color, (g2, t) -> {
+            g2.drawLine(1, 1, t - 1, t - 1);
+            g2.drawLine(t - 1, 1, 1, t - 1);
+        });
+    }
+
+    private static javax.swing.Icon iconoChevronDerecha(java.awt.Color color) {
+        return new VectorIcon(10, color, (g2, t) -> {
+            g2.drawLine(2, 1, t - 3, t / 2);
+            g2.drawLine(t - 3, t / 2, 2, t - 1);
+        });
+    }
+
+    private static javax.swing.Icon iconoDobleChevronIzquierda(java.awt.Color color) {
+        return new VectorIcon(13, color, (g2, t) -> {
+            g2.drawLine(t / 2, 1, 2, t / 2);
+            g2.drawLine(2, t / 2, t / 2, t - 1);
+            g2.drawLine(t - 2, 1, t / 2 - 2, t / 2);
+            g2.drawLine(t / 2 - 2, t / 2, t - 2, t - 1);
+        });
+    }
+
+    private static javax.swing.Icon iconoDobleChevronDerecha(java.awt.Color color) {
+        return new VectorIcon(13, color, (g2, t) -> {
+            g2.drawLine(t / 2 - 2, 1, t - 2, t / 2);
+            g2.drawLine(t - 2, t / 2, t / 2 - 2, t - 1);
+            g2.drawLine(2, 1, t / 2, t / 2);
+            g2.drawLine(t / 2, t / 2, 2, t - 1);
+        });
+    }
+
+    private static javax.swing.Icon iconoMonedas(java.awt.Color color) {
+        return new VectorIcon(16, color, (g2, t) -> {
+            g2.drawOval(1, (int) (t * 0.28), (int) (t * 0.62), (int) (t * 0.62));
+            g2.drawOval((int) (t * 0.36), 1, (int) (t * 0.62), (int) (t * 0.62));
+        });
     }
 
     /**
@@ -724,9 +1299,39 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//buscarProveedor
 
-    private void mostrarHistorialCompras() {
-        String idProveedor = jTextFieldId.getText().trim();
+    private static final class ResultadoHistorial {
+        final java.util.List<Object[]> filas;
+        final double sumaTotal;
+        final double sumaAbonado;
+        final String simboloMoneda;
 
+        ResultadoHistorial(java.util.List<Object[]> filas, double sumaTotal, double sumaAbonado, String simboloMoneda) {
+            this.filas = filas;
+            this.sumaTotal = sumaTotal;
+            this.sumaAbonado = sumaAbonado;
+            this.simboloMoneda = simboloMoneda;
+        }
+    }
+
+    private static final class TarjetaResumen {
+        final javax.swing.JPanel panel;
+        final javax.swing.JLabel etiquetaValor;
+
+        TarjetaResumen(javax.swing.JPanel panel, javax.swing.JLabel etiquetaValor) {
+            this.panel = panel;
+            this.etiquetaValor = etiquetaValor;
+        }
+    }
+
+    /**
+     * Lee el archivo de ordenes de compra y arma las filas del historial
+     * (filtradas por proveedor si se indica un ID), junto con los totales
+     * acumulados. Se separa de mostrarHistorialCompras() para poder recargar
+     * los datos "en caliente" cada vez que se aplica un filtro o se registra
+     * un cambio (abono, recepcion, etc.), evitando que la tabla muestre
+     * informacion desactualizada.
+     */
+    private ResultadoHistorial cargarFilasHistorial(String idProveedor) {
         java.util.List<Object[]> filas = new java.util.ArrayList<>();
         java.util.Map<String, Double> productosPendientesPorOrden = obtenerProductosPendientesPorOrden();
         java.time.LocalDate hoy = java.time.LocalDate.now();
@@ -783,20 +1388,35 @@ public class PROVEEDORES extends javax.swing.JFrame {
                         }
                     }
 
-                    String productosPendientes = formatearCantidadInventario(
-                            productosPendientesPorOrden.getOrDefault(noOrden.toUpperCase(java.util.Locale.ROOT), 0.0));
-                    filas.add(new Object[]{idFila, noOrden, fechaTexto, cotizacion, solicitante, total, abonado,
-                        pendiente, diasFaltantesTexto, productosPendientes, estatus});
+                    // Si la mercancia ya fue recibida en su totalidad no debe quedar nada
+                    // pendiente por recibir, sin importar lo que reporte el detalle (que
+                    // puede quedar desactualizado despues de una recepcion parcial previa).
+                    double cantidadPendiente = "SI".equalsIgnoreCase(estadoRecepcion)
+                            ? 0.0
+                            : productosPendientesPorOrden.getOrDefault(noOrden.toUpperCase(java.util.Locale.ROOT), 0.0);
+                    String productosPendientes = formatearCantidadInventario(cantidadPendiente);
+                    String nombreProveedor = obtenerNombreProveedorPorId(idFila);
+                    filas.add(new Object[]{idFila, nombreProveedor, noOrden, fechaTexto, cotizacion, solicitante,
+                        total, abonado, pendiente, diasFaltantesTexto, productosPendientes, estatus});
                 }
             } catch (Exception ex) {
                 mostrarError("No se pudo leer el historial de ordenes de compra.", ex);
-                return;
+                return null;
             }
+        }
+        return new ResultadoHistorial(filas, sumaTotal, sumaAbonado, simboloMoneda);
+    }//cargarFilasHistorial
+
+    private void mostrarHistorialCompras() {
+        String idProveedor = jTextFieldId.getText().trim();
+        ResultadoHistorial resultadoInicial = cargarFilasHistorial(idProveedor);
+        if (resultadoInicial == null) {
+            return;
         }
 
         String[] columnas = {
-            "ID PROVEEDOR", "NO. ORDEN", "FECHA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
-            "PEND X PAGAR", "DIAS FAL_RECIBIR", "PROD X RECIBIR", "ESTATUS"
+            "ID PROVEEDOR", "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
+            "PEND. X PAGAR", "DIAS FAL_RECIBIR", "PROD. X RECIBIR", "ESTATUS"
         };
         javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(columnas, 0) {
             @Override
@@ -804,26 +1424,23 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 return false;
             }
         };
-        for (Object[] fila : filas) {
-            modelo.addRow(fila);
-        }
 
         javax.swing.JTable tabla = new javax.swing.JTable(modelo) {
             @Override
             public java.awt.Component prepareRenderer(javax.swing.table.TableCellRenderer renderer,
                     int fila, int columna) {
                 java.awt.Component componente = super.prepareRenderer(renderer, fila, columna);
-                if (!isCellSelected(fila, columna)) {
+                int columnaModelo = convertColumnIndexToModel(columna);
+                if (!isCellSelected(fila, columna) && columnaModelo != 11) {
                     int filaModelo = convertRowIndexToModel(fila);
-                    int columnaModelo = convertColumnIndexToModel(columna);
-                    String estatus = String.valueOf(getModel().getValueAt(filaModelo, 10)).trim();
+                    String estatus = String.valueOf(getModel().getValueAt(filaModelo, 11)).trim();
                     componente.setBackground(getBackground());
-                    componente.setForeground(columnaModelo == 1
+                    componente.setForeground(columnaModelo == 2
                             ? new java.awt.Color(0, 90, 200)
                             : getForeground());
                     try {
-                        long dias = Long.parseLong(String.valueOf(getModel().getValueAt(filaModelo, 8)).trim());
-                        boolean columnaPendiente = columnaModelo == 7 || columnaModelo == 9;
+                        long dias = Long.parseLong(String.valueOf(getModel().getValueAt(filaModelo, 9)).trim());
+                        boolean columnaPendiente = columnaModelo == 8 || columnaModelo == 10;
                         double valorPendiente = columnaPendiente
                             ? parseNumeroOrdenable(getModel().getValueAt(filaModelo, columnaModelo))
                             : 0;
@@ -838,68 +1455,724 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 return componente;
             }
         };
-        configurarOrdenamientoHistorial(tabla, modelo);
+        tabla.setRowHeight(36);
+        tabla.setShowGrid(false);
+        tabla.setIntercellSpacing(new java.awt.Dimension(0, 0));
+        tabla.setSelectionBackground(new java.awt.Color(224, 236, 250));
+        tabla.setSelectionForeground(COLOR_AZUL_OSCURO);
+        tabla.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        tabla.setFillsViewportHeight(true);
         tabla.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        tabla.getTableHeader().setReorderingAllowed(false);
+        configurarEncabezadoHistorial(tabla);
         configurarColumnaNoOrdenComoEnlace(tabla);
+        configurarColumnaEstatusHistorial(tabla);
         tabla.removeColumn(tabla.getColumn("DIAS FAL_RECIBIR"));
-        ajustarAnchoColumnas(tabla);
         java.awt.Rectangle areaUtil = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
             .getMaximumWindowBounds();
-        ajustarAnchoHistorial(tabla, areaUtil.width - 40);
 
-        javax.swing.JLabel etiquetaTotal = new javax.swing.JLabel(
-                (idProveedor.isEmpty() ? "Total de compras: " : "Total de compras del proveedor: ") + filas.size());
-        etiquetaTotal.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 8, 4, 8));
+        // ----- Encabezado (icono + titulo + subtitulo + boton ABONAR) -----
+        javax.swing.JPanel panelHeader = new javax.swing.JPanel(new java.awt.BorderLayout(14, 0));
+        panelHeader.setOpaque(false);
 
-        javax.swing.JPanel panelEncabezado = new javax.swing.JPanel();
-        panelEncabezado.setLayout(new javax.swing.BoxLayout(panelEncabezado, javax.swing.BoxLayout.Y_AXIS));
-        panelEncabezado.add(etiquetaTotal);
+        javax.swing.JPanel panelTituloIzquierda = new javax.swing.JPanel(new java.awt.BorderLayout(14, 0));
+        panelTituloIzquierda.setOpaque(false);
+        panelTituloIzquierda.add(crearInsigniaCuadrada(iconoDocumentoAdjunto(java.awt.Color.WHITE), COLOR_AZUL, 46, 12),
+                java.awt.BorderLayout.WEST);
 
-        if (!idProveedor.isEmpty()) {
-            javax.swing.JLabel etiquetaSumaTotal = new javax.swing.JLabel(
-                    String.format("Total de todas las órdenes: %s %,.2f", simboloMoneda, sumaTotal));
-            etiquetaSumaTotal.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 8, 4, 8));
-            panelEncabezado.add(etiquetaSumaTotal);
+        javax.swing.JPanel textoTitulo = new javax.swing.JPanel();
+        textoTitulo.setOpaque(false);
+        textoTitulo.setLayout(new javax.swing.BoxLayout(textoTitulo, javax.swing.BoxLayout.Y_AXIS));
+        javax.swing.JLabel tituloHistorial = new javax.swing.JLabel(idProveedor.isEmpty()
+                ? "Historial de \u00d3rdenes de Compra"
+                : "Historial de \u00d3rdenes de Compra - " + idProveedor);
+        tituloHistorial.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 22));
+        tituloHistorial.setForeground(COLOR_AZUL_OSCURO);
+        javax.swing.JLabel subtituloHistorial = new javax.swing.JLabel(idProveedor.isEmpty()
+                ? "Consulta el historial de \u00f3rdenes de compra de todos los proveedores"
+                : "Consulta el historial de \u00f3rdenes de compra de este proveedor");
+        subtituloHistorial.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        subtituloHistorial.setForeground(COLOR_TEXTO_GRIS);
+        textoTitulo.add(tituloHistorial);
+        textoTitulo.add(subtituloHistorial);
+        panelTituloIzquierda.add(textoTitulo, java.awt.BorderLayout.CENTER);
+        panelHeader.add(panelTituloIzquierda, java.awt.BorderLayout.WEST);
 
-            javax.swing.JLabel etiquetaSumaAbonado = new javax.swing.JLabel(
-                    String.format("Total abonado: %s %,.2f", simboloMoneda, sumaAbonado));
-            etiquetaSumaAbonado.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 8, 8, 8));
-            panelEncabezado.add(etiquetaSumaAbonado);
-        }
+        javax.swing.JButton botonAbonar = new javax.swing.JButton();
+        prepararBoton(botonAbonar, "ABONAR", iconoMonedas(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
+        javax.swing.JPanel panelBotonAbonar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
+        panelBotonAbonar.setOpaque(false);
+        panelBotonAbonar.add(botonAbonar);
+        panelHeader.add(panelBotonAbonar, java.awt.BorderLayout.EAST);
 
-        javax.swing.JButton botonAbonar = new javax.swing.JButton("ABONAR");
-        botonAbonar.addActionListener(e -> registrarAbono(tabla));
-        javax.swing.JPanel panelBoton = new javax.swing.JPanel(new java.awt.BorderLayout());
-        panelBoton.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 8, 4, 8));
-        panelBoton.add(botonAbonar, java.awt.BorderLayout.NORTH);
+        // ----- Tarjetas de resumen -----
+        TarjetaResumen tarjetaCompras = crearTarjetaResumen(
+                idProveedor.isEmpty() ? "Total de compras" : "Total de compras del proveedor",
+                String.valueOf(resultadoInicial.filas.size()), iconoCarrito(COLOR_AZUL, 20), COLOR_AZUL_CLARO);
+        TarjetaResumen tarjetaTotalOrdenes = crearTarjetaResumen("Total de todas las \u00f3rdenes",
+                String.format("%s %,.2f", resultadoInicial.simboloMoneda, resultadoInicial.sumaTotal),
+                iconoDolar(COLOR_AZUL, 18), COLOR_AZUL_CLARO);
+        TarjetaResumen tarjetaAbonado = crearTarjetaResumen("Total abonado",
+                String.format("%s %,.2f", resultadoInicial.simboloMoneda, resultadoInicial.sumaAbonado),
+                iconoTarjeta(COLOR_AZUL, 20), COLOR_AZUL_CLARO);
 
-        javax.swing.JPanel panelSuperior = new javax.swing.JPanel(new java.awt.BorderLayout());
-        panelSuperior.add(panelEncabezado, java.awt.BorderLayout.WEST);
-        panelSuperior.add(panelBoton, java.awt.BorderLayout.EAST);
+        javax.swing.JPanel panelTarjetas = new javax.swing.JPanel(new java.awt.GridLayout(1, 3, 14, 0));
+        panelTarjetas.setOpaque(false);
+        panelTarjetas.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 14, 0));
+        panelTarjetas.add(tarjetaCompras.panel);
+        panelTarjetas.add(tarjetaTotalOrdenes.panel);
+        panelTarjetas.add(tarjetaAbonado.panel);
 
-        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout());
-        panel.add(panelSuperior, java.awt.BorderLayout.NORTH);
-        panel.add(new javax.swing.JScrollPane(tabla), java.awt.BorderLayout.CENTER);
+        // ----- Buscador y filtros -----
+        javax.swing.JTextField campoBuscar = new javax.swing.JTextField();
+        campoBuscar.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 4, 8, 10));
+        campoBuscar.setOpaque(false);
+        campoBuscar.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        String placeholderBusqueda = "Buscar por ID/nombre proveedor, No. orden, cotizaci\u00f3n o solicitante...";
+        configurarPlaceholder(campoBuscar, placeholderBusqueda);
 
-        int anchoTotal = tabla.getColumnModel().getTotalColumnWidth() + 60;
-        int altoTotal = (tabla.getRowCount() + 1) * tabla.getRowHeight() + 120;
-        int anchoPanel = Math.max(1200, Math.min(anchoTotal, areaUtil.width - 16));
-        int altoPanel = Math.max(600, Math.min(altoTotal, areaUtil.height - 60));
-        panel.setPreferredSize(new java.awt.Dimension(anchoPanel, altoPanel));
+        javax.swing.JPanel contenedorBuscar = new javax.swing.JPanel(new java.awt.BorderLayout(6, 0));
+        contenedorBuscar.setOpaque(false);
+        contenedorBuscar.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                new BordeRedondeado(9, COLOR_BORDE_CAMPO, 1.2f),
+                javax.swing.BorderFactory.createEmptyBorder(2, 12, 2, 6)));
+        contenedorBuscar.add(new javax.swing.JLabel(iconoBuscar(COLOR_TEXTO_GRIS)), java.awt.BorderLayout.WEST);
+        contenedorBuscar.add(campoBuscar, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JComboBox<String> comboFecha = new javax.swing.JComboBox<>(new String[]{
+            "Todas las fechas", "Hoy", "\u00daltimos 7 d\u00edas", "Este mes", "Este a\u00f1o"
+        });
+        comboFecha.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        comboFecha.setPreferredSize(new java.awt.Dimension(150, 34));
+
+        javax.swing.JPanel contenedorFecha = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 6, 0));
+        contenedorFecha.setOpaque(false);
+        contenedorFecha.add(new javax.swing.JLabel(iconoCalendario(COLOR_TEXTO_GRIS)));
+        contenedorFecha.add(comboFecha);
+
+        javax.swing.JButton botonFiltrar = new javax.swing.JButton();
+        prepararBoton(botonFiltrar, "Filtrar", iconoFiltro(new java.awt.Color(60, 70, 85)),
+                java.awt.Color.WHITE, new java.awt.Color(60, 70, 85), COLOR_BORDE_CAMPO);
+
+        javax.swing.JPanel panelFiltrosDerecha = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 10, 0));
+        panelFiltrosDerecha.setOpaque(false);
+        panelFiltrosDerecha.add(contenedorFecha);
+        panelFiltrosDerecha.add(botonFiltrar);
+
+        javax.swing.JPanel panelBusquedaFiltros = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        panelBusquedaFiltros.setOpaque(false);
+        panelBusquedaFiltros.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        panelBusquedaFiltros.add(contenedorBuscar, java.awt.BorderLayout.CENTER);
+        panelBusquedaFiltros.add(panelFiltrosDerecha, java.awt.BorderLayout.EAST);
+
+        // ----- Tabla -----
+        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tabla);
+        scroll.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO));
+        scroll.getViewport().setBackground(java.awt.Color.WHITE);
+
+        // ----- Paginacion -----
+        final int filasPorPagina = 8;
+        int[] paginaActual = {0};
+        int[] columnaOrden = {-1};
+        boolean[] ordenAscendente = {true};
+        java.util.List<Object[]> filasFiltradas = new java.util.ArrayList<>(resultadoInicial.filas);
+
+        javax.swing.JLabel etiquetaPaginacion = new javax.swing.JLabel(" ");
+        etiquetaPaginacion.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        etiquetaPaginacion.setForeground(COLOR_TEXTO_GRIS);
+
+        javax.swing.JPanel panelBotonesPagina = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 6, 0));
+        panelBotonesPagina.setOpaque(false);
+
+        Runnable[] refrescarTabla = new Runnable[1];
+
+        javax.swing.JButton botonPrimeraPagina = new javax.swing.JButton();
+        prepararBotonIcono(botonPrimeraPagina, iconoDobleChevronIzquierda(COLOR_AZUL_OSCURO));
+        javax.swing.JButton botonPaginaAnterior = new javax.swing.JButton();
+        prepararBotonIcono(botonPaginaAnterior, iconoChevronIzquierda(COLOR_AZUL_OSCURO));
+        javax.swing.JButton botonPaginaSiguiente = new javax.swing.JButton();
+        prepararBotonIcono(botonPaginaSiguiente, iconoChevronDerecha(COLOR_AZUL_OSCURO));
+        javax.swing.JButton botonUltimaPagina = new javax.swing.JButton();
+        prepararBotonIcono(botonUltimaPagina, iconoDobleChevronDerecha(COLOR_AZUL_OSCURO));
+
+        botonPrimeraPagina.addActionListener(e -> {
+            paginaActual[0] = 0;
+            refrescarTabla[0].run();
+        });
+        botonPaginaAnterior.addActionListener(e -> {
+            paginaActual[0]--;
+            refrescarTabla[0].run();
+        });
+        botonPaginaSiguiente.addActionListener(e -> {
+            paginaActual[0]++;
+            refrescarTabla[0].run();
+        });
+        botonUltimaPagina.addActionListener(e -> {
+            paginaActual[0] = Integer.MAX_VALUE;
+            refrescarTabla[0].run();
+        });
+
+        refrescarTabla[0] = () -> {
+            int total = filasFiltradas.size();
+            int totalPaginas = Math.max(1, (int) Math.ceil(total / (double) filasPorPagina));
+            if (paginaActual[0] >= totalPaginas) {
+                paginaActual[0] = totalPaginas - 1;
+            }
+            if (paginaActual[0] < 0) {
+                paginaActual[0] = 0;
+            }
+            int inicio = paginaActual[0] * filasPorPagina;
+            int fin = Math.min(total, inicio + filasPorPagina);
+
+            modelo.setRowCount(0);
+            for (int i = inicio; i < fin; i++) {
+                modelo.addRow(filasFiltradas.get(i));
+            }
+            ajustarAnchoColumnas(tabla);
+
+            etiquetaPaginacion.setText(total == 0
+                    ? "No hay \u00f3rdenes para mostrar"
+                    : String.format("Mostrando %d - %d de %d \u00f3rdenes", inicio + 1, fin, total));
+
+            panelBotonesPagina.removeAll();
+            panelBotonesPagina.add(botonPrimeraPagina);
+            panelBotonesPagina.add(botonPaginaAnterior);
+            int ventana = 5;
+            int inicioBotones = Math.max(0, paginaActual[0] - ventana / 2);
+            int finBotones = Math.min(totalPaginas, inicioBotones + ventana);
+            inicioBotones = Math.max(0, finBotones - ventana);
+            for (int pagina = inicioBotones; pagina < finBotones; pagina++) {
+                javax.swing.JButton botonPagina = new javax.swing.JButton();
+                boolean actual = pagina == paginaActual[0];
+                prepararBoton(botonPagina, String.valueOf(pagina + 1), null,
+                        actual ? COLOR_AZUL : java.awt.Color.WHITE,
+                        actual ? java.awt.Color.WHITE : COLOR_TEXTO_GRIS,
+                        actual ? null : COLOR_BORDE_CAMPO);
+                botonPagina.setMargin(new java.awt.Insets(2, 2, 2, 2));
+                botonPagina.setPreferredSize(new java.awt.Dimension(30, 30));
+                int paginaDestino = pagina;
+                botonPagina.addActionListener(e -> {
+                    paginaActual[0] = paginaDestino;
+                    refrescarTabla[0].run();
+                });
+                panelBotonesPagina.add(botonPagina);
+            }
+            panelBotonesPagina.add(botonPaginaSiguiente);
+            panelBotonesPagina.add(botonUltimaPagina);
+            botonPrimeraPagina.setEnabled(paginaActual[0] > 0);
+            botonPaginaAnterior.setEnabled(paginaActual[0] > 0);
+            botonPaginaSiguiente.setEnabled(paginaActual[0] < totalPaginas - 1);
+            botonUltimaPagina.setEnabled(paginaActual[0] < totalPaginas - 1);
+            panelBotonesPagina.revalidate();
+            panelBotonesPagina.repaint();
+        };
+
+        Runnable aplicarFiltros = () -> {
+            boolean esPlaceholder = Boolean.TRUE.equals(campoBuscar.getClientProperty("placeholder-activo"));
+            String filtroTexto = esPlaceholder || campoBuscar.getText() == null
+                    ? "" : campoBuscar.getText().trim().toLowerCase(java.util.Locale.ROOT);
+            String filtroFecha = String.valueOf(comboFecha.getSelectedItem());
+
+            ResultadoHistorial resultadoActual = cargarFilasHistorial(idProveedor);
+            java.util.List<Object[]> filasOrigen = resultadoActual == null ? resultadoInicial.filas : resultadoActual.filas;
+            if (resultadoActual != null) {
+                tarjetaCompras.etiquetaValor.setText(String.valueOf(filasOrigen.size()));
+                tarjetaTotalOrdenes.etiquetaValor.setText(
+                        String.format("%s %,.2f", resultadoActual.simboloMoneda, resultadoActual.sumaTotal));
+                tarjetaAbonado.etiquetaValor.setText(
+                        String.format("%s %,.2f", resultadoActual.simboloMoneda, resultadoActual.sumaAbonado));
+            }
+
+            filasFiltradas.clear();
+            for (Object[] fila : filasOrigen) {
+                if (!filtroTexto.isEmpty()) {
+                    boolean coincide = String.valueOf(fila[0]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
+                            || String.valueOf(fila[1]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
+                            || String.valueOf(fila[2]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
+                            || String.valueOf(fila[4]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
+                            || String.valueOf(fila[5]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto);
+                    if (!coincide) {
+                        continue;
+                    }
+                }
+                if (!coincideFiltroFecha(String.valueOf(fila[3]), filtroFecha)) {
+                    continue;
+                }
+                filasFiltradas.add(fila);
+            }
+            if (columnaOrden[0] >= 0) {
+                ordenarFilas(filasFiltradas, columnaOrden[0], ordenAscendente[0]);
+            }
+            paginaActual[0] = 0;
+            refrescarTabla[0].run();
+        };
+
+        campoBuscar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                aplicarFiltros.run();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                aplicarFiltros.run();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                aplicarFiltros.run();
+            }
+        });
+        comboFecha.addActionListener(e -> aplicarFiltros.run());
+        botonFiltrar.addActionListener(e -> aplicarFiltros.run());
+
+        tabla.getTableHeader().addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int columnaVista = tabla.columnAtPoint(e.getPoint());
+                if (columnaVista < 0) {
+                    return;
+                }
+                int columnaModelo = tabla.convertColumnIndexToModel(columnaVista);
+                if (columnaOrden[0] == columnaModelo) {
+                    ordenAscendente[0] = !ordenAscendente[0];
+                } else {
+                    columnaOrden[0] = columnaModelo;
+                    ordenAscendente[0] = true;
+                }
+                ordenarFilas(filasFiltradas, columnaModelo, ordenAscendente[0]);
+                paginaActual[0] = 0;
+                refrescarTabla[0].run();
+            }
+        });
+
+        botonAbonar.addActionListener(e -> {
+            registrarAbono(tabla);
+            aplicarFiltros.run();
+        });
+
+        // ----- Contenedor de tabla (tarjeta blanca con borde) -----
+        RoundedPanel contenedorTabla = new RoundedPanel(12, java.awt.Color.WHITE);
+        contenedorTabla.setLayout(new java.awt.BorderLayout(0, 10));
+        contenedorTabla.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                javax.swing.BorderFactory.createEmptyBorder(14, 16, 10, 16)));
+        contenedorTabla.add(panelBusquedaFiltros, java.awt.BorderLayout.NORTH);
+        contenedorTabla.add(scroll, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel panelPaginacion = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panelPaginacion.setOpaque(false);
+        panelPaginacion.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 2, 0, 2));
+        panelPaginacion.add(etiquetaPaginacion, java.awt.BorderLayout.WEST);
+        panelPaginacion.add(panelBotonesPagina, java.awt.BorderLayout.EAST);
+        contenedorTabla.add(panelPaginacion, java.awt.BorderLayout.SOUTH);
+
+        // ----- Barra inferior (exportar / imprimir / cerrar) -----
+        javax.swing.JDialog[] dialogoRef = new javax.swing.JDialog[1];
+
+        javax.swing.JButton botonExcel = new javax.swing.JButton();
+        prepararBoton(botonExcel, "Exportar a Excel", iconoDocumentoAdjunto(java.awt.Color.WHITE),
+                COLOR_VERDE_EXCEL, java.awt.Color.WHITE, null);
+        botonExcel.addActionListener(e -> exportarHistorialExcel(filasFiltradas, idProveedor));
+
+        javax.swing.JButton botonPdf = new javax.swing.JButton();
+        prepararBoton(botonPdf, "Exportar a PDF", iconoDocumentoAdjunto(java.awt.Color.WHITE),
+                COLOR_ROJO_PDF, java.awt.Color.WHITE, null);
+        botonPdf.addActionListener(e -> exportarHistorialPdf(filasFiltradas, idProveedor));
+
+        javax.swing.JButton botonCerrar = new javax.swing.JButton();
+        prepararBoton(botonCerrar, "Cerrar", iconoCerrarX(new java.awt.Color(60, 70, 85)),
+                java.awt.Color.WHITE, new java.awt.Color(60, 70, 85), COLOR_BORDE_CAMPO);
+        botonCerrar.addActionListener(e -> {
+            if (dialogoRef[0] != null) {
+                dialogoRef[0].dispose();
+            }
+        });
+
+        javax.swing.JPanel panelExportar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 0));
+        panelExportar.setOpaque(false);
+        panelExportar.add(botonExcel);
+        panelExportar.add(botonPdf);
+
+        javax.swing.JPanel panelCerrar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
+        panelCerrar.setOpaque(false);
+        panelCerrar.add(botonCerrar);
+
+        javax.swing.JPanel panelInferior = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panelInferior.setOpaque(false);
+        panelInferior.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 0, 0, 0));
+        panelInferior.add(panelExportar, java.awt.BorderLayout.WEST);
+        panelInferior.add(panelCerrar, java.awt.BorderLayout.EAST);
+
+        // ----- Ensamblado final -----
+        javax.swing.JPanel panelCentro = new javax.swing.JPanel(new java.awt.BorderLayout(0, 14));
+        panelCentro.setOpaque(false);
+        panelCentro.add(panelTarjetas, java.awt.BorderLayout.NORTH);
+        panelCentro.add(contenedorTabla, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel contenedorPrincipal = new javax.swing.JPanel(new java.awt.BorderLayout(0, 14));
+        contenedorPrincipal.setBackground(COLOR_FONDO);
+        contenedorPrincipal.setOpaque(true);
+        contenedorPrincipal.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 20, 18, 20));
+        contenedorPrincipal.add(panelHeader, java.awt.BorderLayout.NORTH);
+        contenedorPrincipal.add(panelCentro, java.awt.BorderLayout.CENTER);
+        contenedorPrincipal.add(panelInferior, java.awt.BorderLayout.SOUTH);
+
+        contenedorPrincipal.setPreferredSize(new java.awt.Dimension(
+                Math.min(1300, areaUtil.width - 60), Math.min(760, areaUtil.height - 80)));
 
         javax.swing.JDialog dialogo = new javax.swing.JDialog(this,
                 idProveedor.isEmpty() ? "Historial de \u00d3rdenes de Compra - Todos los proveedores"
                         : "Historial de \u00d3rdenes de Compra - " + idProveedor,
                 true);
-        dialogo.getContentPane().add(panel);
+        dialogoRef[0] = dialogo;
+        dialogo.getContentPane().add(contenedorPrincipal);
         dialogo.setResizable(true);
         dialogo.pack();
-        int anchoDialogo = Math.min(Math.max(dialogo.getWidth(), anchoTotal + 20), areaUtil.width - 16);
-        dialogo.setSize(anchoDialogo, dialogo.getHeight());
-        dialogo.setLocation(areaUtil.x + (areaUtil.width - anchoDialogo) / 2,
-            areaUtil.y + (areaUtil.height - dialogo.getHeight()) / 2);
+        dialogo.setLocationRelativeTo(this);
+
+        aplicarFiltros.run();
+
         dialogo.setVisible(true);
     }//mostrarHistorialCompras
+
+    private void ordenarFilas(java.util.List<Object[]> filas, int columna, boolean ascendente) {
+        java.util.Comparator<Object[]> comparador;
+        if (columna == 2 || columna == 6 || columna == 7 || columna == 8 || columna == 9 || columna == 10) {
+            comparador = java.util.Comparator.comparingDouble(f -> parseNumeroOrdenable(f[columna]));
+        } else if (columna == 3) {
+            comparador = java.util.Comparator.comparing(f -> parseFechaOrdenable(f[columna]));
+        } else {
+            comparador = java.util.Comparator.comparing(f -> String.valueOf(f[columna]), String.CASE_INSENSITIVE_ORDER);
+        }
+        if (!ascendente) {
+            comparador = comparador.reversed();
+        }
+        filas.sort(comparador);
+    }//ordenarFilas
+
+    private boolean coincideFiltroFecha(String fechaTexto, String filtro) {
+        if (filtro == null || "Todas las fechas".equals(filtro)) {
+            return true;
+        }
+        if (fechaTexto == null || fechaTexto.isEmpty()) {
+            return false;
+        }
+        java.time.LocalDate fecha;
+        try {
+            fecha = java.time.LocalDate.parse(fechaTexto, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        } catch (java.time.format.DateTimeParseException ex) {
+            return true;
+        }
+        java.time.LocalDate hoy = java.time.LocalDate.now();
+        switch (filtro) {
+            case "Hoy":
+                return fecha.isEqual(hoy);
+            case "\u00daltimos 7 d\u00edas":
+                return !fecha.isBefore(hoy.minusDays(7)) && !fecha.isAfter(hoy);
+            case "Este mes":
+                return fecha.getMonthValue() == hoy.getMonthValue() && fecha.getYear() == hoy.getYear();
+            case "Este a\u00f1o":
+                return fecha.getYear() == hoy.getYear();
+            default:
+                return true;
+        }
+    }//coincideFiltroFecha
+
+    private static void configurarPlaceholder(javax.swing.JTextField campo, String textoPlaceholder) {
+        java.awt.Color colorTextoNormal = new java.awt.Color(40, 50, 65);
+        java.awt.Color colorPlaceholder = COLOR_TEXTO_GRIS;
+        campo.setText(textoPlaceholder);
+        campo.setForeground(colorPlaceholder);
+        campo.putClientProperty("placeholder-activo", Boolean.TRUE);
+        campo.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (Boolean.TRUE.equals(campo.getClientProperty("placeholder-activo"))) {
+                    campo.setText("");
+                    campo.setForeground(colorTextoNormal);
+                    campo.putClientProperty("placeholder-activo", Boolean.FALSE);
+                }
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (campo.getText().isEmpty()) {
+                    campo.setForeground(colorPlaceholder);
+                    campo.setText(textoPlaceholder);
+                    campo.putClientProperty("placeholder-activo", Boolean.TRUE);
+                }
+            }
+        });
+    }//configurarPlaceholder
+
+    private void configurarEncabezadoHistorial(javax.swing.JTable tabla) {
+        javax.swing.table.JTableHeader encabezado = tabla.getTableHeader();
+        encabezado.setDefaultRenderer((t, valor, seleccionado, foco, fila, columna) -> {
+            javax.swing.JLabel etiqueta = new javax.swing.JLabel(String.valueOf(valor));
+            etiqueta.setOpaque(true);
+            etiqueta.setBackground(COLOR_AZUL);
+            etiqueta.setForeground(java.awt.Color.WHITE);
+            etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+            etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            etiqueta.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 6, 10, 6));
+            return etiqueta;
+        });
+        encabezado.setPreferredSize(new java.awt.Dimension(encabezado.getPreferredSize().width, 38));
+    }//configurarEncabezadoHistorial
+
+    private void configurarColumnaEstatusHistorial(javax.swing.JTable tabla) {
+        tabla.getColumn("ESTATUS").setCellRenderer((t, valor, seleccionado, foco, fila, columna) -> {
+            String estatus = String.valueOf(valor).trim();
+            java.awt.Color colorTexto;
+            java.awt.Color colorFondo;
+            switch (estatus) {
+                case "FINALIZADO":
+                    colorTexto = COLOR_VERDE;
+                    colorFondo = COLOR_VERDE_CLARO;
+                    break;
+                case "PENDIENTE DE PAGO":
+                    colorTexto = COLOR_NARANJA;
+                    colorFondo = COLOR_NARANJA_CLARO;
+                    break;
+                case "PENDIENTE DE MERCANCIA":
+                    colorTexto = COLOR_AZUL;
+                    colorFondo = COLOR_AZUL_CLARO;
+                    break;
+                case "PENDIENTE PAGO Y MERCANCIA":
+                    colorTexto = COLOR_ROJO;
+                    colorFondo = COLOR_ROJO_CLARO;
+                    break;
+                default:
+                    colorTexto = COLOR_GRIS;
+                    colorFondo = COLOR_GRIS_CLARO;
+            }
+            return crearPastillaEstatus(estatus, colorTexto, colorFondo);
+        });
+    }//configurarColumnaEstatusHistorial
+
+    private static javax.swing.JComponent crearPastillaEstatus(String texto, java.awt.Color colorTexto, java.awt.Color colorFondo) {
+        javax.swing.JPanel pastilla = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 5, 2)) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(colorFondo);
+                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, getHeight(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        pastilla.setOpaque(false);
+        javax.swing.JLabel punto = new javax.swing.JLabel(iconoPuntoRelleno(colorTexto));
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel(texto);
+        etiqueta.setForeground(colorTexto);
+        etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
+        pastilla.add(punto);
+        pastilla.add(etiqueta);
+        return pastilla;
+    }//crearPastillaEstatus
+
+    private static javax.swing.Icon iconoPuntoRelleno(java.awt.Color color) {
+        return new VectorIcon(8, color, (g2, t) -> g2.fillOval(0, 0, t, t));
+    }
+
+    private void exportarHistorialExcel(java.util.List<Object[]> filas, String idProveedor) {
+        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
+        selector.setDialogTitle("Exportar historial a Excel");
+        String nombreSugerido = "HistorialCompras" + (idProveedor.isEmpty() ? "" : "_" + idProveedor) + ".xlsx";
+        selector.setSelectedFile(new File(System.getProperty("user.home") + "\\Desktop\\" + nombreSugerido));
+        selector.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Excel (*.xlsx)", "xlsx"));
+        if (selector.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        String ruta = selector.getSelectedFile().getAbsolutePath();
+        if (!ruta.toLowerCase(java.util.Locale.ROOT).endsWith(".xlsx")) {
+            ruta += ".xlsx";
+        }
+
+        String[] encabezados = {
+            "ID PROVEEDOR", "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
+            "PEND. X PAGAR", "PROD. X RECIBIR", "ESTATUS"
+        };
+        try (Workbook libro = new XSSFWorkbook()) {
+            Sheet hoja = libro.createSheet("Historial");
+            org.apache.poi.ss.usermodel.CellStyle estiloEncabezado = libro.createCellStyle();
+            org.apache.poi.ss.usermodel.Font fuenteEncabezado = libro.createFont();
+            fuenteEncabezado.setBold(true);
+            fuenteEncabezado.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
+            estiloEncabezado.setFont(fuenteEncabezado);
+            estiloEncabezado.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.BLUE.getIndex());
+            estiloEncabezado.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+
+            Row filaEncabezado = hoja.createRow(0);
+            for (int columna = 0; columna < encabezados.length; columna++) {
+                Cell celda = filaEncabezado.createCell(columna);
+                celda.setCellValue(encabezados[columna]);
+                celda.setCellStyle(estiloEncabezado);
+            }
+
+            int numeroFila = 1;
+            for (Object[] fila : filas) {
+                Row rowExcel = hoja.createRow(numeroFila++);
+                int[] indicesOrigen = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11};
+                for (int columna = 0; columna < indicesOrigen.length; columna++) {
+                    rowExcel.createCell(columna).setCellValue(String.valueOf(fila[indicesOrigen[columna]]));
+                }
+            }
+            for (int columna = 0; columna < encabezados.length; columna++) {
+                hoja.autoSizeColumn(columna);
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(ruta)) {
+                libro.write(fos);
+            }
+            JOptionPane.showMessageDialog(this, "Historial exportado correctamente a Excel.");
+        } catch (Exception ex) {
+            mostrarError("No se pudo exportar el historial a Excel.", ex);
+        }
+    }//exportarHistorialExcel
+
+    private void exportarHistorialPdf(java.util.List<Object[]> filas, String idProveedor) {
+        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
+        selector.setDialogTitle("Exportar historial a PDF");
+        String nombreSugerido = "HistorialCompras" + (idProveedor.isEmpty() ? "" : "_" + idProveedor) + ".pdf";
+        selector.setSelectedFile(new File(System.getProperty("user.home") + "\\Desktop\\" + nombreSugerido));
+        selector.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF (*.pdf)", "pdf"));
+        if (selector.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        String ruta = selector.getSelectedFile().getAbsolutePath();
+        if (!ruta.toLowerCase(java.util.Locale.ROOT).endsWith(".pdf")) {
+            ruta += ".pdf";
+        }
+
+        String[] encabezados = {
+            "ID PROV.", "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
+            "PEND. X PAGAR", "PROD. X RECIBIR", "ESTATUS"
+        };
+        try {
+            com.itextpdf.kernel.pdf.PdfWriter escritor = new com.itextpdf.kernel.pdf.PdfWriter(ruta);
+            com.itextpdf.kernel.pdf.PdfDocument documentoPdf = new com.itextpdf.kernel.pdf.PdfDocument(escritor);
+            com.itextpdf.layout.Document documento = new com.itextpdf.layout.Document(documentoPdf,
+                    com.itextpdf.kernel.geom.PageSize.A4.rotate());
+            documento.setMargins(24, 24, 24, 24);
+
+            com.itextpdf.kernel.font.PdfFont negrita = com.itextpdf.kernel.font.PdfFontFactory.createFont(
+                    com.itextpdf.io.font.constants.StandardFonts.HELVETICA_BOLD);
+            com.itextpdf.kernel.font.PdfFont normal = com.itextpdf.kernel.font.PdfFontFactory.createFont(
+                    com.itextpdf.io.font.constants.StandardFonts.HELVETICA);
+            com.itextpdf.kernel.colors.DeviceRgb azulPdf = new com.itextpdf.kernel.colors.DeviceRgb(31, 112, 184);
+
+            documento.add(new com.itextpdf.layout.element.Paragraph(
+                    "Historial de \u00d3rdenes de Compra" + (idProveedor.isEmpty() ? "" : " - " + idProveedor))
+                    .setFont(negrita).setFontSize(16).setFontColor(azulPdf));
+
+            com.itextpdf.layout.element.Table tablaPdf = new com.itextpdf.layout.element.Table(
+                    com.itextpdf.layout.properties.UnitValue.createPercentArray(encabezados.length)).useAllAvailableWidth();
+            for (String encabezado : encabezados) {
+                tablaPdf.addHeaderCell(new com.itextpdf.layout.element.Cell()
+                        .add(new com.itextpdf.layout.element.Paragraph(encabezado).setFont(negrita).setFontSize(8)
+                                .setFontColor(com.itextpdf.kernel.colors.ColorConstants.WHITE))
+                        .setBackgroundColor(azulPdf)
+                        .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
+            }
+            int[] indicesOrigen = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11};
+            for (Object[] fila : filas) {
+                for (int indice : indicesOrigen) {
+                    tablaPdf.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new com.itextpdf.layout.element.Paragraph(String.valueOf(fila[indice])).setFont(normal).setFontSize(8))
+                            .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
+                }
+            }
+            documento.add(tablaPdf);
+            documento.close();
+            JOptionPane.showMessageDialog(this, "Historial exportado correctamente a PDF.");
+        } catch (Exception ex) {
+            mostrarError("No se pudo exportar el historial a PDF.", ex);
+        }
+    }//exportarHistorialPdf
+
+    private void prepararBotonIcono(javax.swing.JButton boton, javax.swing.Icon icono) {
+        boton.setUI(new BotonPlanoUI());
+        boton.setText(null);
+        boton.setIcon(icono);
+        boton.setBackground(java.awt.Color.WHITE);
+        boton.setFocusPainted(false);
+        boton.setContentAreaFilled(false);
+        boton.setOpaque(false);
+        boton.setRolloverEnabled(true);
+        boton.setBorderPainted(true);
+        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                new BordeRedondeado(8, COLOR_BORDE_CAMPO, 1.2f),
+                javax.swing.BorderFactory.createEmptyBorder(6, 6, 6, 6)));
+        boton.setPreferredSize(new java.awt.Dimension(32, 32));
+        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+    }//prepararBotonIcono
+
+    private static TarjetaResumen crearTarjetaResumen(String titulo, String valorInicial,
+            javax.swing.Icon icono, java.awt.Color colorFondoIcono) {
+        RoundedPanel tarjeta = new RoundedPanel(12, COLOR_AZUL_PALIDO);
+        tarjeta.setLayout(new java.awt.BorderLayout(12, 0));
+        tarjeta.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                javax.swing.BorderFactory.createEmptyBorder(12, 16, 12, 16)));
+
+        tarjeta.add(crearInsigniaCircular(icono, colorFondoIcono, 42), java.awt.BorderLayout.WEST);
+
+        javax.swing.JPanel textos = new javax.swing.JPanel();
+        textos.setOpaque(false);
+        textos.setLayout(new javax.swing.BoxLayout(textos, javax.swing.BoxLayout.Y_AXIS));
+        javax.swing.JLabel etiquetaTitulo = new javax.swing.JLabel(titulo);
+        etiquetaTitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        etiquetaTitulo.setForeground(COLOR_TEXTO_GRIS);
+        javax.swing.JLabel etiquetaValor = new javax.swing.JLabel(valorInicial);
+        etiquetaValor.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+        etiquetaValor.setForeground(COLOR_AZUL_OSCURO);
+        textos.add(etiquetaTitulo);
+        textos.add(etiquetaValor);
+        tarjeta.add(textos, java.awt.BorderLayout.CENTER);
+        return new TarjetaResumen(tarjeta, etiquetaValor);
+    }//crearTarjetaResumen
+
+    private static javax.swing.JComponent crearInsigniaCircular(javax.swing.Icon icono, java.awt.Color colorFondo, int diametro) {
+        javax.swing.JLabel insignia = new javax.swing.JLabel(icono) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(colorFondo);
+                g2.fillOval(0, 0, getWidth() - 1, getHeight() - 1);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        insignia.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        insignia.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+        insignia.setPreferredSize(new java.awt.Dimension(diametro, diametro));
+        insignia.setOpaque(false);
+        return insignia;
+    }//crearInsigniaCircular
+
+    private static javax.swing.JComponent crearInsigniaCuadrada(javax.swing.Icon icono, java.awt.Color colorFondo, int tamano, int radio) {
+        javax.swing.JLabel insignia = new javax.swing.JLabel(icono) {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(colorFondo);
+                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radio, radio);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        insignia.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        insignia.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+        insignia.setPreferredSize(new java.awt.Dimension(tamano, tamano));
+        insignia.setOpaque(false);
+        return insignia;
+    }//crearInsigniaCuadrada
+
 
     private static String describirAlertaEntrega(String noOrden, long diasFaltantes, java.time.LocalDate limiteEntrega) {
         String fechaLimite = limiteEntrega.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
@@ -954,25 +2227,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         tabla.getColumnModel().getColumn(columnaDias).setCellRenderer(renderer);
     }//configurarAlertaDiasFaltantes
 
-    private void configurarOrdenamientoHistorial(javax.swing.JTable tabla, javax.swing.table.DefaultTableModel modelo) {
-        javax.swing.table.TableRowSorter<javax.swing.table.DefaultTableModel> sorter = new javax.swing.table.TableRowSorter<>(modelo);
-        java.util.Comparator<String> textoComparator = String.CASE_INSENSITIVE_ORDER;
-        java.util.Comparator<String> numeroComparator = java.util.Comparator.comparingDouble(this::parseNumeroOrdenable);
-        java.util.Comparator<String> fechaComparator = java.util.Comparator.comparing(this::parseFechaOrdenable);
-
-        sorter.setComparator(0, textoComparator);
-        sorter.setComparator(1, numeroComparator);
-        sorter.setComparator(2, fechaComparator);
-        sorter.setComparator(3, textoComparator);
-        sorter.setComparator(4, textoComparator);
-        sorter.setComparator(5, numeroComparator);
-        sorter.setComparator(6, numeroComparator);
-        sorter.setComparator(7, numeroComparator);
-        sorter.setComparator(8, numeroComparator);
-        sorter.setComparator(9, numeroComparator);
-        sorter.setComparator(10, textoComparator);
-        tabla.setRowSorter(sorter);
-    }//configurarOrdenamientoHistorial
 
     private double parseNumeroOrdenable(Object valor) {
         if (valor == null) {
@@ -1001,15 +2255,17 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//parseFechaOrdenable
 
     private void registrarAbono(javax.swing.JTable tabla) {
-        int filaSeleccionada = tabla.getSelectedRow();
-        if (filaSeleccionada < 0) {
+        int filaVista = tabla.getSelectedRow();
+        if (filaVista < 0) {
             JOptionPane.showMessageDialog(this, "Selecciona una orden de la tabla primero.");
             return;
         }
 
-        String noOrden = String.valueOf(tabla.getValueAt(filaSeleccionada, 1)).trim();
-        String totalTexto = String.valueOf(tabla.getValueAt(filaSeleccionada, 5)).trim();
-        String abonadoTexto = String.valueOf(tabla.getValueAt(filaSeleccionada, 6)).trim();
+        int filaModelo = tabla.convertRowIndexToModel(filaVista);
+        javax.swing.table.TableModel modelo = tabla.getModel();
+        String noOrden = String.valueOf(modelo.getValueAt(filaModelo, 2)).trim();
+        String totalTexto = String.valueOf(modelo.getValueAt(filaModelo, 6)).trim();
+        String abonadoTexto = String.valueOf(modelo.getValueAt(filaModelo, 7)).trim();
 
         double totalNumero = parseMonto(totalTexto);
         double abonadoActual = parseMonto(abonadoTexto);
@@ -1098,13 +2354,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
 
         JOptionPane.showMessageDialog(this, "Abono registrado correctamente.");
-        int filaModelo = tabla.convertRowIndexToModel(filaSeleccionada);
-        javax.swing.table.TableModel modelo = tabla.getModel();
         String nuevoAbonadoTexto = String.format("%s %,.2f", simbolo, nuevoAbonado);
-        modelo.setValueAt(nuevoAbonadoTexto, filaModelo, 6);
-        modelo.setValueAt(String.format("%s %,.2f", simbolo, Math.max(0, totalNumero - nuevoAbonado)), filaModelo, 7);
+        modelo.setValueAt(nuevoAbonadoTexto, filaModelo, 7);
+        modelo.setValueAt(String.format("%s %,.2f", simbolo, Math.max(0, totalNumero - nuevoAbonado)), filaModelo, 8);
         modelo.setValueAt(calcularEstatusOrden(totalTexto, nuevoAbonadoTexto,
-            obtenerEstadoRecepcionOrden(noOrden)), filaModelo, 10);
+            obtenerEstadoRecepcionOrden(noOrden)), filaModelo, 11);
         tabla.repaint();
         PRINCIPAL.actualizarAlarmasEnTiempoReal();
     }//registrarAbono
@@ -1139,25 +2393,41 @@ public class PROVEEDORES extends javax.swing.JFrame {
             }
         }
 
+        String textoNormalizado = texto.toString()
+                .replace('\u00A0', ' ')
+                .replaceAll("\\s+", " ");
         java.util.regex.Pattern importeEtiquetado = java.util.regex.Pattern.compile(
-                "(?i)(?:importe|monto|total|cantidad)(?:\\s+(?:pagad[oa]|de\\s+pago))?\\s*[:$]?\\s*"
-                + "(?:MXN|M\\.?N\\.?)?\\s*\\$?\\s*([0-9][0-9,.]*[0-9]|[0-9])");
-        java.util.regex.Matcher coincidencia = importeEtiquetado.matcher(texto);
+                "(?i)(?:importe|monto|total|cantidad)(?:\\s+en\\s+texto)?"
+                + "(?:\\s+(?:pagad[oa]|de\\s+pago|a\\s+pagar))?"
+                + "\\s*[:=]?\\s*(?:MXN|M\\.?N\\.?)?\\s*\\$?\\s*"
+                + "([0-9][0-9.,\\s]*[0-9]|[0-9])");
+        java.util.regex.Matcher coincidencia = importeEtiquetado.matcher(textoNormalizado);
         while (coincidencia.find()) {
             double importe = parseMontoDocumento(coincidencia.group(1));
-            if (importe > 0 && importe <= pendiente + 0.001) {
+            if (importe > 0) {
                 return importe;
             }
         }
 
         java.util.regex.Matcher importeMoneda = java.util.regex.Pattern
-                .compile("\\$\\s*([0-9][0-9,.]*[0-9]|[0-9])")
-                .matcher(texto);
+                .compile("(?i)(?:MXN|M\\.?N\\.?)?\\s*\\$\\s*([0-9][0-9.,\\s]*[0-9]|[0-9])")
+                .matcher(textoNormalizado);
         double mejorImporte = 0;
         while (importeMoneda.find()) {
             double importe = parseMontoDocumento(importeMoneda.group(1));
             if (importe > mejorImporte && importe <= pendiente + 0.001) {
                 mejorImporte = importe;
+            }
+        }
+        if (mejorImporte <= 0) {
+            java.util.regex.Matcher importeDecimal = java.util.regex.Pattern
+                    .compile("(?<![\\d])([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{2})|[0-9]+[.,][0-9]{2})(?![\\d])")
+                    .matcher(textoNormalizado);
+            while (importeDecimal.find()) {
+                double importe = parseMontoDocumento(importeDecimal.group(1));
+                if (importe > mejorImporte && importe <= pendiente + 0.001) {
+                    mejorImporte = importe;
+                }
             }
         }
         if (mejorImporte <= 0) {
@@ -1259,13 +2529,14 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
                 javax.swing.table.TableModel modelo = tabla.getModel();
                 for (int filaModelo = 0; filaModelo < modelo.getRowCount(); filaModelo++) {
-                    if (noOrden.equalsIgnoreCase(String.valueOf(modelo.getValueAt(filaModelo, 1)).trim())) {
-                        modelo.setValueAt(abonado, filaModelo, 6);
-                        modelo.setValueAt(calcularPendientePago(total, abonado), filaModelo, 7);
-                        modelo.setValueAt(diasFaltantesTexto, filaModelo, 8);
-                        modelo.setValueAt(formatearCantidadInventario(
-                            obtenerProductosPendientesOrden(noOrden)), filaModelo, 9);
-                        modelo.setValueAt(calcularEstatusOrden(total, abonado, estadoRecepcion), filaModelo, 10);
+                    if (noOrden.equalsIgnoreCase(String.valueOf(modelo.getValueAt(filaModelo, 2)).trim())) {
+                        double cantidadPendiente = "SI".equalsIgnoreCase(estadoRecepcion)
+                                ? 0.0 : obtenerProductosPendientesOrden(noOrden);
+                        modelo.setValueAt(abonado, filaModelo, 7);
+                        modelo.setValueAt(calcularPendientePago(total, abonado), filaModelo, 8);
+                        modelo.setValueAt(diasFaltantesTexto, filaModelo, 9);
+                        modelo.setValueAt(formatearCantidadInventario(cantidadPendiente), filaModelo, 10);
+                        modelo.setValueAt(calcularEstatusOrden(total, abonado, estadoRecepcion), filaModelo, 11);
                         tabla.repaint();
                         return;
                     }
@@ -1278,7 +2549,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//actualizarFilaHistorial
 
     private void configurarColumnaNoOrdenComoEnlace(javax.swing.JTable tabla) {
-        final int columnaNoOrden = 1;
+        final int columnaNoOrden = 2;
         javax.swing.table.DefaultTableCellRenderer rendererEnlace = new javax.swing.table.DefaultTableCellRenderer() {
             @Override
             public java.awt.Component getTableCellRendererComponent(javax.swing.JTable t, Object valor,
@@ -1933,30 +3204,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//ajustarAnchoColumnas
 
-    private void ajustarAnchoHistorial(javax.swing.JTable tabla, int anchoDisponible) {
-        javax.swing.table.TableColumnModel columnas = tabla.getColumnModel();
-        int ultimaColumna = columnas.getColumnCount() - 1;
-        int anchoEstatus = columnas.getColumn(ultimaColumna).getPreferredWidth();
-        int anchoOtrasColumnas = 0;
-
-        for (int columna = 0; columna < ultimaColumna; columna++) {
-            anchoOtrasColumnas += columnas.getColumn(columna).getPreferredWidth();
-        }
-
-        double factor = Math.min(1.0, (double) (anchoDisponible - anchoEstatus) / anchoOtrasColumnas);
-        for (int columna = 0; columna < ultimaColumna; columna++) {
-            javax.swing.table.TableColumn tableColumn = columnas.getColumn(columna);
-            int anchoEncabezado = tabla.getTableHeader().getDefaultRenderer()
-                    .getTableCellRendererComponent(tabla, tableColumn.getHeaderValue(), false, false, 0, columna)
-                    .getPreferredSize().width + 12;
-            int anchoAjustado = Math.max(anchoEncabezado,
-                    (int) Math.floor(tableColumn.getPreferredWidth() * factor));
-            tableColumn.setPreferredWidth(anchoAjustado);
-            tableColumn.setWidth(anchoAjustado);
-        }
-        columnas.getColumn(ultimaColumna).setWidth(anchoEstatus);
-    }//ajustarAnchoHistorial
-
     private String calcularPendientePago(String total, String abonado) {
         double totalNumero = parseMonto(total);
         double abonadoNumero = parseMonto(abonado);
@@ -2286,23 +3533,21 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
     private void actualizarIndicadorEstado(String estado) {
         String estadoNormalizado = normalizarEstado(estado);
-        jButton3.setBackground(java.awt.Color.WHITE);
         if ("1".equals(estadoNormalizado)) {
-            jButton3.setText("DESACTIVAR (ACTIVO)");
-            jButton3.setForeground(new java.awt.Color(0, 120, 0));
+            prepararBoton(jButton3, "DESACTIVAR (ACTIVO)", iconoPower(COLOR_VERDE),
+                    java.awt.Color.WHITE, COLOR_VERDE, COLOR_VERDE);
             jButton3.setToolTipText("Estado actual: ACTIVO (1)");
             return;
         }
 
-        jButton3.setText("ACTIVAR (INACTIVO)");
-        jButton3.setForeground(new java.awt.Color(180, 0, 0));
+        prepararBoton(jButton3, "ACTIVAR (INACTIVO)", iconoPower(COLOR_ROJO),
+                java.awt.Color.WHITE, COLOR_ROJO, COLOR_ROJO);
         jButton3.setToolTipText("Estado actual: INACTIVO (0)");
     }//actualizarIndicadorEstado
 
     private void restablecerIndicadorEstado() {
-        jButton3.setText("ACTIVAR/DESACTIVAR");
-        jButton3.setBackground(java.awt.Color.WHITE);
-        jButton3.setForeground(new java.awt.Color(0, 0, 0));
+        prepararBoton(jButton3, "ACTIVAR/DESACTIVAR", iconoPower(COLOR_GRIS),
+                java.awt.Color.WHITE, COLOR_GRIS, COLOR_GRIS);
         jButton3.setToolTipText("Estado actual: sin seleccionar");
     }//restablecerIndicadorEstado
 

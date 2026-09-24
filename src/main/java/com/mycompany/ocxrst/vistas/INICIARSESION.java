@@ -2,9 +2,13 @@
 package com.mycompany.ocxrst.vistas;
 
 import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.config.AppConfig;
+import java.awt.Image;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
+import javax.swing.ImageIcon;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 /**
@@ -24,12 +28,29 @@ public class INICIARSESION extends javax.swing.JFrame {
      * Creates new form PRINCIPAL
      */
     public INICIARSESION() {
+        EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
-        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoAjustado("/com/mycompany/ocxrst/IMAGENES/Logo PDF.png", 260, 120));
+        LOGO.setIcon(cargarImagenEscalada("/com/mycompany/ocxrst/IMAGENES/FONDO LOGIN.png", 550, 410));
+        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoAjustado("/com/mycompany/ocxrst/IMAGENES/LOGO LOGIN.png", 170, 70));
         IconoVentanaUtil.aplicar(this);
         setLocationRelativeTo(null); 
         java.awt.EventQueue.invokeLater(() -> jTextField1.requestFocusInWindow());
     
+    }
+
+    /**
+     * Carga una imagen desde el classpath y la escala exactamente al tamaño
+     * indicado (sin conservar relación de aspecto), útil para fondos que
+     * deben cubrir por completo un área determinada.
+     */
+    private static ImageIcon cargarImagenEscalada(String rutaClasspath, int ancho, int alto) {
+        URL url = INICIARSESION.class.getResource(rutaClasspath);
+        if (url == null) {
+            return IconoVentanaUtil.obtenerIconoSeguro(rutaClasspath);
+        }
+        Image imagenOriginal = new ImageIcon(url).getImage();
+        Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
+        return new ImageIcon(imagenEscalada);
     }
 
     /**
@@ -48,55 +69,99 @@ public class INICIARSESION extends javax.swing.JFrame {
         salir = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         LOGO = new javax.swing.JLabel();
+        lblBienvenido = new javax.swing.JLabel();
+        lblSubtitulo = new javax.swing.JLabel();
+        lblTagline = new javax.swing.JLabel();
+        lblFooter = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setUndecorated(true);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        jPasswordField1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-        jPasswordField1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        jPasswordField1.addActionListener(this::jPasswordField1ActionPerformed);
-        getContentPane().add(jPasswordField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 240, 190, -1));
+        java.awt.Color colorTitulo = new java.awt.Color(13, 42, 84);
+        java.awt.Color colorSubtitulo = new java.awt.Color(110, 122, 133);
+        java.awt.Color colorEtiquetaCampo = new java.awt.Color(90, 105, 120);
+        java.awt.Color colorBordeCampo = new java.awt.Color(200, 210, 220);
+        java.awt.Color colorBoton = new java.awt.Color(8, 84, 132);
+        javax.swing.border.Border bordeCampo = javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(colorBordeCampo, 1),
+                javax.swing.BorderFactory.createEmptyBorder(0, 14, 0, 14));
+
+        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF.png")); // NOI18N
+        jLabel1.setText("");
+        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(18, 55, 170, 70));
+
+        lblTagline.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD | java.awt.Font.ITALIC, 10));
+        lblTagline.setForeground(new java.awt.Color(205, 226, 238));
+        lblTagline.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblTagline.setText("CONECTANDO PORTUNIDADES");
+        getContentPane().add(lblTagline, new org.netbeans.lib.awtextra.AbsoluteConstraints(18, 132, 170, 18));
+
+        lblBienvenido.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
+        lblBienvenido.setForeground(colorTitulo);
+        lblBienvenido.setText("Bienvenido");
+        getContentPane().add(lblBienvenido, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 42, 290, 40));
+
+        lblSubtitulo.setFont(new java.awt.Font("Segoe UI", 0, 13));
+        lblSubtitulo.setForeground(colorSubtitulo);
+        lblSubtitulo.setText("Accede a tu cuenta para continuar");
+        getContentPane().add(lblSubtitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 85, 300, 20));
+
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
+        jLabel4.setForeground(colorEtiquetaCampo);
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabel4.setText("USUARIO");
+        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 125, 200, 16));
 
         jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jTextField1.setAutoscrolls(false);
-        jTextField1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jTextField1.setBorder(bordeCampo);
+        jTextField1.setBackground(new java.awt.Color(255, 255, 255));
         jTextField1.setDoubleBuffered(true);
         jTextField1.addActionListener(this::jTextField1ActionPerformed);
-        getContentPane().add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 200, 190, -1));
+        getContentPane().add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 143, 290, 36));
 
-        jButton1.setBackground(new java.awt.Color(0, 95, 131));
+        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
+        jLabel3.setForeground(colorEtiquetaCampo);
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        jLabel3.setText("CONTRASEÑA");
+        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 190, 200, 16));
+
+        jPasswordField1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jPasswordField1.setBorder(bordeCampo);
+        jPasswordField1.setBackground(new java.awt.Color(255, 255, 255));
+        jPasswordField1.addActionListener(this::jPasswordField1ActionPerformed);
+        getContentPane().add(jPasswordField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 208, 290, 36));
+
+        jButton1.setBackground(colorBoton);
         jButton1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jButton1.setForeground(new java.awt.Color(255, 255, 255));
-        jButton1.setText("INICIA SESIÓN");
-        jButton1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jButton1.setText("INICIA SESIÓN   \u2192");
+        jButton1.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        jButton1.setFocusPainted(false);
+        jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButton1.addActionListener(this::jButton1ActionPerformed);
-        getContentPane().add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 290, 120, 30));
+        getContentPane().add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 262, 290, 42));
 
-        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel4.setForeground(new java.awt.Color(0, 95, 131));
-        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel4.setText("USUARIO:");
-        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(155, 200, 140, 20));
+        lblFooter.setFont(new java.awt.Font("Segoe UI", 1, 9)); // NOI18N
+        lblFooter.setForeground(new java.awt.Color(150, 160, 170));
+        lblFooter.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblFooter.setText("TELECOMUNICACIONES PARA UN MEJOR FUTURO");
+        getContentPane().add(lblFooter, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 322, 290, 16));
 
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        jLabel3.setForeground(new java.awt.Color(0, 95, 131));
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        jLabel3.setText("CONTRASEÑA:");
-        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(155, 240, 140, 20));
-
-        salir.setText("X");
-        salir.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        salir.setText("\u00D7");
+        salir.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        salir.setForeground(new java.awt.Color(60, 70, 80));
+        salir.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        salir.setContentAreaFilled(false);
+        salir.setFocusPainted(false);
+        salir.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         salir.addActionListener(this::salirActionPerformed);
-        getContentPane().add(salir, new org.netbeans.lib.awtextra.AbsoluteConstraints(510, 10, 20, 20));
+        getContentPane().add(salir, new org.netbeans.lib.awtextra.AbsoluteConstraints(514, 12, 24, 24));
 
-        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF.png")); // NOI18N
-        jLabel1.setText("jLabel1");
-        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 50, 260, 120));
-
-        LOGO.setBackground(new java.awt.Color(0, 102, 102));
+        LOGO.setBackground(new java.awt.Color(255, 255, 255));
         LOGO.setHorizontalAlignment(javax.swing.SwingConstants.TRAILING);
-        LOGO.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/COPA.jpeg")); // NOI18N
+        LOGO.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/FONDO LOGIN.png")); // NOI18N
         LOGO.setLabelFor(LOGO);
         LOGO.setDoubleBuffered(true);
         LOGO.setFocusCycleRoot(true);
@@ -121,7 +186,7 @@ public class INICIARSESION extends javax.swing.JFrame {
             String nombreMostrado = nombreUsuarioActual == null || nombreUsuarioActual.isBlank()
                     ? usuario
                     : nombreUsuarioActual;
-            javax.swing.JOptionPane.showMessageDialog(this, "Bienvenido " + nombreMostrado);
+            javax.swing.JOptionPane.showMessageDialog(this, "Bienvenido " + nombreMostrado, "RST", javax.swing.JOptionPane.INFORMATION_MESSAGE);
 
             PRINCIPAL.reiniciarAlertaEntregasSesion();
             PRINCIPAL ventana = new PRINCIPAL();
@@ -129,7 +194,7 @@ public class INICIARSESION extends javax.swing.JFrame {
 
             this.dispose();
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos");
+            javax.swing.JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos", "RST", javax.swing.JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -166,6 +231,12 @@ public class INICIARSESION extends javax.swing.JFrame {
         }
         //</editor-fold>
 
+        // Mantiene el mensaje blanco y la barra de botones gris claro, como las alertas del sistema.
+        javax.swing.UIManager.put("OptionPane.background", java.awt.Color.WHITE);
+        javax.swing.UIManager.put("OptionPane.messageAreaBackground", java.awt.Color.WHITE);
+        javax.swing.UIManager.put("OptionPane.buttonAreaBackground", new java.awt.Color(238, 238, 238));
+        javax.swing.UIManager.put("Panel.background", java.awt.Color.WHITE);
+
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new INICIARSESION().setVisible(true));
     }
@@ -179,6 +250,10 @@ public class INICIARSESION extends javax.swing.JFrame {
     private javax.swing.JPasswordField jPasswordField1;
     private javax.swing.JTextField jTextField1;
     private javax.swing.JButton salir;
+    private javax.swing.JLabel lblBienvenido;
+    private javax.swing.JLabel lblSubtitulo;
+    private javax.swing.JLabel lblTagline;
+    private javax.swing.JLabel lblFooter;
     // End of variables declaration//GEN-END:variables
 
 

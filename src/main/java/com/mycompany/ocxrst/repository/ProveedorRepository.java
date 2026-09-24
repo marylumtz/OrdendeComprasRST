@@ -115,4 +115,62 @@ public class ProveedorRepository {
         Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
         celda.setCellValue(valor == null ? "" : valor.trim());
     }
+
+    /**
+     * Devuelve los proveedores activos como pares {ID_PROVEEDOR, NOMBRE_RAZON_SOCIAL},
+     * útiles para poblar combos de selección (por ejemplo, al asociar proveedores a un producto).
+     */
+    public java.util.List<String[]> obtenerProveedoresActivos() {
+        java.util.List<String[]> resultado = new java.util.ArrayList<>();
+        asegurarArchivoProveedores();
+        File archivo = obtenerArchivoProveedores();
+        try (Workbook libro = cargarLibro(archivo)) {
+            Sheet hoja = obtenerHojaProveedores(libro);
+            int ultimaFila = hoja.getLastRowNum();
+            for (int numeroFila = 1; numeroFila <= ultimaFila; numeroFila++) {
+                Row fila = hoja.getRow(numeroFila);
+                if (fila == null) {
+                    continue;
+                }
+                String id = leerCelda(fila, 0);
+                if (id.isEmpty()) {
+                    continue;
+                }
+                String estado = com.mycompany.ocxrst.service.ProveedorService.normalizarEstado(leerCelda(fila, 11));
+                if (!"1".equals(estado)) {
+                    continue;
+                }
+                resultado.add(new String[]{id, leerCelda(fila, 1)});
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException("No se pudieron leer los proveedores.", ex);
+        }
+        return resultado;
+    }
+
+    /**
+     * Devuelve el nombre/razón social de un proveedor a partir de su ID, o el
+     * propio ID si no se encuentra (para no perder trazabilidad en la UI).
+     */
+    public String obtenerNombrePorId(String idProveedor) {
+        if (idProveedor == null || idProveedor.isBlank()) {
+            return "";
+        }
+        asegurarArchivoProveedores();
+        File archivo = obtenerArchivoProveedores();
+        try (Workbook libro = cargarLibro(archivo)) {
+            Sheet hoja = obtenerHojaProveedores(libro);
+            int ultimaFila = hoja.getLastRowNum();
+            for (int numeroFila = 1; numeroFila <= ultimaFila; numeroFila++) {
+                Row fila = hoja.getRow(numeroFila);
+                if (fila != null && idProveedor.equalsIgnoreCase(leerCelda(fila, 0))) {
+                    String nombre = leerCelda(fila, 1);
+                    return nombre.isEmpty() ? idProveedor : nombre;
+                }
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException("No se pudo consultar el nombre del proveedor.", ex);
+        }
+        return idProveedor;
+    }
 }

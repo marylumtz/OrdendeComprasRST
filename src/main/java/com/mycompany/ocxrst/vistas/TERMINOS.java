@@ -5,6 +5,7 @@
 package com.mycompany.ocxrst.vistas;
 
 import com.mycompany.ocxrst.IconoVentanaUtil;
+import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.config.AppConfig;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +23,7 @@ public class TERMINOS extends javax.swing.JFrame {
      * Creates new form PRINCIPAL
      */
     public TERMINOS() {
+        EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
         IconoVentanaUtil.aplicar(this);
         setLocationRelativeTo(null);

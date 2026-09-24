@@ -15,7 +15,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class InventarioRepository {
 
     public static final String[] ENCABEZADOS = {
-        "CODIGO", "DESCRIPCION", "UNIDAD", "PRECIO_UNITARIO", "CANTIDAD", "ACTIVO"
+        "CODIGO", "DESCRIPCION", "UNIDAD", "PRECIO_UNITARIO", "CANTIDAD", "ACTIVO",
+        "CATEGORIA", "MARCA", "STOCK_MINIMO", "OBSERVACIONES", "IMAGEN_RUTA"
     };
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
 

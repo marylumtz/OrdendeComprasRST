@@ -17,11 +17,13 @@ import java.nio.file.Path;
  */
 public class TERMINOS extends javax.swing.JFrame {
     
+    // =====================================================================
+    // Configuracion y carga de terminos y condiciones
+    // =====================================================================
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(TERMINOS.class.getName());
 
-    /**
-     * Creates new form PRINCIPAL
-     */
+    /** Inicializa la ventana y carga los terminos desde archivo o recursos. */
     public TERMINOS() {
         EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
@@ -31,6 +33,7 @@ public class TERMINOS extends javax.swing.JFrame {
         jButton2.addActionListener(this::jButton2ActionPerformed);
     }
     
+    /** Lee el contenido y lo muestra en el panel de texto. */
     private void cargarTerminos() {
         File archivo = obtenerArchivoTerminos();
         try (java.io.InputStream is = archivo.exists() ? new java.io.FileInputStream(archivo)
@@ -70,6 +73,10 @@ public class TERMINOS extends javax.swing.JFrame {
                 .toFile();
         return fallback;
     }
+
+    // =====================================================================
+    // Componentes generados por NetBeans: no modificar manualmente
+    // =====================================================================
 
     /**
      * This method is called from within the constructor to initialize the form.

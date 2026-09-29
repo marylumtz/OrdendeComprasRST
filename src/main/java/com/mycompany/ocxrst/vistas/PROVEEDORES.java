@@ -26,7 +26,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * @author Maria Luisa Martinez
  */
 public class PROVEEDORES extends javax.swing.JFrame {
-    
+    // =====================================================================
+    // Configuracion general y estado de la ventana
+    // =====================================================================
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(PROVEEDORES.class.getName());
     private static final String ORDENES_FILE_ABSOLUTE = AppConfig.registroCFile().getAbsolutePath();
     private static final String ORDENES_DETALLE_FILE_ABSOLUTE = AppConfig.intOrdenCompraFile().getAbsolutePath();
@@ -53,6 +55,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private final javax.swing.JPopupMenu popupProveedores = new javax.swing.JPopupMenu();
     private boolean seleccionandoProveedor = false;
 
+    // =====================================================================
+    // Alertas y metricas mostradas en el modulo principal
+    // =====================================================================
+
+    /** Muestra alertas de entregas y pagos proximos y permite abrir el historial. */
     public static void mostrarAlertaEntregasPendientes(java.awt.Component parent) {
         java.util.List<String> alertasEntrega = obtenerAlertasEntregasPendientes();
         java.util.List<String> alertasPago = obtenerAlertasPagosPendientes();
@@ -269,9 +276,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//parseMontoAlerta
 
-    /**
-     * Creates new form PRINCIPAL
-     */
+    // =====================================================================
+    // Construccion y apariencia de la ventana
+    // =====================================================================
+
+    /** Inicializa componentes, estilos, archivos y eventos de la ventana. */
     public PROVEEDORES() {
         EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
@@ -286,6 +295,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         configurarEventos();
     }
 
+    // Paleta compartida por el formulario, dialogos, tablas e iconos.
     private static final java.awt.Color COLOR_AZUL_OSCURO = new java.awt.Color(28, 82, 132);
     private static final java.awt.Color COLOR_AZUL = new java.awt.Color(31, 112, 184);
     private static final java.awt.Color COLOR_FONDO = new java.awt.Color(237, 245, 253);
@@ -476,6 +486,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 Math.max(0, Math.min(255, g)),
                 Math.max(0, Math.min(255, b)));
     }
+
+    // =====================================================================
+    // Componentes visuales reutilizables
+    // =====================================================================
 
     /**
      * ButtonUI plano que sustituye el bisel nativo de Windows (que generaba un
@@ -856,6 +870,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
         });
     }
 
+    // =====================================================================
+    // Componentes generados por NetBeans: no modificar manualmente
+    // =====================================================================
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -1107,6 +1125,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField6;
     // End of variables declaration//GEN-END:variables
 
+    // =====================================================================
+    // Eventos y operaciones basicas de proveedores
+    // =====================================================================
+
     private void configurarEventos() {
         jButton1.addActionListener(e -> crearProveedor());
         jButton2.addActionListener(e -> editarProveedor());
@@ -1122,6 +1144,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//asegurarArchivoProveedores
 
+    /** Valida y agrega un proveedor nuevo al archivo de proveedores. */
     private void crearProveedor() {
         if (!validarCamposBase()) {
             return;
@@ -1167,6 +1190,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//crearProveedor
 
+    /** Valida y guarda los cambios del proveedor actualmente seleccionado. */
     private void editarProveedor() {
         if (!validarCamposBase()) {
             return;
@@ -1223,6 +1247,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//editarProveedor
 
+    /** Cambia entre los estados activo (1) e inactivo (0) del proveedor. */
     private void alternarEstadoProveedor() {
         try {
             File archivo = obtenerArchivoProveedores();
@@ -1258,6 +1283,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//alternarEstadoProveedor
 
+    /** Busca un proveedor por nombre o RFC y carga sus datos en el formulario. */
     private void buscarProveedor() {
         String nombre = jTextField1.getText().trim();
         String rfc = jTextField2.getText().trim();
@@ -1308,6 +1334,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
             mostrarError("No se pudo buscar el proveedor.", ex);
         }
     }//buscarProveedor
+
+    // =====================================================================
+    // Historial de ordenes de compra
+    // =====================================================================
 
     private static final class ResultadoHistorial {
         final java.util.List<Object[]> filas;
@@ -1890,6 +1920,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
         dialogo.setVisible(true);
     }//mostrarHistorialCompras
 
+    // =====================================================================
+    // Historial y registro de recepciones de mercancia
+    // =====================================================================
+
     private void mostrarHistorialRecepciones(String ordenFiltro) {
         java.util.Set<String> ordenes = new java.util.LinkedHashSet<>();
         if (ordenFiltro != null && !ordenFiltro.isBlank()) {
@@ -1898,6 +1932,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         mostrarHistorialRecepciones(ordenes);
     }//mostrarHistorialRecepciones
 
+    /** Construye el dialogo con los registros de recepcion filtrados. */
     private void mostrarHistorialRecepciones(java.util.Set<String> ordenesFiltro) {
         java.util.List<String[]> registros = cargarRegistrosRecepcion(ordenesFiltro);
         String[] columnas = {
@@ -3359,6 +3394,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
         dialogo.setVisible(true);
     }//mostrarDetalleOrden
 
+    // =====================================================================
+    // Incidencias y devoluciones asociadas a una orden
+    // =====================================================================
+
     private void mostrarFormularioIncidencia(String noOrden, java.util.Map<String, String> datos,
             javax.swing.table.DefaultTableModel modeloProductos,
             javax.swing.table.DefaultTableModel modeloIncidencias,
@@ -3856,6 +3895,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
         mapaTeclas.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_TAB, 0), accionAvanzar);
         tabla.getActionMap().put(accionAvanzar, avanzarRenglon);
     }//configurarNavegacionRecepcion
+
+    // =====================================================================
+    // Persistencia de recepciones e inventario
+    // =====================================================================
 
     private TarjetaResumen crearTarjetaRecepcion(String titulo, String valor,
             java.awt.Color color, javax.swing.Icon icono) {
@@ -4361,6 +4404,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
             modeloColumnas.getColumn(columna).setPreferredWidth(anchoAjustado);
         }
     }//ajustarAnchoColumnasIncidencias
+
+    // =====================================================================
+    // Utilidades de lectura, validacion y escritura de archivos Excel
+    // =====================================================================
 
     private String calcularPendientePago(String total, String abonado) {
         double totalNumero = parseMonto(total);

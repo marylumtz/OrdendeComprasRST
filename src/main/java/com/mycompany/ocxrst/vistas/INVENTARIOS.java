@@ -26,6 +26,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 public class INVENTARIOS extends javax.swing.JFrame {
 
+    // =====================================================================
+    // Estado, repositorios y configuracion del inventario
+    // =====================================================================
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(INVENTARIOS.class.getName());
     private final InventarioRepository inventarioRepository = new InventarioRepository();
     private final ProveedorRepository proveedorRepository = new ProveedorRepository();
@@ -85,9 +89,11 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private javax.swing.JTable tablaProveedoresProducto;
     private javax.swing.table.DefaultTableModel modeloProveedoresProducto;
 
-    /**
-     * Creates new form INVENTARIOS
-     */
+    // =====================================================================
+    // Construccion y componentes del formulario
+    // =====================================================================
+
+    /** Inicializa la pantalla, archivos, eventos y autocompletado. */
     public INVENTARIOS() {
         EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
@@ -138,6 +144,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
     }
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {
+        // Regresa al menu principal.
         PRINCIPAL ventana = new PRINCIPAL();
         ventana.setVisible(true);
         this.dispose();
@@ -160,6 +167,10 @@ public class INVENTARIOS extends javax.swing.JFrame {
 
         java.awt.EventQueue.invokeLater(() -> new INVENTARIOS().setVisible(true));
     }
+
+    // =====================================================================
+    // Diseño visual y eventos del inventario
+    // =====================================================================
 
     private void configurarEventos() {
         jButton3.addActionListener(e -> alternarEstadoProducto());
@@ -759,6 +770,10 @@ public class INVENTARIOS extends javax.swing.JFrame {
     }//mostrarDialogoProveedor
 
     // ===================== Persistencia del producto =====================
+    // =====================================================================
+    // Operaciones de productos y proveedores
+    // =====================================================================
+
     private void asegurarArchivoInventarios() {
         try {
             inventarioRepository.asegurarArchivoInventarios();
@@ -884,6 +899,10 @@ public class INVENTARIOS extends javax.swing.JFrame {
             }
         });
     }//configurarAutocompletadoCodigo
+
+    // =====================================================================
+    // Autocompletado, busqueda y persistencia en Excel
+    // =====================================================================
 
     private void cargarCacheProductos() {
         cacheProductos.clear();

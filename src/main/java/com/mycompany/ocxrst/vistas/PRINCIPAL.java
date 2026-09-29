@@ -6,6 +6,10 @@ import com.mycompany.ocxrst.EstiloAplicacion;
 
 public class PRINCIPAL extends javax.swing.JFrame {
 
+    // =====================================================================
+    // Estado de la sesion y notificaciones
+    // =====================================================================
+
     private static boolean alertaEntregasMostradaEnSesion = false;
     private final java.util.Map<String, javax.swing.JLabel> etiquetasValorIndicadores = new java.util.HashMap<>();
     private boolean notificacionesEnHover;
@@ -24,6 +28,10 @@ public class PRINCIPAL extends javax.swing.JFrame {
         setLocationRelativeTo(null); 
         mostrarAlertaEntregasUnaVezPorSesion();
     }
+
+    // =====================================================================
+    // Menu de usuario y alertas
+    // =====================================================================
 
     private void configurarMenuSesion() {
         menuSesion = new javax.swing.JPopupMenu();
@@ -98,6 +106,10 @@ public class PRINCIPAL extends javax.swing.JFrame {
                 : new java.awt.Color(0, 95, 131));
         jButtonNotificaciones.setForeground(java.awt.Color.WHITE);
     }
+
+    // =====================================================================
+    // Componentes y diseño de la pantalla principal
+    // =====================================================================
 
     private void initComponents() {
         jPanel1 = crearPanelConFondo();
@@ -248,6 +260,10 @@ public class PRINCIPAL extends javax.swing.JFrame {
         getContentPane().setLayout(new java.awt.BorderLayout());
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
     }
+
+    // =====================================================================
+    // Indicadores, reloj y navegacion
+    // =====================================================================
 
     private void iniciarReloj() {
         actualizarFechaHora();

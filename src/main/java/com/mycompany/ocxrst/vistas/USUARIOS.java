@@ -20,12 +20,14 @@ import org.apache.poi.ss.usermodel.Workbook;
  */
 public class USUARIOS extends javax.swing.JFrame {
 
+    // =====================================================================
+    // Repositorio y configuracion de usuarios
+    // =====================================================================
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(USUARIOS.class.getName());
     private final UsuarioRepository usuarioRepository = new UsuarioRepository();
 
-    /**
-     * Creates new form PRINCIPAL
-     */
+    /** Inicializa el formulario y prepara el archivo de usuarios. */
     public USUARIOS() {
         EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
@@ -33,6 +35,10 @@ public class USUARIOS extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         asegurarArchivoUsuarios();
     }
+
+    // =====================================================================
+    // Componentes generados por NetBeans: no modificar manualmente
+    // =====================================================================
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -251,6 +257,10 @@ public class USUARIOS extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField6;
     // End of variables declaration//GEN-END:variables
+
+    // =====================================================================
+    // Operaciones CRUD y persistencia de usuarios
+    // =====================================================================
 
     private void asegurarArchivoUsuarios() {
         try {

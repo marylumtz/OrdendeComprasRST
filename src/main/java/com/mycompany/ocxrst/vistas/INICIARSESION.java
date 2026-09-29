@@ -17,6 +17,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 public class INICIARSESION extends javax.swing.JFrame {
 
+    // =====================================================================
+    // Estado de la sesion actual
+    // =====================================================================
+
     /** Usuario que inició sesión actualmente */
     public static String usuarioActual = "";
     /** Nombre completo asociado al usuario autenticado */
@@ -24,9 +28,11 @@ public class INICIARSESION extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(INICIARSESION.class.getName());
 
-    /**
-     * Creates new form PRINCIPAL
-     */
+    // =====================================================================
+    // Construccion y recursos visuales
+    // =====================================================================
+
+    /** Inicializa el formulario de acceso y carga sus imagenes. */
     public INICIARSESION() {
         EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
@@ -52,6 +58,10 @@ public class INICIARSESION extends javax.swing.JFrame {
         Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
         return new ImageIcon(imagenEscalada);
     }
+
+    // =====================================================================
+    // Componentes generados por NetBeans: no modificar manualmente
+    // =====================================================================
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -176,6 +186,11 @@ public class INICIARSESION extends javax.swing.JFrame {
         autenticar();
     }//GEN-LAST:event_jTextField1ActionPerformed
 
+    // =====================================================================
+    // Autenticacion y navegacion
+    // =====================================================================
+
+    /** Valida las credenciales y abre la pantalla principal si son correctas. */
     private void autenticar() {
         String usuario = jTextField1.getText();
         String contraseña = new String(jPasswordField1.getPassword());
@@ -257,6 +272,10 @@ public class INICIARSESION extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
 
+
+    // =====================================================================
+    // Lectura de credenciales desde Excel
+    // =====================================================================
 
     public static String obtenerNombreUsuarioExcel(String usuario, String contraseña) {
         try {

@@ -13,9 +13,12 @@ import com.mycompany.ocxrst.service.InventarioService;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JOptionPane;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  *
@@ -42,9 +45,9 @@ public class INVENTARIOS extends javax.swing.JFrame {
     };
     private static final String[] MARCAS_PRESET = {"Gen\u00e9rico", "Sin marca"};
 
-    private static final int COL_PREDETERMINADO = 4;
-    private static final int COL_EDITAR = 5;
-    private static final int COL_ELIMINAR = 6;
+    private static final int COL_PREDETERMINADO = 5;
+    private static final int COL_EDITAR = 6;
+    private static final int COL_ELIMINAR = 7;
 
     // ===================== Paleta de colores (misma que PROVEEDORES) =====================
     private static final java.awt.Color COLOR_AZUL_OSCURO = new java.awt.Color(28, 82, 132);
@@ -214,30 +217,9 @@ public class INVENTARIOS extends javax.swing.JFrame {
         breadcrumb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         breadcrumb.setAlignmentX(java.awt.Component.RIGHT_ALIGNMENT);
 
-        etiquetaId.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
-        etiquetaId.setForeground(COLOR_AZUL_OSCURO);
-        etiquetaId.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        etiquetaId.setAlignmentX(java.awt.Component.RIGHT_ALIGNMENT);
-        etiquetaId.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 0, 6, 0));
-
-        comboEstado.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
-        comboEstado.setFocusable(false);
-        comboEstado.setPreferredSize(new java.awt.Dimension(110, 28));
-        comboEstado.setMaximumSize(new java.awt.Dimension(110, 28));
-        comboEstado.setAlignmentX(java.awt.Component.RIGHT_ALIGNMENT);
-        comboEstado.addActionListener(e -> actualizarColorPildoraEstado());
-
-        javax.swing.JPanel contenedorPildora = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
-        contenedorPildora.setOpaque(false);
-        contenedorPildora.add(comboEstado);
-        contenedorPildora.setAlignmentX(java.awt.Component.RIGHT_ALIGNMENT);
-
         panelDerecha.add(breadcrumb);
-        panelDerecha.add(etiquetaId);
-        panelDerecha.add(contenedorPildora);
         panelHeader.add(panelDerecha, java.awt.BorderLayout.EAST);
 
-        actualizarColorPildoraEstado();
         return panelHeader;
     }//crearPanelEncabezado
 
@@ -394,7 +376,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
         tarjeta.add(encabezado, java.awt.BorderLayout.NORTH);
 
         modeloProveedoresProducto = new javax.swing.table.DefaultTableModel(
-                new Object[]{"PROVEEDOR", "C\u00d3DIGO PROV.", "PRECIO", "TIEMPO ENTREGA", "PRED.", "", ""}, 0) {
+                new Object[]{"PROVEEDOR", "C\u00d3DIGO PROV.", "PRECIO", "TIEMPO ENTREGA",
+                    "\u00dALTIMA COMPRA", "PRED.", "", ""}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -409,6 +392,9 @@ public class INVENTARIOS extends javax.swing.JFrame {
         tablaProveedoresProducto.setGridColor(COLOR_BORDE_CAMPO);
         tablaProveedoresProducto.setShowVerticalLines(false);
 
+        tablaProveedoresProducto.getColumnModel().getColumn(4).setMinWidth(92);
+        tablaProveedoresProducto.getColumnModel().getColumn(4).setPreferredWidth(105);
+        tablaProveedoresProducto.getColumnModel().getColumn(4).setMaxWidth(120);
         tablaProveedoresProducto.getColumnModel().getColumn(COL_PREDETERMINADO).setPreferredWidth(46);
         tablaProveedoresProducto.getColumnModel().getColumn(COL_PREDETERMINADO).setMaxWidth(50);
         tablaProveedoresProducto.getColumnModel().getColumn(COL_EDITAR).setPreferredWidth(34);
@@ -452,17 +438,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tablaProveedoresProducto);
         scroll.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO));
         tarjeta.add(scroll, java.awt.BorderLayout.CENTER);
-
-        RoundedPanel banner = new RoundedPanel(9, COLOR_AZUL_PALIDO);
-        banner.setLayout(new java.awt.BorderLayout(8, 0));
-        banner.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10));
-        javax.swing.JLabel etiquetaBanner = new javax.swing.JLabel(
-                "Marca un proveedor como predeterminado para usarlo autom\u00e1ticamente en nuevas \u00f3rdenes de compra.");
-        etiquetaBanner.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
-        etiquetaBanner.setForeground(COLOR_AZUL_OSCURO);
-        banner.add(new javax.swing.JLabel(iconoInfo(COLOR_AZUL)), java.awt.BorderLayout.WEST);
-        banner.add(etiquetaBanner, java.awt.BorderLayout.CENTER);
-        tarjeta.add(banner, java.awt.BorderLayout.SOUTH);
 
         return tarjeta;
     }//crearTarjetaProveedores
@@ -589,17 +564,77 @@ public class INVENTARIOS extends javax.swing.JFrame {
         if (codigoProducto == null || codigoProducto.isBlank()) {
             return;
         }
+        java.util.Map<String, String> ultimasCompras = cargarUltimasComprasPorProveedor();
         java.util.List<String[]> filas = productoProveedorRepository.obtenerProveedoresDeProducto(codigoProducto);
         for (String[] datos : filas) {
             String idProveedor = datos[1];
             String nombreProveedor = proveedorRepository.obtenerNombrePorId(idProveedor);
             boolean predeterminado = "SI".equalsIgnoreCase(datos[5]);
             modeloProveedoresProducto.addRow(new Object[]{
-                nombreProveedor, datos[2], datos[3], datos[4], predeterminado, "", ""
+                nombreProveedor, datos[2], datos[3], datos[4],
+                ultimasCompras.getOrDefault(idProveedor.toUpperCase(java.util.Locale.ROOT), "SIN COMPRAS"),
+                predeterminado, "", ""
             });
             filasProveedorProducto.add(datos);
         }
     }//refrescarTablaProveedoresProducto
+
+    private java.util.Map<String, String> cargarUltimasComprasPorProveedor() {
+        java.util.Map<String, java.time.LocalDate> fechas = new java.util.HashMap<>();
+        File archivoOrdenes = com.mycompany.ocxrst.config.AppConfig.registroCFile();
+        if (!archivoOrdenes.exists() || archivoOrdenes.length() == 0) {
+            return new java.util.HashMap<>();
+        }
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(archivoOrdenes);
+             Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (Row fila : hoja) {
+                if (fila.getRowNum() == 0) {
+                    continue;
+                }
+                String idProveedor = leerCelda(fila, 4).toUpperCase(java.util.Locale.ROOT);
+                java.time.LocalDate fecha = leerFechaOrden(fila.getCell(1));
+                if (idProveedor.isEmpty() || fecha == null) {
+                    continue;
+                }
+                java.time.LocalDate fechaAnterior = fechas.get(idProveedor);
+                if (fechaAnterior == null || fecha.isAfter(fechaAnterior)) {
+                    fechas.put(idProveedor, fecha);
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudieron cargar las últimas compras por proveedor.", ex);
+            return new java.util.HashMap<>();
+        }
+
+        java.util.Map<String, String> resultado = new java.util.HashMap<>();
+        java.time.format.DateTimeFormatter formato = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (java.util.Map.Entry<String, java.time.LocalDate> entrada : fechas.entrySet()) {
+            resultado.put(entrada.getKey(), entrada.getValue().format(formato));
+        }
+        return resultado;
+    }//cargarUltimasComprasPorProveedor
+
+    private java.time.LocalDate leerFechaOrden(Cell celda) {
+        if (celda == null) {
+            return null;
+        }
+        if (DateUtil.isCellDateFormatted(celda)) {
+            return celda.getDateCellValue().toInstant()
+                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        }
+        String texto = new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(celda).trim();
+        for (String patron : new String[]{"dd/MM/yyyy", "d/M/yyyy"}) {
+            try {
+                return java.time.LocalDate.parse(texto,
+                        java.time.format.DateTimeFormatter.ofPattern(patron));
+            } catch (java.time.format.DateTimeParseException ex) {
+                // Intenta el siguiente formato admitido.
+            }
+        }
+        return null;
+    }//leerFechaOrden
 
     private void marcarProveedorPredeterminado(int filaModelo) {
         String[] datos = filasProveedorProducto.get(filaModelo);

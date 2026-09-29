@@ -31,7 +31,17 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private static final String ORDENES_FILE_ABSOLUTE = AppConfig.registroCFile().getAbsolutePath();
     private static final String ORDENES_DETALLE_FILE_ABSOLUTE = AppConfig.intOrdenCompraFile().getAbsolutePath();
     private static final String[] ENCABEZADOS_REGISTRO_RECEPCION = {
-        "ORDENCOMPRA", "PROVEEDOR", "FECHA_RECIBIDO", "MODELO", "CANTIDAD"
+        "ORDENCOMPRA", "PROVEEDOR", "FECHA_RECIBIDO", "HORA_RECIBIDO",
+        "USUARIO", "NOMBRE_USUARIO", "MODELO", "CANTIDAD", "TIPO_RECEPCION"
+    };
+    private static final String[] ENCABEZADOS_INCIDENCIAS = {
+        "ORDENCOMPRA", "FECHA", "CODIGO_PRODUCTO", "PRODUCTO", "CANTIDAD",
+        "TIPO", "DESCRIPCION", "REGISTRADO_POR", "ESTATUS"
+    };
+    private static final String[] ENCABEZADOS_DEVOLUCIONES = {
+        "ORDENCOMPRA", "FECHA", "CODIGO_PRODUCTO", "PRODUCTO", "CANTIDAD",
+        "TIPO", "CONDICION", "GUIA", "ACCION_SOLICITADA", "MOTIVO",
+        "REGISTRADO_POR", "ESTATUS"
     };
     private static final ProveedorRepository PROVEEDOR_REPOSITORY = new ProveedorRepository();
     private static final InventarioRepository INVENTARIO_REPOSITORY = new InventarioRepository();
@@ -1357,6 +1367,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     }
 
                     java.util.Date fecha = leerFechaCelda(row, 1);
+                    java.util.Date fechaPago = leerFechaCelda(row, 12);
                     java.util.Date fechaEntrega = leerFechaCelda(row, 11);
                     String cotizacion = leerCelda(row, 3);
                     String solicitante = leerCelda(row, 6);
@@ -1373,6 +1384,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     }
 
                     String fechaTexto = "";
+                    String fechaPagoTexto = formatearFechaCelda(fechaPago);
+                    String fechaEntregaTexto = formatearFechaCelda(fechaEntrega);
                     String diasFaltantesTexto = "";
                     if (fecha != null) {
                         java.time.LocalDate fechaOrden = fecha.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
@@ -1396,8 +1409,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
                             : productosPendientesPorOrden.getOrDefault(noOrden.toUpperCase(java.util.Locale.ROOT), 0.0);
                     String productosPendientes = formatearCantidadInventario(cantidadPendiente);
                     String nombreProveedor = obtenerNombreProveedorPorId(idFila);
-                    filas.add(new Object[]{idFila, nombreProveedor, noOrden, fechaTexto, cotizacion, solicitante,
-                        total, abonado, pendiente, diasFaltantesTexto, productosPendientes, estatus});
+                    filas.add(new Object[]{idFila, nombreProveedor, noOrden, fechaTexto, fechaPagoTexto,
+                        fechaEntregaTexto, cotizacion, solicitante, total, abonado, pendiente, diasFaltantesTexto,
+                        productosPendientes, estatus});
                 }
             } catch (Exception ex) {
                 mostrarError("No se pudo leer el historial de ordenes de compra.", ex);
@@ -1415,8 +1429,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
 
         String[] columnas = {
-            "ID PROVEEDOR", "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
-            "PEND. X PAGAR", "DIAS FAL_RECIBIR", "PROD. X RECIBIR", "ESTATUS"
+            "ID PROVEEDOR", "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA DE CREACI\u00d3N",
+            "FECHA DE PAGO PROMETIDA", "FECHA DE RECEPCI\u00d3N PROMETIDA", "COTIZACI\u00d3N", "SOLICITANTE",
+            "TOTAL", "ABONADO", "PEND. X PAGAR", "DIAS FAL_RECIBIR", "PROD. X RECIBIR", "ESTATUS"
         };
         javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(columnas, 0) {
             @Override
@@ -1431,16 +1446,14 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     int fila, int columna) {
                 java.awt.Component componente = super.prepareRenderer(renderer, fila, columna);
                 int columnaModelo = convertColumnIndexToModel(columna);
-                if (!isCellSelected(fila, columna) && columnaModelo != 11) {
+                if (!isCellSelected(fila, columna) && columnaModelo != 13) {
                     int filaModelo = convertRowIndexToModel(fila);
-                    String estatus = String.valueOf(getModel().getValueAt(filaModelo, 11)).trim();
+                    String estatus = String.valueOf(getModel().getValueAt(filaModelo, 13)).trim();
                     componente.setBackground(getBackground());
-                    componente.setForeground(columnaModelo == 2
-                            ? new java.awt.Color(0, 90, 200)
-                            : getForeground());
+                    componente.setForeground(getForeground());
                     try {
-                        long dias = Long.parseLong(String.valueOf(getModel().getValueAt(filaModelo, 9)).trim());
-                        boolean columnaPendiente = columnaModelo == 8 || columnaModelo == 10;
+                        long dias = Long.parseLong(String.valueOf(getModel().getValueAt(filaModelo, 11)).trim());
+                        boolean columnaPendiente = columnaModelo == 10 || columnaModelo == 12;
                         double valorPendiente = columnaPendiente
                             ? parseNumeroOrdenable(getModel().getValueAt(filaModelo, columnaModelo))
                             : 0;
@@ -1455,23 +1468,43 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 return componente;
             }
         };
-        tabla.setRowHeight(36);
+        tabla.setRowHeight(48);
         tabla.setShowGrid(false);
         tabla.setIntercellSpacing(new java.awt.Dimension(0, 0));
         tabla.setSelectionBackground(new java.awt.Color(224, 236, 250));
         tabla.setSelectionForeground(COLOR_AZUL_OSCURO);
         tabla.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        tabla.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            private final javax.swing.JTextArea texto = new javax.swing.JTextArea();
+
+            {
+                texto.setLineWrap(true);
+                texto.setWrapStyleWord(true);
+                texto.setOpaque(true);
+                texto.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+                texto.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 6, 4, 6));
+            }
+
+            @Override
+            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable tabla, Object valor,
+                    boolean seleccionado, boolean foco, int fila, int columna) {
+                texto.setText(valor == null ? "" : String.valueOf(valor));
+                texto.setBackground(seleccionado ? tabla.getSelectionBackground() : tabla.getBackground());
+                texto.setForeground(seleccionado ? tabla.getSelectionForeground() : tabla.getForeground());
+                return texto;
+            }
+        });
         tabla.setFillsViewportHeight(true);
         tabla.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         tabla.getTableHeader().setReorderingAllowed(false);
         configurarEncabezadoHistorial(tabla);
-        configurarColumnaNoOrdenComoEnlace(tabla);
         configurarColumnaEstatusHistorial(tabla);
+        tabla.removeColumn(tabla.getColumn("ID PROVEEDOR"));
         tabla.removeColumn(tabla.getColumn("DIAS FAL_RECIBIR"));
         java.awt.Rectangle areaUtil = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
             .getMaximumWindowBounds();
 
-        // ----- Encabezado (icono + titulo + subtitulo + boton ABONAR) -----
+        // ----- Encabezado (icono + titulo + subtitulo) -----
         javax.swing.JPanel panelHeader = new javax.swing.JPanel(new java.awt.BorderLayout(14, 0));
         panelHeader.setOpaque(false);
 
@@ -1497,13 +1530,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         textoTitulo.add(subtituloHistorial);
         panelTituloIzquierda.add(textoTitulo, java.awt.BorderLayout.CENTER);
         panelHeader.add(panelTituloIzquierda, java.awt.BorderLayout.WEST);
-
-        javax.swing.JButton botonAbonar = new javax.swing.JButton();
-        prepararBoton(botonAbonar, "ABONAR", iconoMonedas(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
-        javax.swing.JPanel panelBotonAbonar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
-        panelBotonAbonar.setOpaque(false);
-        panelBotonAbonar.add(botonAbonar);
-        panelHeader.add(panelBotonAbonar, java.awt.BorderLayout.EAST);
 
         // ----- Tarjetas de resumen -----
         TarjetaResumen tarjetaCompras = crearTarjetaResumen(
@@ -1550,14 +1576,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
         contenedorFecha.add(new javax.swing.JLabel(iconoCalendario(COLOR_TEXTO_GRIS)));
         contenedorFecha.add(comboFecha);
 
-        javax.swing.JButton botonFiltrar = new javax.swing.JButton();
-        prepararBoton(botonFiltrar, "Filtrar", iconoFiltro(new java.awt.Color(60, 70, 85)),
-                java.awt.Color.WHITE, new java.awt.Color(60, 70, 85), COLOR_BORDE_CAMPO);
-
         javax.swing.JPanel panelFiltrosDerecha = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 10, 0));
         panelFiltrosDerecha.setOpaque(false);
         panelFiltrosDerecha.add(contenedorFecha);
-        panelFiltrosDerecha.add(botonFiltrar);
 
         javax.swing.JPanel panelBusquedaFiltros = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
         panelBusquedaFiltros.setOpaque(false);
@@ -1628,7 +1649,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
             for (int i = inicio; i < fin; i++) {
                 modelo.addRow(filasFiltradas.get(i));
             }
-            ajustarAnchoColumnas(tabla);
+            ajustarAnchoColumnasHistorial(tabla);
 
             etiquetaPaginacion.setText(total == 0
                     ? "No hay \u00f3rdenes para mostrar"
@@ -1689,8 +1710,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     boolean coincide = String.valueOf(fila[0]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
                             || String.valueOf(fila[1]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
                             || String.valueOf(fila[2]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
-                            || String.valueOf(fila[4]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
-                            || String.valueOf(fila[5]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto);
+                            || String.valueOf(fila[6]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto)
+                            || String.valueOf(fila[7]).toLowerCase(java.util.Locale.ROOT).contains(filtroTexto);
                     if (!coincide) {
                         continue;
                     }
@@ -1724,7 +1745,42 @@ public class PROVEEDORES extends javax.swing.JFrame {
             }
         });
         comboFecha.addActionListener(e -> aplicarFiltros.run());
-        botonFiltrar.addActionListener(e -> aplicarFiltros.run());
+        tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evento) {
+                if (!javax.swing.SwingUtilities.isLeftMouseButton(evento)) {
+                    return;
+                }
+                int filaVista = tabla.rowAtPoint(evento.getPoint());
+                int columnaVista = tabla.columnAtPoint(evento.getPoint());
+                if (filaVista < 0 || columnaVista < 0) {
+                    return;
+                }
+                int columnaModelo = tabla.convertColumnIndexToModel(columnaVista);
+                if (columnaModelo != 13) {
+                    return;
+                }
+                int filaModelo = tabla.convertRowIndexToModel(filaVista);
+                String noOrden = String.valueOf(modelo.getValueAt(filaModelo, 2)).trim();
+                String estatus = String.valueOf(modelo.getValueAt(filaModelo, 13)).trim();
+                if ("FINALIZADO".equalsIgnoreCase(estatus)) {
+                    tabla.setRowSelectionInterval(filaVista, filaVista);
+                    mostrarDetalleOrden(noOrden, tabla);
+                    return;
+                }
+                double pendientePago = parseNumeroOrdenable(modelo.getValueAt(filaModelo, 10));
+                double pendienteMercancia = parseNumeroOrdenable(modelo.getValueAt(filaModelo, 12));
+                tabla.setRowSelectionInterval(filaVista, filaVista);
+                mostrarAccionesPendiente(noOrden, pendientePago, pendienteMercancia, tabla, aplicarFiltros);
+            }
+
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evento) {
+                if (tabla.rowAtPoint(evento.getPoint()) < 0) {
+                    tabla.clearSelection();
+                }
+            }
+        });
 
         tabla.getTableHeader().addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -1746,11 +1802,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
             }
         });
 
-        botonAbonar.addActionListener(e -> {
-            registrarAbono(tabla);
-            aplicarFiltros.run();
-        });
-
         // ----- Contenedor de tabla (tarjeta blanca con borde) -----
         RoundedPanel contenedorTabla = new RoundedPanel(12, java.awt.Color.WHITE);
         contenedorTabla.setLayout(new java.awt.BorderLayout(0, 10));
@@ -1767,18 +1818,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
         panelPaginacion.add(panelBotonesPagina, java.awt.BorderLayout.EAST);
         contenedorTabla.add(panelPaginacion, java.awt.BorderLayout.SOUTH);
 
-        // ----- Barra inferior (exportar / imprimir / cerrar) -----
+        // ----- Barra inferior (historial de recepciones / cerrar) -----
         javax.swing.JDialog[] dialogoRef = new javax.swing.JDialog[1];
-
-        javax.swing.JButton botonExcel = new javax.swing.JButton();
-        prepararBoton(botonExcel, "Exportar a Excel", iconoDocumentoAdjunto(java.awt.Color.WHITE),
-                COLOR_VERDE_EXCEL, java.awt.Color.WHITE, null);
-        botonExcel.addActionListener(e -> exportarHistorialExcel(filasFiltradas, idProveedor));
-
-        javax.swing.JButton botonPdf = new javax.swing.JButton();
-        prepararBoton(botonPdf, "Exportar a PDF", iconoDocumentoAdjunto(java.awt.Color.WHITE),
-                COLOR_ROJO_PDF, java.awt.Color.WHITE, null);
-        botonPdf.addActionListener(e -> exportarHistorialPdf(filasFiltradas, idProveedor));
 
         javax.swing.JButton botonCerrar = new javax.swing.JButton();
         prepararBoton(botonCerrar, "Cerrar", iconoCerrarX(new java.awt.Color(60, 70, 85)),
@@ -1791,8 +1832,21 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         javax.swing.JPanel panelExportar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 0));
         panelExportar.setOpaque(false);
-        panelExportar.add(botonExcel);
-        panelExportar.add(botonPdf);
+        javax.swing.JButton botonRecepciones = new javax.swing.JButton();
+        prepararBoton(botonRecepciones, "Historial de recepciones",
+                iconoCarrito(java.awt.Color.WHITE, 18), COLOR_AZUL, java.awt.Color.WHITE, null);
+        botonRecepciones.addActionListener(e -> {
+            java.util.Set<String> ordenesSeleccionadas = new java.util.LinkedHashSet<>();
+            for (int filaVista : tabla.getSelectedRows()) {
+                int filaModelo = tabla.convertRowIndexToModel(filaVista);
+                String orden = String.valueOf(modelo.getValueAt(filaModelo, 2)).trim();
+                if (!orden.isEmpty()) {
+                    ordenesSeleccionadas.add(orden);
+                }
+            }
+            mostrarHistorialRecepciones(ordenesSeleccionadas);
+        });
+        panelExportar.add(botonRecepciones);
 
         javax.swing.JPanel panelCerrar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
         panelCerrar.setOpaque(false);
@@ -1836,11 +1890,347 @@ public class PROVEEDORES extends javax.swing.JFrame {
         dialogo.setVisible(true);
     }//mostrarHistorialCompras
 
+    private void mostrarHistorialRecepciones(String ordenFiltro) {
+        java.util.Set<String> ordenes = new java.util.LinkedHashSet<>();
+        if (ordenFiltro != null && !ordenFiltro.isBlank()) {
+            ordenes.add(ordenFiltro);
+        }
+        mostrarHistorialRecepciones(ordenes);
+    }//mostrarHistorialRecepciones
+
+    private void mostrarHistorialRecepciones(java.util.Set<String> ordenesFiltro) {
+        java.util.List<String[]> registros = cargarRegistrosRecepcion(ordenesFiltro);
+        String[] columnas = {
+            "ORDEN", "PROVEEDOR", "FECHA DE ENTRADA", "HORA", "USUARIO",
+            "NOMBRE", "MODELO ID", "DESCRIPCIÓN", "CANTIDAD", "ESTATUS ENTRADA"
+        };
+        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(columnas, 0) {
+            @Override
+            public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+        for (String[] registro : registros) {
+            modelo.addRow(registro);
+        }
+
+        javax.swing.JTable tabla = new javax.swing.JTable(modelo);
+        tabla.setAutoCreateRowSorter(true);
+        tabla.setRowHeight(30);
+        tabla.setFillsViewportHeight(true);
+        tabla.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        tabla.getTableHeader().setReorderingAllowed(false);
+        tabla.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        configurarEncabezadoHistorial(tabla);
+        configurarEstatusEntradaRecepciones(tabla);
+        ajustarAnchoColumnasRecepciones(tabla);
+
+        javax.swing.JTextField campoBuscar = new javax.swing.JTextField();
+        campoBuscar.setToolTipText("Filtrar por proveedor, modelo ID o descripción");
+        campoBuscar.setPreferredSize(new java.awt.Dimension(320, 32));
+        javax.swing.JButton botonBuscar = new javax.swing.JButton("Buscar");
+        prepararBoton(botonBuscar, "Buscar", iconoBuscar(java.awt.Color.WHITE),
+                COLOR_AZUL, java.awt.Color.WHITE, null);
+
+        Runnable[] aplicarFiltro = new Runnable[1];
+        aplicarFiltro[0] = () -> {
+            boolean esPlaceholder = Boolean.TRUE.equals(campoBuscar.getClientProperty("placeholder-activo"));
+            String filtro = esPlaceholder ? ""
+                    : campoBuscar.getText().trim().toLowerCase(java.util.Locale.ROOT);
+            modelo.setRowCount(0);
+            for (String[] registro : cargarRegistrosRecepcion(ordenesFiltro)) {
+                String texto = String.join(" ", registro).toLowerCase(java.util.Locale.ROOT);
+                if (filtro.isEmpty() || texto.contains(filtro)) {
+                    modelo.addRow(registro);
+                }
+            }
+            ajustarAnchoColumnasRecepciones(tabla);
+        };
+        campoBuscar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void actualizar() {
+                aplicarFiltro[0].run();
+            }
+
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent evento) {
+                actualizar();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent evento) {
+                actualizar();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent evento) {
+                actualizar();
+            }
+        });
+        botonBuscar.addActionListener(e -> aplicarFiltro[0].run());
+        campoBuscar.addActionListener(e -> aplicarFiltro[0].run());
+
+        javax.swing.JPanel panelFiltros = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 0));
+        panelFiltros.setOpaque(false);
+        panelFiltros.add(new javax.swing.JLabel("Buscar:"));
+        panelFiltros.add(campoBuscar);
+        panelFiltros.add(botonBuscar);
+
+        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tabla);
+        java.awt.Rectangle areaUtil = java.awt.GraphicsEnvironment
+                .getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        int anchoVentana = Math.min(1500, areaUtil.width - 40);
+        int altoVentana = Math.min(850, areaUtil.height - 40);
+        scroll.setPreferredSize(new java.awt.Dimension(anchoVentana - 40, altoVentana - 130));
+        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
+        contenido.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 16, 16, 16));
+        contenido.add(panelFiltros, java.awt.BorderLayout.NORTH);
+        contenido.add(scroll, java.awt.BorderLayout.CENTER);
+
+        String titulo = ordenesFiltro.isEmpty()
+                ? "Historial de recepciones"
+                : "Recepciones de órdenes seleccionadas";
+        javax.swing.JDialog dialogo = new javax.swing.JDialog(this, titulo, true);
+        dialogo.getContentPane().add(contenido);
+        dialogo.setSize(anchoVentana, altoVentana);
+        dialogo.setResizable(true);
+        dialogo.setLocationRelativeTo(this);
+        dialogo.setVisible(true);
+    }//mostrarHistorialRecepciones
+
+    private void ajustarAnchoColumnasRecepciones(javax.swing.JTable tabla) {
+        javax.swing.table.JTableHeader encabezado = tabla.getTableHeader();
+        java.awt.FontMetrics metricas = encabezado.getFontMetrics(encabezado.getFont());
+        for (int columna = 0; columna < tabla.getColumnCount(); columna++) {
+            int ancho = metricas.stringWidth(tabla.getColumnName(columna));
+            for (int fila = 0; fila < tabla.getRowCount(); fila++) {
+                javax.swing.table.TableCellRenderer renderer = tabla.getCellRenderer(fila, columna);
+                java.awt.Component componente = renderer.getTableCellRendererComponent(
+                        tabla, tabla.getValueAt(fila, columna), false, false, fila, columna);
+                ancho = Math.max(ancho, componente.getPreferredSize().width);
+            }
+            int minimo = columna == 2 ? 125 : 70;
+            int maximo = columna == 5 || columna == 7 ? 260 : 180;
+            int anchoAjustado = Math.min(maximo, Math.max(minimo, ancho + 18));
+            tabla.getColumnModel().getColumn(columna).setPreferredWidth(anchoAjustado);
+        }
+    }//ajustarAnchoColumnasRecepciones
+
+    private void configurarEstatusEntradaRecepciones(javax.swing.JTable tabla) {
+        int columnaEstatus = tabla.getColumnModel().getColumnIndex("ESTATUS ENTRADA");
+        tabla.getColumnModel().getColumn(columnaEstatus).setCellRenderer(
+                new javax.swing.table.DefaultTableCellRenderer() {
+                    @Override
+                    public java.awt.Component getTableCellRendererComponent(javax.swing.JTable tabla,
+                            Object valor, boolean seleccionado, boolean foco, int fila, int columna) {
+                        java.awt.Component componente = super.getTableCellRendererComponent(
+                                tabla, valor, seleccionado, foco, fila, columna);
+                        String estatus = String.valueOf(valor).toUpperCase(java.util.Locale.ROOT);
+                        if (!seleccionado) {
+                            if (estatus.contains("RETRASO")) {
+                                componente.setBackground(new java.awt.Color(255, 226, 226));
+                                componente.setForeground(new java.awt.Color(170, 0, 0));
+                            } else {
+                                componente.setBackground(new java.awt.Color(226, 246, 234));
+                                componente.setForeground(new java.awt.Color(0, 115, 55));
+                            }
+                        }
+                        setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                        return componente;
+                    }
+                });
+    }//configurarEstatusEntradaRecepciones
+
+    private java.util.List<String[]> cargarRegistrosRecepcion(String ordenFiltro) {
+        java.util.Set<String> ordenes = new java.util.LinkedHashSet<>();
+        if (ordenFiltro != null && !ordenFiltro.isBlank()) {
+            ordenes.add(ordenFiltro);
+        }
+        return cargarRegistrosRecepcion(ordenes);
+    }//cargarRegistrosRecepcion
+
+    private java.util.List<String[]> cargarRegistrosRecepcion(java.util.Set<String> ordenesFiltro) {
+        java.util.List<String[]> registros = new java.util.ArrayList<>();
+        File archivo = AppConfig.resolveBaseFile("REGISTRORECIBIR.xlsx");
+        if (!archivo.exists() || archivo.length() == 0) {
+            return registros;
+        }
+        try (FileInputStream fis = new FileInputStream(archivo);
+             Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            java.util.Map<String, String> descripciones = cargarDescripcionesInventario();
+            java.util.Map<String, java.time.LocalDate> fechasEntrega = cargarFechasEntregaOrdenes();
+            java.util.Map<String, Integer> columnas = new java.util.HashMap<>();
+            Row encabezado = hoja.getRow(0);
+            if (encabezado != null) {
+                for (int columna = 0; columna < 20; columna++) {
+                    String nombre = leerCelda(encabezado, columna).toUpperCase(java.util.Locale.ROOT);
+                    if (!nombre.isEmpty()) {
+                        columnas.put(nombre, columna);
+                    }
+                }
+            }
+            int indiceOrden = columnas.getOrDefault("ORDENCOMPRA", 0);
+            int indiceProveedor = columnas.getOrDefault("PROVEEDOR", 1);
+            int indiceFecha = columnas.getOrDefault("FECHA_RECIBIDO", 2);
+            int indiceHora = columnas.getOrDefault("HORA_RECIBIDO", -1);
+            int indiceUsuario = columnas.getOrDefault("USUARIO", -1);
+            int indiceNombreUsuario = columnas.getOrDefault("NOMBRE_USUARIO", -1);
+            int indiceModelo = columnas.containsKey("MODELO")
+                    ? columnas.get("MODELO") : 3;
+            int indiceCantidad = columnas.containsKey("CANTIDAD")
+                    ? columnas.get("CANTIDAD") : 4;
+            int indiceTipo = columnas.getOrDefault("TIPO_RECEPCION", -1);
+            for (Row fila : hoja) {
+                if (fila.getRowNum() == 0) {
+                    continue;
+                }
+                String orden = leerCelda(fila, indiceOrden);
+                boolean coincideOrden = ordenesFiltro.isEmpty()
+                        || ordenesFiltro.stream().anyMatch(ordenFiltro -> ordenFiltro.equalsIgnoreCase(orden));
+                if (orden.isEmpty() || !coincideOrden) {
+                    continue;
+                }
+                String idProveedor = leerCelda(fila, indiceProveedor);
+                String codigoProducto = leerCelda(fila, indiceModelo);
+                registros.add(new String[]{
+                    orden,
+                    obtenerNombreProveedorPorId(idProveedor),
+                    leerCelda(fila, indiceFecha),
+                    indiceHora < 0 ? "" : leerCelda(fila, indiceHora),
+                    indiceUsuario < 0 ? "" : leerCelda(fila, indiceUsuario),
+                    indiceNombreUsuario < 0 ? "" : leerCelda(fila, indiceNombreUsuario),
+                    codigoProducto,
+                    descripciones.getOrDefault(
+                            codigoProducto.toUpperCase(java.util.Locale.ROOT), codigoProducto),
+                    leerCelda(fila, indiceCantidad),
+                    calcularEstatusEntrada(orden, leerCelda(fila, indiceFecha), fechasEntrega)
+                });
+            }
+        } catch (IOException ex) {
+            mostrarError("No se pudo leer el historial de recepciones.", ex);
+        }
+        return registros;
+    }//cargarRegistrosRecepcion
+
+    private java.util.Map<String, java.time.LocalDate> cargarFechasEntregaOrdenes() {
+        java.util.Map<String, java.time.LocalDate> fechas = new java.util.HashMap<>();
+        File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
+        if (!archivoOrdenes.exists() || archivoOrdenes.length() == 0) {
+            return fechas;
+        }
+        try (FileInputStream fis = new FileInputStream(archivoOrdenes);
+             Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (Row fila : hoja) {
+                if (fila.getRowNum() == 0) {
+                    continue;
+                }
+                String orden = leerCelda(fila, 0);
+                java.util.Date fechaEntrega = leerFechaCelda(fila, 11);
+                if (!orden.isEmpty() && fechaEntrega != null) {
+                    fechas.put(orden.toUpperCase(java.util.Locale.ROOT),
+                            fechaEntrega.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudieron cargar las fechas esperadas de entrega.", ex);
+        }
+        return fechas;
+    }//cargarFechasEntregaOrdenes
+
+    private String calcularEstatusEntrada(String noOrden, String fechaEntrada,
+            java.util.Map<String, java.time.LocalDate> fechasEntrega) {
+        java.time.LocalDate fechaEsperada = fechasEntrega.get(noOrden.toUpperCase(java.util.Locale.ROOT));
+        if (fechaEsperada == null || fechaEntrada == null || fechaEntrada.isBlank()) {
+            return "SIN FECHA ESPERADA";
+        }
+        try {
+            java.time.LocalDate fechaReal = java.time.LocalDate.parse(fechaEntrada.trim(),
+                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            if (fechaReal.isEqual(fechaEsperada)) {
+                return "A TIEMPO (0 DÍAS)";
+            }
+            if (fechaReal.isBefore(fechaEsperada)) {
+                long diasAnticipacion = java.time.temporal.ChronoUnit.DAYS.between(fechaReal, fechaEsperada);
+                return diasAnticipacion == 1
+                        ? "1 DÍA ADELANTADA"
+                        : diasAnticipacion + " DÍAS ADELANTADA";
+            }
+            long diasRetraso = java.time.temporal.ChronoUnit.DAYS.between(fechaEsperada, fechaReal);
+            return diasRetraso == 1
+                    ? "1 DÍA DE RETRASO"
+                    : diasRetraso + " DÍAS DE RETRASO";
+        } catch (java.time.format.DateTimeParseException ex) {
+            return "SIN FECHA ESPERADA";
+        }
+    }//calcularEstatusEntrada
+
+    private java.util.Map<String, String> cargarDescripcionesInventario() {
+        java.util.Map<String, String> descripciones = new java.util.HashMap<>();
+        File archivo = INVENTARIO_REPOSITORY.obtenerArchivoInventarios();
+        if (!archivo.exists() || archivo.length() == 0) {
+            return descripciones;
+        }
+        try (Workbook libro = INVENTARIO_REPOSITORY.cargarLibro(archivo)) {
+            Sheet hoja = INVENTARIO_REPOSITORY.obtenerHojaInventarios(libro);
+            for (Row fila : hoja) {
+                if (fila.getRowNum() == 0) {
+                    continue;
+                }
+                String codigo = INVENTARIO_REPOSITORY.leerCelda(fila, 0);
+                String descripcion = INVENTARIO_REPOSITORY.leerCelda(fila, 1);
+                if (!codigo.isEmpty() && !descripcion.isEmpty()) {
+                    descripciones.put(codigo.toUpperCase(java.util.Locale.ROOT), descripcion);
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudieron cargar las descripciones del inventario.", ex);
+        }
+        return descripciones;
+    }//cargarDescripcionesInventario
+
+    private void mostrarAccionesPendiente(String noOrden, double pendientePago,
+            double pendienteMercancia, javax.swing.JTable tabla, Runnable refrescar) {
+        java.util.List<String> opcionesDisponibles = new java.util.ArrayList<>();
+        if (pendientePago > 0) {
+            opcionesDisponibles.add("Registrar abono");
+        }
+        if (pendienteMercancia > 0) {
+            opcionesDisponibles.add("Recibir mercancía");
+        }
+        if (opcionesDisponibles.isEmpty()) {
+            return;
+        }
+        opcionesDisponibles.add("Cancelar");
+        Object[] opciones = opcionesDisponibles.toArray();
+        int seleccion = JOptionPane.showOptionDialog(this,
+                "¿Qué deseas registrar para la orden " + noOrden + "?",
+                "Orden pendiente",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]);
+        if (seleccion < 0 || seleccion == opcionesDisponibles.size() - 1) {
+            return;
+        }
+        if ("Registrar abono".equals(opcionesDisponibles.get(seleccion))) {
+            registrarAbono(noOrden, tabla);
+            refrescar.run();
+        } else if ("Recibir mercancía".equals(opcionesDisponibles.get(seleccion))) {
+            mostrarDetalleOrden(noOrden, tabla);
+            refrescar.run();
+        }
+    }//mostrarAccionesPendiente
+
     private void ordenarFilas(java.util.List<Object[]> filas, int columna, boolean ascendente) {
         java.util.Comparator<Object[]> comparador;
-        if (columna == 2 || columna == 6 || columna == 7 || columna == 8 || columna == 9 || columna == 10) {
+        if (columna == 2 || columna == 8 || columna == 9 || columna == 10
+                || columna == 11 || columna == 12) {
             comparador = java.util.Comparator.comparingDouble(f -> parseNumeroOrdenable(f[columna]));
-        } else if (columna == 3) {
+        } else if (columna == 3 || columna == 4 || columna == 5) {
             comparador = java.util.Comparator.comparing(f -> parseFechaOrdenable(f[columna]));
         } else {
             comparador = java.util.Comparator.comparing(f -> String.valueOf(f[columna]), String.CASE_INSENSITIVE_ORDER);
@@ -1889,18 +2279,18 @@ public class PROVEEDORES extends javax.swing.JFrame {
             @Override
             public void focusGained(java.awt.event.FocusEvent e) {
                 if (Boolean.TRUE.equals(campo.getClientProperty("placeholder-activo"))) {
+                    campo.putClientProperty("placeholder-activo", Boolean.FALSE);
                     campo.setText("");
                     campo.setForeground(colorTextoNormal);
-                    campo.putClientProperty("placeholder-activo", Boolean.FALSE);
                 }
             }
 
             @Override
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (campo.getText().isEmpty()) {
+                    campo.putClientProperty("placeholder-activo", Boolean.TRUE);
                     campo.setForeground(colorPlaceholder);
                     campo.setText(textoPlaceholder);
-                    campo.putClientProperty("placeholder-activo", Boolean.TRUE);
                 }
             }
         });
@@ -1909,17 +2299,46 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private void configurarEncabezadoHistorial(javax.swing.JTable tabla) {
         javax.swing.table.JTableHeader encabezado = tabla.getTableHeader();
         encabezado.setDefaultRenderer((t, valor, seleccionado, foco, fila, columna) -> {
-            javax.swing.JLabel etiqueta = new javax.swing.JLabel(String.valueOf(valor));
+            String textoEncabezado = formatearEncabezadoHistorial(String.valueOf(valor));
+            javax.swing.JLabel etiqueta = new javax.swing.JLabel(
+                    "<html><div style='width:88px;text-align:left;'>"
+                    + textoEncabezado + "</div></html>");
             etiqueta.setOpaque(true);
             etiqueta.setBackground(COLOR_AZUL);
             etiqueta.setForeground(java.awt.Color.WHITE);
             etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
-            etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-            etiqueta.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 6, 10, 6));
+            etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+            etiqueta.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+            etiqueta.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 4, 6, 4));
             return etiqueta;
         });
-        encabezado.setPreferredSize(new java.awt.Dimension(encabezado.getPreferredSize().width, 38));
+        encabezado.setPreferredSize(new java.awt.Dimension(encabezado.getPreferredSize().width, 64));
     }//configurarEncabezadoHistorial
+
+    private String formatearEncabezadoHistorial(String encabezado) {
+        String texto = encabezado
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+        switch (encabezado) {
+            case "NOMBRE PROVEEDOR":
+                return "NOMBRE<br>PROVEEDOR";
+            case "NO. ORDEN":
+                return "NO. ORDEN";
+            case "FECHA DE CREACI\u00d3N":
+                return "FECHA DE<br>CREACI\u00d3N";
+            case "FECHA DE PAGO PROMETIDA":
+                return "FECHA DE<br>PAGO<br>PROMETIDA";
+            case "FECHA DE RECEPCI\u00d3N PROMETIDA":
+                return "FECHA DE<br>RECEPCI\u00d3N<br>PROMETIDA";
+            case "PEND. X PAGAR":
+                return "PEND. X<br>PAGAR";
+            case "PROD. X RECIBIR":
+                return "PROD. X<br>RECIBIR";
+            default:
+                return texto;
+        }
+    }//formatearEncabezadoHistorial
 
     private void configurarColumnaEstatusHistorial(javax.swing.JTable tabla) {
         tabla.getColumn("ESTATUS").setCellRenderer((t, valor, seleccionado, foco, fila, columna) -> {
@@ -1947,12 +2366,19 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     colorTexto = COLOR_GRIS;
                     colorFondo = COLOR_GRIS_CLARO;
             }
-            return crearPastillaEstatus(estatus, colorTexto, colorFondo);
+            javax.swing.JComponent pastilla = crearPastillaEstatus(estatus, colorTexto, colorFondo);
+            boolean accionable = !"FINALIZADO".equalsIgnoreCase(estatus);
+            pastilla.setCursor(java.awt.Cursor.getPredefinedCursor(
+                    java.awt.Cursor.HAND_CURSOR));
+            pastilla.setToolTipText(accionable
+                    ? "Selecciona para registrar un abono o recibir mercancía"
+                    : "Selecciona para consultar los detalles de la orden finalizada");
+            return pastilla;
         });
     }//configurarColumnaEstatusHistorial
 
     private static javax.swing.JComponent crearPastillaEstatus(String texto, java.awt.Color colorTexto, java.awt.Color colorFondo) {
-        javax.swing.JPanel pastilla = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 5, 2)) {
+        javax.swing.JPanel pastilla = new javax.swing.JPanel(new java.awt.BorderLayout(4, 0)) {
             @Override
             protected void paintComponent(java.awt.Graphics g) {
                 java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
@@ -1964,12 +2390,18 @@ public class PROVEEDORES extends javax.swing.JFrame {
             }
         };
         pastilla.setOpaque(false);
+        pastilla.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 8, 4, 8));
+
         javax.swing.JLabel punto = new javax.swing.JLabel(iconoPuntoRelleno(colorTexto));
+        punto.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        punto.setBorder(javax.swing.BorderFactory.createEmptyBorder(3, 0, 0, 0));
+
         javax.swing.JLabel etiqueta = new javax.swing.JLabel(texto);
+        etiqueta.setOpaque(false);
         etiqueta.setForeground(colorTexto);
         etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
-        pastilla.add(punto);
-        pastilla.add(etiqueta);
+        pastilla.add(punto, java.awt.BorderLayout.WEST);
+        pastilla.add(etiqueta, java.awt.BorderLayout.CENTER);
         return pastilla;
     }//crearPastillaEstatus
 
@@ -1992,7 +2424,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
 
         String[] encabezados = {
-            "ID PROVEEDOR", "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
+            "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA DE CREACI\u00d3N", "FECHA DE PAGO PROMETIDA",
+            "FECHA DE RECEPCI\u00d3N PROMETIDA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
             "PEND. X PAGAR", "PROD. X RECIBIR", "ESTATUS"
         };
         try (Workbook libro = new XSSFWorkbook()) {
@@ -2015,7 +2448,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
             int numeroFila = 1;
             for (Object[] fila : filas) {
                 Row rowExcel = hoja.createRow(numeroFila++);
-                int[] indicesOrigen = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11};
+                int[] indicesOrigen = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13};
                 for (int columna = 0; columna < indicesOrigen.length; columna++) {
                     rowExcel.createCell(columna).setCellValue(String.valueOf(fila[indicesOrigen[columna]]));
                 }
@@ -2048,7 +2481,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
 
         String[] encabezados = {
-            "ID PROV.", "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
+            "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA DE CREACI\u00d3N", "FECHA DE PAGO PROMETIDA",
+            "FECHA DE RECEPCI\u00d3N PROMETIDA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
             "PEND. X PAGAR", "PROD. X RECIBIR", "ESTATUS"
         };
         try {
@@ -2077,7 +2511,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                         .setBackgroundColor(azulPdf)
                         .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
             }
-            int[] indicesOrigen = {0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11};
+            int[] indicesOrigen = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13};
             for (Object[] fila : filas) {
                 for (int indice : indicesOrigen) {
                     tablaPdf.addCell(new com.itextpdf.layout.element.Cell()
@@ -2254,18 +2688,37 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//parseFechaOrdenable
 
-    private void registrarAbono(javax.swing.JTable tabla) {
+    private void registrarAbono(String noOrden, javax.swing.JTable tabla) {
         int filaVista = tabla.getSelectedRow();
+        if (filaVista >= 0) {
+            int filaSeleccionadaModelo = tabla.convertRowIndexToModel(filaVista);
+            String ordenSeleccionada = String.valueOf(tabla.getModel()
+                    .getValueAt(filaSeleccionadaModelo, 2)).trim();
+            if (!noOrden.equalsIgnoreCase(ordenSeleccionada)) {
+                filaVista = -1;
+            }
+        }
         if (filaVista < 0) {
-            JOptionPane.showMessageDialog(this, "Selecciona una orden de la tabla primero.");
-            return;
+            for (int fila = 0; fila < tabla.getRowCount(); fila++) {
+                int filaModelo = tabla.convertRowIndexToModel(fila);
+                if (noOrden.equalsIgnoreCase(String.valueOf(
+                        tabla.getModel().getValueAt(filaModelo, 2)).trim())) {
+                    filaVista = fila;
+                    tabla.setRowSelectionInterval(fila, fila);
+                    break;
+                }
+            }
+            if (filaVista < 0) {
+                JOptionPane.showMessageDialog(this,
+                        "No se encontró la orden seleccionada en la tabla.");
+                return;
+            }
         }
 
         int filaModelo = tabla.convertRowIndexToModel(filaVista);
         javax.swing.table.TableModel modelo = tabla.getModel();
-        String noOrden = String.valueOf(modelo.getValueAt(filaModelo, 2)).trim();
-        String totalTexto = String.valueOf(modelo.getValueAt(filaModelo, 6)).trim();
-        String abonadoTexto = String.valueOf(modelo.getValueAt(filaModelo, 7)).trim();
+        String totalTexto = String.valueOf(modelo.getValueAt(filaModelo, 8)).trim();
+        String abonadoTexto = String.valueOf(modelo.getValueAt(filaModelo, 9)).trim();
 
         double totalNumero = parseMonto(totalTexto);
         double abonadoActual = parseMonto(abonadoTexto);
@@ -2355,10 +2808,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         JOptionPane.showMessageDialog(this, "Abono registrado correctamente.");
         String nuevoAbonadoTexto = String.format("%s %,.2f", simbolo, nuevoAbonado);
-        modelo.setValueAt(nuevoAbonadoTexto, filaModelo, 7);
-        modelo.setValueAt(String.format("%s %,.2f", simbolo, Math.max(0, totalNumero - nuevoAbonado)), filaModelo, 8);
+        modelo.setValueAt(nuevoAbonadoTexto, filaModelo, 9);
+        modelo.setValueAt(String.format("%s %,.2f", simbolo, Math.max(0, totalNumero - nuevoAbonado)), filaModelo, 10);
         modelo.setValueAt(calcularEstatusOrden(totalTexto, nuevoAbonadoTexto,
-            obtenerEstadoRecepcionOrden(noOrden)), filaModelo, 11);
+            obtenerEstadoRecepcionOrden(noOrden)), filaModelo, 13);
         tabla.repaint();
         PRINCIPAL.actualizarAlarmasEnTiempoReal();
     }//registrarAbono
@@ -2532,11 +2985,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     if (noOrden.equalsIgnoreCase(String.valueOf(modelo.getValueAt(filaModelo, 2)).trim())) {
                         double cantidadPendiente = "SI".equalsIgnoreCase(estadoRecepcion)
                                 ? 0.0 : obtenerProductosPendientesOrden(noOrden);
-                        modelo.setValueAt(abonado, filaModelo, 7);
-                        modelo.setValueAt(calcularPendientePago(total, abonado), filaModelo, 8);
-                        modelo.setValueAt(diasFaltantesTexto, filaModelo, 9);
-                        modelo.setValueAt(formatearCantidadInventario(cantidadPendiente), filaModelo, 10);
-                        modelo.setValueAt(calcularEstatusOrden(total, abonado, estadoRecepcion), filaModelo, 11);
+                        modelo.setValueAt(abonado, filaModelo, 9);
+                        modelo.setValueAt(calcularPendientePago(total, abonado), filaModelo, 10);
+                        modelo.setValueAt(diasFaltantesTexto, filaModelo, 11);
+                        modelo.setValueAt(formatearCantidadInventario(cantidadPendiente), filaModelo, 12);
+                        modelo.setValueAt(calcularEstatusOrden(total, abonado, estadoRecepcion), filaModelo, 13);
                         tabla.repaint();
                         return;
                     }
@@ -2638,6 +3091,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "No se encontr\u00f3 informaci\u00f3n de la orden " + noOrden + ".");
             return;
         }
+        final boolean ordenFinalizada = "FINALIZADO".equalsIgnoreCase(datos.get("ESTATUS"));
 
         javax.swing.JPanel panelDatos = new javax.swing.JPanel(new java.awt.GridLayout(0, 4, 12, 6));
         panelDatos.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -2656,7 +3110,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
         javax.swing.table.DefaultTableModel modeloProductos = new javax.swing.table.DefaultTableModel(columnasProductos, 0) {
             @Override
             public boolean isCellEditable(int fila, int columna) {
-                return columna == 6 && parseNumeroInventario(String.valueOf(getValueAt(fila, 5))) > 0;
+                return !ordenFinalizada && columna == 6
+                        && parseNumeroInventario(String.valueOf(getValueAt(fila, 5))) > 0;
             }
         };
 
@@ -2715,35 +3170,632 @@ public class PROVEEDORES extends javax.swing.JFrame {
         javax.swing.JPanel panelProductos = new javax.swing.JPanel(new java.awt.BorderLayout());
         panelProductos.setBorder(javax.swing.BorderFactory.createTitledBorder("PRODUCTOS"));
         javax.swing.JScrollPane scrollProductos = new javax.swing.JScrollPane(tablaProductos);
-        scrollProductos.setPreferredSize(new java.awt.Dimension(860, 320));
+        scrollProductos.setPreferredSize(new java.awt.Dimension(900, 520));
         panelProductos.add(scrollProductos, java.awt.BorderLayout.CENTER);
+
+        double totalProductos = 0;
+        double productosRecibidos = 0;
+        double productosPendientes = 0;
+        for (int fila = 0; fila < modeloProductos.getRowCount(); fila++) {
+            totalProductos += parseNumeroInventario(String.valueOf(modeloProductos.getValueAt(fila, 3)));
+            productosRecibidos += parseNumeroInventario(String.valueOf(modeloProductos.getValueAt(fila, 4)));
+            productosPendientes += parseNumeroInventario(String.valueOf(modeloProductos.getValueAt(fila, 5)));
+        }
+        javax.swing.JPanel resumenRecepcion = new javax.swing.JPanel(new java.awt.BorderLayout(10, 8));
+        resumenRecepcion.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 0, 0, 0));
+
+        javax.swing.JPanel tarjetasRecepcion = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 8, 0));
+        tarjetasRecepcion.add(crearTarjetaRecepcion("Productos recibidos",
+                formatearCantidadInventario(productosRecibidos) + " de "
+                        + formatearCantidadInventario(totalProductos),
+                COLOR_AZUL, iconoCarrito(COLOR_AZUL, 20)).panel);
+        tarjetasRecepcion.add(crearTarjetaRecepcion("Pendientes",
+                formatearCantidadInventario(productosPendientes) + " por recibir",
+                COLOR_AZUL, iconoDocumentoAdjunto(COLOR_AZUL)).panel);
+        TarjetaResumen tarjetaIncidencias = crearTarjetaRecepcion("Incidencias", "0",
+                new java.awt.Color(230, 160, 0), iconoMonedas(new java.awt.Color(230, 160, 0)));
+        tarjetasRecepcion.add(tarjetaIncidencias.panel);
+        TarjetaResumen tarjetaDevoluciones = crearTarjetaRecepcion("Devoluciones", "0",
+                COLOR_ROJO, iconoCerrarX(COLOR_ROJO));
+        tarjetasRecepcion.add(tarjetaDevoluciones.panel);
+
+        javax.swing.JPanel entrega = new javax.swing.JPanel(new java.awt.GridLayout(2, 1, 4, 2));
+        entrega.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+        entrega.setBackground(new java.awt.Color(248, 251, 255));
+        javax.swing.JLabel fechaPrometida = new javax.swing.JLabel(
+                "Fecha prometida: " + datos.getOrDefault("FECHA DE ENTREGA", "-"));
+        fechaPrometida.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        java.time.LocalDate fechaEsperada = obtenerFechaLocal(datos.get("FECHA DE ENTREGA"));
+        long diasRetraso = fechaEsperada == null ? 0
+                : Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(
+                        fechaEsperada, java.time.LocalDate.now()));
+        javax.swing.JLabel diasRetrasoEtiqueta = new javax.swing.JLabel(
+                "Días de retraso: " + diasRetraso);
+        diasRetrasoEtiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        diasRetrasoEtiqueta.setForeground(diasRetraso > 0 ? COLOR_ROJO : COLOR_VERDE);
+        entrega.add(fechaPrometida);
+        entrega.add(diasRetrasoEtiqueta);
+
+        javax.swing.JPanel accionesRecepcion = new javax.swing.JPanel(
+                new java.awt.GridLayout(2, 1, 0, 6));
+        accionesRecepcion.setOpaque(false);
+        javax.swing.JButton botonIncidencia = new javax.swing.JButton("REGISTRAR INCIDENCIA");
+        prepararBoton(botonIncidencia, "REGISTRAR INCIDENCIA",
+                iconoMonedas(java.awt.Color.WHITE), java.awt.Color.WHITE,
+                COLOR_AZUL, COLOR_AZUL);
+        javax.swing.JButton botonDevolucion = new javax.swing.JButton("REGISTRAR DEVOLUCIÓN");
+        prepararBoton(botonDevolucion, "REGISTRAR DEVOLUCIÓN",
+                iconoCerrarX(java.awt.Color.WHITE), java.awt.Color.WHITE,
+                COLOR_AZUL, COLOR_AZUL);
+        botonIncidencia.setEnabled(!ordenFinalizada);
+        botonDevolucion.setEnabled(!ordenFinalizada);
+        accionesRecepcion.add(botonIncidencia);
+        accionesRecepcion.add(botonDevolucion);
+
+        javax.swing.JPanel encabezadoResumen = new javax.swing.JPanel(new java.awt.BorderLayout(8, 0));
+        encabezadoResumen.setOpaque(false);
+        encabezadoResumen.add(tarjetasRecepcion, java.awt.BorderLayout.CENTER);
+        encabezadoResumen.add(entrega, java.awt.BorderLayout.EAST);
+        resumenRecepcion.add(encabezadoResumen, java.awt.BorderLayout.NORTH);
+
+        String[] columnasIncidencias = {"TIPO", "PRODUCTO", "CANTIDAD", "MOTIVO", "ESTATUS", "ACCIONES"};
+        javax.swing.table.DefaultTableModel modeloIncidencias =
+                new javax.swing.table.DefaultTableModel(columnasIncidencias, 0) {
+                    @Override
+                    public boolean isCellEditable(int fila, int columna) {
+                        return false;
+                    }
+                };
+        cargarIncidenciasEnTabla(noOrden, modeloIncidencias, tarjetaIncidencias);
+        cargarIncidenciasEnTabla(noOrden, modeloIncidencias, tarjetaIncidencias);
+        cargarDevolucionesEnTabla(noOrden, modeloIncidencias, tarjetaDevoluciones);
+        botonIncidencia.addActionListener(e -> mostrarFormularioIncidencia(
+                    noOrden, datos, modeloProductos, modeloIncidencias, tarjetaIncidencias));
+        botonDevolucion.addActionListener(e -> mostrarFormularioDevolucion(
+                    noOrden, modeloProductos, modeloIncidencias, tarjetaIncidencias, tarjetaDevoluciones));
+        javax.swing.JTable tablaIncidencias = new javax.swing.JTable(modeloIncidencias);
+        tablaIncidencias.setRowHeight(24);
+        tablaIncidencias.setFillsViewportHeight(true);
+        tablaIncidencias.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        tablaIncidencias.getTableHeader().setFont(
+                tablaIncidencias.getTableHeader().getFont().deriveFont(java.awt.Font.BOLD));
+        tablaIncidencias.getColumnModel().getColumn(5).setCellRenderer(
+                new javax.swing.table.DefaultTableCellRenderer() {
+                    @Override
+                    public java.awt.Component getTableCellRendererComponent(javax.swing.JTable tabla,
+                            Object valor, boolean seleccionado, boolean foco, int fila, int columna) {
+                        javax.swing.JButton boton = new javax.swing.JButton("ELIMINAR");
+                        boton.setForeground(COLOR_ROJO);
+                        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+                        boton.setFocusPainted(false);
+                        boton.setOpaque(true);
+                        boton.setBackground(java.awt.Color.WHITE);
+                        return boton;
+                    }
+                });
+        ajustarAnchoColumnasIncidencias(tablaIncidencias);
+        tablaIncidencias.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evento) {
+                int columna = tablaIncidencias.columnAtPoint(evento.getPoint());
+                int fila = tablaIncidencias.rowAtPoint(evento.getPoint());
+                if (columna != 5 || fila < 0) {
+                    return;
+                }
+                int filaModelo = tablaIncidencias.convertRowIndexToModel(fila);
+                int respuesta = JOptionPane.showConfirmDialog(tablaIncidencias,
+                        "¿Deseas eliminar esta incidencia?",
+                        "Confirmar eliminación", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+                if (respuesta != JOptionPane.YES_OPTION) {
+                    return;
+                }
+                try {
+                    boolean esDevolucion = "DEVOLUCIÓN".equals(
+                            String.valueOf(modeloIncidencias.getValueAt(filaModelo, 0)));
+                    if (esDevolucion) {
+                        eliminarDevolucion(noOrden,
+                                String.valueOf(modeloIncidencias.getValueAt(filaModelo, 1)),
+                                String.valueOf(modeloIncidencias.getValueAt(filaModelo, 2)),
+                                String.valueOf(modeloIncidencias.getValueAt(filaModelo, 3)));
+                    } else {
+                        eliminarIncidencia(noOrden,
+                                String.valueOf(modeloIncidencias.getValueAt(filaModelo, 1)),
+                                String.valueOf(modeloIncidencias.getValueAt(filaModelo, 2)),
+                                String.valueOf(modeloIncidencias.getValueAt(filaModelo, 0)),
+                                String.valueOf(modeloIncidencias.getValueAt(filaModelo, 3)));
+                    }
+                    cargarIncidenciasEnTabla(noOrden, modeloIncidencias, tarjetaIncidencias);
+                    cargarDevolucionesEnTabla(noOrden, modeloIncidencias, tarjetaDevoluciones);
+                } catch (Exception ex) {
+                    mostrarError("No se pudo eliminar la incidencia.", ex);
+                }
+            }
+        });
+        javax.swing.JPanel panelIncidencias = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panelIncidencias.setBorder(javax.swing.BorderFactory.createTitledBorder(
+                "INCIDENCIAS Y DEVOLUCIONES DE ESTA ORDEN"));
+        panelIncidencias.add(new javax.swing.JScrollPane(tablaIncidencias), java.awt.BorderLayout.CENTER);
+        panelIncidencias.setPreferredSize(new java.awt.Dimension(860, 150));
+        resumenRecepcion.add(panelIncidencias, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel controlesRecepcion = new javax.swing.JPanel(new java.awt.BorderLayout(8, 0));
+        controlesRecepcion.setOpaque(false);
+        controlesRecepcion.add(accionesRecepcion, java.awt.BorderLayout.WEST);
 
         javax.swing.JButton botonRecibir = new javax.swing.JButton("RECIBIR MERCANCIA");
         botonRecibir.setBackground(new java.awt.Color(0, 95, 131));
         botonRecibir.setForeground(java.awt.Color.WHITE);
-        botonRecibir.setEnabled(!ordenMercanciaRecibida(noOrden) && hayPendienteRecibir(modeloProductos));
+        botonRecibir.setEnabled(!ordenFinalizada
+                && !ordenMercanciaRecibida(noOrden) && hayPendienteRecibir(modeloProductos));
         botonRecibir.addActionListener(e -> {
             if (recibirMercancia(noOrden, modeloProductos)) {
-                botonRecibir.setEnabled(!ordenMercanciaRecibida(noOrden) && hayPendienteRecibir(modeloProductos));
+                botonRecibir.setEnabled(!ordenFinalizada
+                        && !ordenMercanciaRecibida(noOrden) && hayPendienteRecibir(modeloProductos));
                 actualizarFilaHistorial(tablaHistorial, noOrden);
             }
         });
         javax.swing.JPanel panelRecibir = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
         panelRecibir.add(botonRecibir);
-        panelProductos.add(panelRecibir, java.awt.BorderLayout.SOUTH);
+        controlesRecepcion.add(panelRecibir, java.awt.BorderLayout.EAST);
+        javax.swing.JPanel inferiorProductos = new javax.swing.JPanel(new java.awt.BorderLayout(0, 8));
+        inferiorProductos.setOpaque(false);
+        inferiorProductos.add(resumenRecepcion, java.awt.BorderLayout.CENTER);
+        inferiorProductos.add(controlesRecepcion, java.awt.BorderLayout.SOUTH);
+        panelProductos.add(inferiorProductos, java.awt.BorderLayout.SOUTH);
 
         javax.swing.JPanel panelContenido = new javax.swing.JPanel(new java.awt.BorderLayout(10, 10));
         panelContenido.add(panelDatos, java.awt.BorderLayout.NORTH);
         panelContenido.add(panelProductos, java.awt.BorderLayout.CENTER);
-        panelContenido.setPreferredSize(new java.awt.Dimension(900, 600));
+        panelContenido.setPreferredSize(new java.awt.Dimension(900, 850));
 
         javax.swing.JDialog dialogo = new javax.swing.JDialog(this, "Orden de Compra No. " + noOrden, true);
         dialogo.getContentPane().add(panelContenido);
         dialogo.setResizable(true);
         dialogo.pack();
-        dialogo.setLocationRelativeTo(this);
+        dialogo.setLocationRelativeTo(null);
         dialogo.setVisible(true);
     }//mostrarDetalleOrden
+
+    private void mostrarFormularioIncidencia(String noOrden, java.util.Map<String, String> datos,
+            javax.swing.table.DefaultTableModel modeloProductos,
+            javax.swing.table.DefaultTableModel modeloIncidencias,
+            TarjetaResumen tarjetaIncidencias) {
+        javax.swing.JDialog dialogo = new javax.swing.JDialog(this,
+                "Registrar incidencia - Orden No. " + noOrden, true);
+        dialogo.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
+        contenido.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 18, 14, 18));
+
+        javax.swing.JLabel titulo = new javax.swing.JLabel("REGISTRAR INCIDENCIA");
+        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
+        titulo.setForeground(COLOR_AZUL);
+        contenido.add(titulo, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        java.awt.GridBagConstraints restricciones = new java.awt.GridBagConstraints();
+        restricciones.insets = new java.awt.Insets(5, 5, 5, 5);
+        restricciones.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        restricciones.anchor = java.awt.GridBagConstraints.WEST;
+
+        javax.swing.JComboBox<String> tipo = new javax.swing.JComboBox<>(
+                new String[]{"Producto dañado", "Producto incorrecto", "Faltante", "Otro"});
+        javax.swing.JComboBox<String> producto = new javax.swing.JComboBox<>();
+        java.util.List<String[]> productos = new java.util.ArrayList<>();
+        for (int fila = 0; fila < modeloProductos.getRowCount(); fila++) {
+            String codigo = obtenerValorModelo(modeloProductos, fila, 0);
+            String descripcion = obtenerValorModelo(modeloProductos, fila, 1);
+            int pendiente = (int) parseNumeroInventario(obtenerValorModelo(modeloProductos, fila, 5));
+            if (!codigo.isEmpty() && pendiente > 0) {
+                productos.add(new String[]{codigo, descripcion, String.valueOf(pendiente)});
+                producto.addItem(codigo + " - " + descripcion);
+            }
+        }
+        javax.swing.JSpinner cantidad = new javax.swing.JSpinner(
+                new javax.swing.SpinnerNumberModel(1, 1, 999999, 1));
+        javax.swing.JTextField fecha = new javax.swing.JTextField(
+                java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        javax.swing.JTextArea descripcion = new javax.swing.JTextArea(5, 45);
+        descripcion.setLineWrap(true);
+        descripcion.setWrapStyleWord(true);
+        javax.swing.JScrollPane scrollDescripcion = new javax.swing.JScrollPane(descripcion);
+        javax.swing.JButton guardar = new javax.swing.JButton("GUARDAR INCIDENCIA");
+        guardar.setEnabled(!productos.isEmpty());
+
+        agregarCampoIncidencia(formulario, restricciones, 0, "Tipo de incidencia:", tipo);
+        agregarCampoIncidencia(formulario, restricciones, 1, "Fecha de incidencia:", fecha);
+        agregarCampoIncidencia(formulario, restricciones, 2, "Producto:", producto);
+        agregarCampoIncidencia(formulario, restricciones, 3, "Cantidad con incidencia:", cantidad);
+        agregarCampoIncidencia(formulario, restricciones, 4, "Descripción de la incidencia:", scrollDescripcion);
+        contenido.add(formulario, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel botones = new javax.swing.JPanel(
+                new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
+        javax.swing.JButton cancelar = new javax.swing.JButton("CANCELAR");
+        prepararBoton(guardar, "GUARDAR INCIDENCIA", null, java.awt.Color.WHITE, COLOR_AZUL, COLOR_AZUL);
+        producto.addActionListener(e -> {
+            if (producto.getSelectedIndex() >= 0) {
+                int maximo = Integer.parseInt(productos.get(producto.getSelectedIndex())[2]);
+                cantidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, maximo, 1));
+            }
+        });
+        if (productos.isEmpty()) {
+            javax.swing.JLabel aviso = new javax.swing.JLabel(
+                    "No hay productos pendientes para registrar una incidencia.");
+            aviso.setForeground(COLOR_ROJO);
+            formulario.add(aviso, new java.awt.GridBagConstraints());
+        } else {
+            producto.setSelectedIndex(0);
+        }
+        cancelar.addActionListener(e -> dialogo.dispose());
+        guardar.addActionListener(e -> {
+            if (producto.getSelectedIndex() < 0) {
+                JOptionPane.showMessageDialog(dialogo, "Selecciona un producto.", "Datos incompletos",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (descripcion.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(dialogo, "Escribe la descripción de la incidencia.",
+                        "Datos incompletos", JOptionPane.WARNING_MESSAGE);
+                descripcion.requestFocusInWindow();
+                return;
+            }
+            String[] productoSeleccionado = productos.get(producto.getSelectedIndex());
+            int cantidadIncidencia = ((Number) cantidad.getValue()).intValue();
+            int cantidadPendiente = Integer.parseInt(productoSeleccionado[2]);
+            if (cantidadIncidencia > cantidadPendiente) {
+                JOptionPane.showMessageDialog(dialogo,
+                        "La cantidad no puede ser mayor a la cantidad pendiente (" + cantidadPendiente + ").",
+                        "Cantidad inválida", JOptionPane.WARNING_MESSAGE);
+                cantidad.requestFocusInWindow();
+                return;
+            }
+            try {
+                guardarIncidencia(noOrden, fecha.getText().trim(), productoSeleccionado[0],
+                        productoSeleccionado[1], cantidadIncidencia, String.valueOf(tipo.getSelectedItem()),
+                        descripcion.getText().trim());
+                cargarIncidenciasEnTabla(noOrden, modeloIncidencias, tarjetaIncidencias);
+                dialogo.dispose();
+                JOptionPane.showMessageDialog(this, "La incidencia se guardó correctamente.",
+                        "Incidencia registrada", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                mostrarError("No se pudo guardar la incidencia.", ex);
+            }
+        });
+        botones.add(cancelar);
+        botones.add(guardar);
+        contenido.add(botones, java.awt.BorderLayout.SOUTH);
+
+        dialogo.setContentPane(contenido);
+        dialogo.setSize(720, 520);
+        dialogo.setResizable(false);
+        dialogo.setLocationRelativeTo(null);
+        dialogo.setVisible(true);
+    }//mostrarFormularioIncidencia
+
+    private void agregarCampoIncidencia(javax.swing.JPanel formulario,
+            java.awt.GridBagConstraints restricciones, int fila, String etiqueta,
+            java.awt.Component campo) {
+        restricciones.gridx = 0;
+        restricciones.gridy = fila;
+        restricciones.weightx = 0;
+        formulario.add(new javax.swing.JLabel(etiqueta), (java.awt.GridBagConstraints) restricciones.clone());
+        restricciones.gridx = 1;
+        restricciones.weightx = 1;
+        formulario.add(campo, (java.awt.GridBagConstraints) restricciones.clone());
+    }//agregarCampoIncidencia
+
+    private void guardarIncidencia(String noOrden, String fecha, String codigoProducto,
+            String producto, int cantidad, String tipo, String descripcion) throws IOException {
+        File archivo = AppConfig.resolveBaseFile("REGISTROINCIDENCIAS.xlsx");
+        Workbook libro;
+        if (archivo.exists() && archivo.length() > 0) {
+            try (FileInputStream fis = new FileInputStream(archivo)) {
+                libro = new XSSFWorkbook(fis);
+            }
+        } else {
+            libro = new XSSFWorkbook();
+        }
+        try (libro) {
+            Sheet hoja = libro.getNumberOfSheets() == 0
+                    ? libro.createSheet("INCIDENCIAS") : libro.getSheetAt(0);
+            Row encabezado = hoja.getRow(0);
+            if (encabezado == null) {
+                encabezado = hoja.createRow(0);
+            }
+            for (int columna = 0; columna < ENCABEZADOS_INCIDENCIAS.length; columna++) {
+                encabezado.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
+                        .setCellValue(ENCABEZADOS_INCIDENCIAS[columna]);
+            }
+            Row fila = hoja.createRow(hoja.getLastRowNum() + 1);
+            String usuario = INICIARSESION.usuarioActual == null ? "" : INICIARSESION.usuarioActual.trim();
+            String nombre = INICIARSESION.nombreUsuarioActual == null
+                    ? "" : INICIARSESION.nombreUsuarioActual.trim();
+            String registradoPor = nombre.isEmpty() ? usuario : nombre;
+            String[] valores = {noOrden, fecha, codigoProducto, producto, String.valueOf(cantidad),
+                tipo, descripcion, registradoPor, "ABIERTA"};
+            for (int columna = 0; columna < valores.length; columna++) {
+                fila.createCell(columna).setCellValue(valores[columna]);
+            }
+            try (FileOutputStream fos = new FileOutputStream(archivo)) {
+                libro.write(fos);
+            }
+        }
+    }//guardarIncidencia
+
+    private void cargarIncidenciasEnTabla(String noOrden,
+            javax.swing.table.DefaultTableModel modelo, TarjetaResumen tarjeta) {
+        modelo.setRowCount(0);
+        File archivo = AppConfig.resolveBaseFile("REGISTROINCIDENCIAS.xlsx");
+        if (!archivo.exists()) {
+            tarjeta.etiquetaValor.setText("0");
+            return;
+        }
+        try (FileInputStream fis = new FileInputStream(archivo);
+                Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+                Row registro = hoja.getRow(fila);
+                if (registro == null || !noOrden.equalsIgnoreCase(leerCelda(registro, 0))) {
+                    continue;
+                }
+                modelo.addRow(new Object[]{leerCelda(registro, 5), leerCelda(registro, 3),
+                    leerCelda(registro, 4), leerCelda(registro, 6), leerCelda(registro, 8),
+                    "ELIMINAR"});
+            }
+            tarjeta.etiquetaValor.setText(String.valueOf(modelo.getRowCount()));
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudieron cargar las incidencias de la orden " + noOrden, ex);
+            tarjeta.etiquetaValor.setText("0");
+        }
+    }//cargarIncidenciasEnTabla
+
+    private void eliminarIncidencia(String noOrden, String producto, String cantidad,
+            String tipo, String descripcion) throws IOException {
+        File archivo = AppConfig.resolveBaseFile("REGISTROINCIDENCIAS.xlsx");
+        if (!archivo.exists()) {
+            return;
+        }
+        try (FileInputStream fis = new FileInputStream(archivo);
+                Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                Row registro = hoja.getRow(indice);
+                if (registro == null
+                        || !noOrden.equalsIgnoreCase(leerCelda(registro, 0))
+                        || !producto.equals(leerCelda(registro, 3))
+                        || !cantidad.equals(leerCelda(registro, 4))
+                        || !tipo.equals(leerCelda(registro, 5))
+                        || !descripcion.equals(leerCelda(registro, 6))) {
+                    continue;
+                }
+                int ultimaFila = hoja.getLastRowNum();
+                hoja.removeRow(registro);
+                if (indice < ultimaFila) {
+                    hoja.shiftRows(indice + 1, ultimaFila, -1);
+                }
+                break;
+            }
+            try (FileOutputStream fos = new FileOutputStream(archivo)) {
+                libro.write(fos);
+            }
+        }
+    }//eliminarIncidencia
+
+    private void mostrarFormularioDevolucion(String noOrden,
+            javax.swing.table.DefaultTableModel modeloProductos,
+            javax.swing.table.DefaultTableModel modeloIncidencias,
+            TarjetaResumen tarjetaIncidencias,
+            TarjetaResumen tarjetaDevoluciones) {
+        javax.swing.JDialog dialogo = new javax.swing.JDialog(this,
+                "Registrar devolución - Orden No. " + noOrden, true);
+        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        formulario.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 18, 8, 18));
+        java.awt.GridBagConstraints restricciones = new java.awt.GridBagConstraints();
+        restricciones.insets = new java.awt.Insets(5, 5, 5, 5);
+        restricciones.fill = java.awt.GridBagConstraints.HORIZONTAL;
+
+        javax.swing.JComboBox<String> producto = new javax.swing.JComboBox<>();
+        java.util.List<String[]> productos = new java.util.ArrayList<>();
+        for (int fila = 0; fila < modeloProductos.getRowCount(); fila++) {
+            String codigo = obtenerValorModelo(modeloProductos, fila, 0);
+            String descripcionProducto = obtenerValorModelo(modeloProductos, fila, 1);
+            int recibido = (int) parseNumeroInventario(obtenerValorModelo(modeloProductos, fila, 4));
+            if (!codigo.isEmpty() && recibido > 0) {
+                productos.add(new String[]{codigo, descripcionProducto, String.valueOf(recibido)});
+                producto.addItem(codigo + " - " + descripcionProducto);
+            }
+        }
+        javax.swing.JTextField fecha = new javax.swing.JTextField(
+                java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        javax.swing.JSpinner cantidad = new javax.swing.JSpinner(
+                new javax.swing.SpinnerNumberModel(1, 1, productos.isEmpty() ? 1
+                        : Integer.parseInt(productos.get(0)[2]), 1));
+        javax.swing.JComboBox<String> tipo = new javax.swing.JComboBox<>(
+                new String[]{"Producto defectuoso", "Producto incorrecto", "Excedente", "Otro"});
+        javax.swing.JComboBox<String> condicion = new javax.swing.JComboBox<>(
+                new String[]{"Con empaque", "Sin empaque", "Dañado"});
+        javax.swing.JComboBox<String> accion = new javax.swing.JComboBox<>(
+                new String[]{"Reposición", "Reembolso", "Nota de crédito"});
+        javax.swing.JTextField guia = new javax.swing.JTextField();
+        javax.swing.JTextArea motivo = new javax.swing.JTextArea(4, 42);
+        motivo.setLineWrap(true);
+        motivo.setWrapStyleWord(true);
+
+        agregarCampoIncidencia(formulario, restricciones, 0, "Producto:", producto);
+        agregarCampoIncidencia(formulario, restricciones, 1, "Fecha de devolución:", fecha);
+        agregarCampoIncidencia(formulario, restricciones, 2, "Cantidad a devolver:", cantidad);
+        agregarCampoIncidencia(formulario, restricciones, 3, "Tipo de devolución:", tipo);
+        agregarCampoIncidencia(formulario, restricciones, 4, "Condición del producto:", condicion);
+        agregarCampoIncidencia(formulario, restricciones, 5, "Número de guía (opcional):", guia);
+        agregarCampoIncidencia(formulario, restricciones, 6, "Acción solicitada:", accion);
+        agregarCampoIncidencia(formulario, restricciones, 7, "Motivo detallado:", new javax.swing.JScrollPane(motivo));
+
+        javax.swing.JButton guardar = new javax.swing.JButton("GUARDAR DEVOLUCIÓN");
+        guardar.setEnabled(!productos.isEmpty());
+        producto.addActionListener(e -> {
+            if (producto.getSelectedIndex() >= 0) {
+                int maximo = Integer.parseInt(productos.get(producto.getSelectedIndex())[2]);
+                cantidad.setModel(new javax.swing.SpinnerNumberModel(1, 1, maximo, 1));
+            }
+        });
+        javax.swing.JPanel botones = new javax.swing.JPanel(
+                new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+        javax.swing.JButton cancelar = new javax.swing.JButton("CANCELAR");
+        prepararBoton(guardar, "GUARDAR DEVOLUCIÓN", null, java.awt.Color.WHITE, COLOR_AZUL, COLOR_AZUL);
+        cancelar.addActionListener(e -> dialogo.dispose());
+        guardar.addActionListener(e -> {
+            if (producto.getSelectedIndex() < 0) {
+                JOptionPane.showMessageDialog(dialogo, "No hay productos recibidos disponibles para devolver.",
+                        "Datos incompletos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (motivo.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(dialogo, "Escribe el motivo de la devolución.",
+                        "Datos incompletos", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            String[] productoSeleccionado = productos.get(producto.getSelectedIndex());
+            int cantidadDevolver = ((Number) cantidad.getValue()).intValue();
+            int maximo = Integer.parseInt(productoSeleccionado[2]);
+            if (cantidadDevolver > maximo) {
+                JOptionPane.showMessageDialog(dialogo,
+                        "La cantidad no puede ser mayor a la cantidad recibida (" + maximo + ").",
+                        "Cantidad inválida", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            try {
+                guardarDevolucion(noOrden, fecha.getText().trim(), productoSeleccionado[0],
+                        productoSeleccionado[1], cantidadDevolver, String.valueOf(tipo.getSelectedItem()),
+                        String.valueOf(condicion.getSelectedItem()), guia.getText().trim(),
+                        String.valueOf(accion.getSelectedItem()), motivo.getText().trim());
+                cargarDevolucionesEnTabla(noOrden, modeloIncidencias, tarjetaDevoluciones);
+                dialogo.dispose();
+                JOptionPane.showMessageDialog(this, "La devolución se guardó correctamente.",
+                        "Devolución registrada", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                mostrarError("No se pudo guardar la devolución.", ex);
+            }
+        });
+        botones.add(cancelar);
+        botones.add(guardar);
+
+        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout());
+        javax.swing.JLabel titulo = new javax.swing.JLabel("REGISTRAR DEVOLUCIÓN");
+        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
+        titulo.setForeground(COLOR_AZUL);
+        contenido.add(titulo, java.awt.BorderLayout.NORTH);
+        contenido.add(formulario, java.awt.BorderLayout.CENTER);
+        contenido.add(botones, java.awt.BorderLayout.SOUTH);
+        dialogo.setContentPane(contenido);
+        dialogo.setSize(700, 590);
+        dialogo.setResizable(false);
+        dialogo.setLocationRelativeTo(null);
+        dialogo.setVisible(true);
+    }//mostrarFormularioDevolucion
+
+    private void guardarDevolucion(String noOrden, String fecha, String codigoProducto,
+            String producto, int cantidad, String tipo, String condicion, String guia,
+            String accion, String motivo) throws IOException {
+        File archivo = AppConfig.resolveBaseFile("REGISTRODEVOLUCIONES.xlsx");
+        Workbook libro;
+        if (archivo.exists() && archivo.length() > 0) {
+            try (FileInputStream fis = new FileInputStream(archivo)) {
+                libro = new XSSFWorkbook(fis);
+            }
+        } else {
+            libro = new XSSFWorkbook();
+        }
+        try (libro) {
+            Sheet hoja = libro.getNumberOfSheets() == 0
+                    ? libro.createSheet("DEVOLUCIONES") : libro.getSheetAt(0);
+            Row encabezado = hoja.getRow(0);
+            if (encabezado == null) {
+                encabezado = hoja.createRow(0);
+            }
+            for (int columna = 0; columna < ENCABEZADOS_DEVOLUCIONES.length; columna++) {
+                encabezado.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
+                        .setCellValue(ENCABEZADOS_DEVOLUCIONES[columna]);
+            }
+            Row fila = hoja.createRow(hoja.getLastRowNum() + 1);
+            String usuario = INICIARSESION.usuarioActual == null ? "" : INICIARSESION.usuarioActual.trim();
+            String nombre = INICIARSESION.nombreUsuarioActual == null
+                    ? "" : INICIARSESION.nombreUsuarioActual.trim();
+            String registradoPor = nombre.isEmpty() ? usuario : nombre;
+            String[] valores = {noOrden, fecha, codigoProducto, producto, String.valueOf(cantidad),
+                tipo, condicion, guia, accion, motivo, registradoPor, "PENDIENTE DE PROCESO"};
+            for (int columna = 0; columna < valores.length; columna++) {
+                fila.createCell(columna).setCellValue(valores[columna]);
+            }
+            try (FileOutputStream fos = new FileOutputStream(archivo)) {
+                libro.write(fos);
+            }
+        }
+    }//guardarDevolucion
+
+    private void cargarDevolucionesEnTabla(String noOrden,
+            javax.swing.table.DefaultTableModel modelo, TarjetaResumen tarjeta) {
+        File archivo = AppConfig.resolveBaseFile("REGISTRODEVOLUCIONES.xlsx");
+        if (!archivo.exists()) {
+            tarjeta.etiquetaValor.setText("0");
+            return;
+        }
+        int total = 0;
+        try (FileInputStream fis = new FileInputStream(archivo);
+                Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+                Row registro = hoja.getRow(fila);
+                if (registro == null || !noOrden.equalsIgnoreCase(leerCelda(registro, 0))) {
+                    continue;
+                }
+                modelo.addRow(new Object[]{"DEVOLUCIÓN", leerCelda(registro, 3),
+                    leerCelda(registro, 4), leerCelda(registro, 9),
+                    leerCelda(registro, 11), "ELIMINAR"});
+                total++;
+            }
+            tarjeta.etiquetaValor.setText(String.valueOf(total));
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudieron cargar las devoluciones de la orden " + noOrden, ex);
+            tarjeta.etiquetaValor.setText("0");
+        }
+    }//cargarDevolucionesEnTabla
+
+    private void eliminarDevolucion(String noOrden, String producto, String cantidad,
+            String motivo) throws IOException {
+        File archivo = AppConfig.resolveBaseFile("REGISTRODEVOLUCIONES.xlsx");
+        if (!archivo.exists()) {
+            return;
+        }
+        try (FileInputStream fis = new FileInputStream(archivo);
+                Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                Row registro = hoja.getRow(indice);
+                if (registro == null
+                        || !noOrden.equalsIgnoreCase(leerCelda(registro, 0))
+                        || !producto.equals(leerCelda(registro, 3))
+                        || !cantidad.equals(leerCelda(registro, 4))
+                        || !motivo.equals(leerCelda(registro, 9))) {
+                    continue;
+                }
+                int ultimaFila = hoja.getLastRowNum();
+                hoja.removeRow(registro);
+                if (indice < ultimaFila) {
+                    hoja.shiftRows(indice + 1, ultimaFila, -1);
+                }
+                break;
+            }
+            try (FileOutputStream fos = new FileOutputStream(archivo)) {
+                libro.write(fos);
+            }
+        }
+    }//eliminarDevolucion
 
     private String obtenerNombreProveedorPorId(String idProveedor) {
         if (idProveedor == null || idProveedor.isBlank()) {
@@ -2804,6 +3856,45 @@ public class PROVEEDORES extends javax.swing.JFrame {
         mapaTeclas.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_TAB, 0), accionAvanzar);
         tabla.getActionMap().put(accionAvanzar, avanzarRenglon);
     }//configurarNavegacionRecepcion
+
+    private TarjetaResumen crearTarjetaRecepcion(String titulo, String valor,
+            java.awt.Color color, javax.swing.Icon icono) {
+        javax.swing.JPanel tarjeta = new javax.swing.JPanel(new java.awt.BorderLayout(6, 0));
+        tarjeta.setBackground(java.awt.Color.WHITE);
+        tarjeta.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO));
+        javax.swing.JLabel iconoEtiqueta = new javax.swing.JLabel(icono);
+        iconoEtiqueta.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        iconoEtiqueta.setPreferredSize(new java.awt.Dimension(30, 30));
+        javax.swing.JPanel textos = new javax.swing.JPanel();
+        textos.setOpaque(false);
+        textos.setLayout(new javax.swing.BoxLayout(textos, javax.swing.BoxLayout.Y_AXIS));
+        javax.swing.JLabel etiquetaTitulo = new javax.swing.JLabel(titulo);
+        etiquetaTitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 10));
+        etiquetaTitulo.setForeground(COLOR_TEXTO_GRIS);
+        javax.swing.JLabel etiquetaValor = new javax.swing.JLabel(valor);
+        etiquetaValor.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        etiquetaValor.setForeground(color);
+        textos.add(etiquetaTitulo);
+        textos.add(etiquetaValor);
+        tarjeta.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                javax.swing.BorderFactory.createEmptyBorder(5, 7, 5, 7)));
+        tarjeta.add(iconoEtiqueta, java.awt.BorderLayout.WEST);
+        tarjeta.add(textos, java.awt.BorderLayout.CENTER);
+        return new TarjetaResumen(tarjeta, etiquetaValor);
+    }//crearTarjetaRecepcion
+
+    private java.time.LocalDate obtenerFechaLocal(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return null;
+        }
+        try {
+            return java.time.LocalDate.parse(texto.trim(),
+                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        } catch (java.time.format.DateTimeParseException ex) {
+            return null;
+        }
+    }//obtenerFechaLocal
 
     private String formatearFechaCelda(java.util.Date fecha) {
         if (fecha == null) {
@@ -2935,6 +4026,24 @@ public class PROVEEDORES extends javax.swing.JFrame {
             if (encabezado == null) {
                 encabezado = hoja.createRow(0);
             }
+            boolean formatoAnterior = "MODELO".equalsIgnoreCase(leerCelda(encabezado, 3))
+                    && "CANTIDAD".equalsIgnoreCase(leerCelda(encabezado, 4));
+            if (formatoAnterior) {
+                for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+                    Row movimientoAnterior = hoja.getRow(fila);
+                    if (movimientoAnterior == null || leerCelda(movimientoAnterior, 0).isEmpty()) {
+                        continue;
+                    }
+                    String modeloAnterior = leerCelda(movimientoAnterior, 3);
+                    String cantidadAnterior = leerCelda(movimientoAnterior, 4);
+                    escribirCelda(movimientoAnterior, 3, "");
+                    escribirCelda(movimientoAnterior, 4, "");
+                    escribirCelda(movimientoAnterior, 5, "");
+                    escribirCelda(movimientoAnterior, 6, modeloAnterior);
+                    escribirCelda(movimientoAnterior, 7, cantidadAnterior);
+                    escribirCelda(movimientoAnterior, 8, "");
+                }
+            }
             for (int columna = 0; columna < ENCABEZADOS_REGISTRO_RECEPCION.length; columna++) {
                 encabezado.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
                         .setCellValue(ENCABEZADOS_REGISTRO_RECEPCION[columna]);
@@ -2943,6 +4052,22 @@ public class PROVEEDORES extends javax.swing.JFrame {
             String proveedor = obtenerProveedorOrden(noOrden);
             java.time.LocalDate fechaRecibido = java.time.LocalDate.now();
             String fechaTexto = fechaRecibido.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            String horaTexto = java.time.LocalTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+            String usuario = INICIARSESION.usuarioActual == null
+                    ? "" : INICIARSESION.usuarioActual.trim();
+            String nombreUsuario = INICIARSESION.nombreUsuarioActual == null
+                    ? "" : INICIARSESION.nombreUsuarioActual.trim();
+            boolean recepcionCompleta = true;
+            for (int fila = 0; fila < modeloProductos.getRowCount(); fila++) {
+                double pendiente = parseNumeroInventario(obtenerValorModelo(modeloProductos, fila, 5));
+                double recibirAhora = parseNumeroInventario(obtenerValorModelo(modeloProductos, fila, 6));
+                if (pendiente > recibirAhora) {
+                    recepcionCompleta = false;
+                    break;
+                }
+            }
+            String tipoRecepcion = recepcionCompleta ? "COMPLETA" : "PARCIAL";
             int siguienteFila = Math.max(1, hoja.getLastRowNum() + 1);
             for (int fila = 0; fila < modeloProductos.getRowCount(); fila++) {
                 double cantidadRecibida = parseNumeroInventario(obtenerValorModelo(modeloProductos, fila, 6));
@@ -2953,8 +4078,12 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 escribirCelda(movimiento, 0, noOrden);
                 escribirCelda(movimiento, 1, proveedor);
                 escribirCelda(movimiento, 2, fechaTexto);
-                escribirCelda(movimiento, 3, obtenerValorModelo(modeloProductos, fila, 0));
-                escribirCelda(movimiento, 4, formatearCantidadInventario(cantidadRecibida));
+                escribirCelda(movimiento, 3, horaTexto);
+                escribirCelda(movimiento, 4, usuario);
+                escribirCelda(movimiento, 5, nombreUsuario);
+                escribirCelda(movimiento, 6, obtenerValorModelo(modeloProductos, fila, 0));
+                escribirCelda(movimiento, 7, formatearCantidadInventario(cantidadRecibida));
+                escribirCelda(movimiento, 8, tipoRecepcion);
             }
 
             try (FileOutputStream fos = new FileOutputStream(archivoRegistro)) {
@@ -3203,6 +4332,35 @@ public class PROVEEDORES extends javax.swing.JFrame {
             tableColumn.setPreferredWidth(ancho + 16);
         }
     }//ajustarAnchoColumnas
+
+    private void ajustarAnchoColumnasHistorial(javax.swing.JTable tabla) {
+        javax.swing.table.TableColumnModel modeloColumnas = tabla.getColumnModel();
+        for (int columna = 0; columna < tabla.getColumnCount(); columna++) {
+            javax.swing.table.TableColumn tableColumn = modeloColumnas.getColumn(columna);
+            int ancho = "ESTATUS".equals(tabla.getColumnName(columna)) ? 230 : 100;
+            tableColumn.setMinWidth(ancho);
+            tableColumn.setPreferredWidth(ancho);
+            tableColumn.setMaxWidth(ancho);
+        }
+    }//ajustarAnchoColumnasHistorial
+
+    private void ajustarAnchoColumnasIncidencias(javax.swing.JTable tabla) {
+        int[] minimos = {130, 220, 85, 220, 150, 130};
+        int[] maximos = {190, 360, 110, 420, 240, 160};
+        javax.swing.table.TableColumnModel modeloColumnas = tabla.getColumnModel();
+        for (int columna = 0; columna < tabla.getColumnCount(); columna++) {
+            int ancho = tabla.getTableHeader().getFontMetrics(
+                    tabla.getTableHeader().getFont()).stringWidth(tabla.getColumnName(columna));
+            for (int fila = 0; fila < tabla.getRowCount(); fila++) {
+                java.awt.Component componente = tabla.prepareRenderer(
+                        tabla.getCellRenderer(fila, columna), fila, columna);
+                ancho = Math.max(ancho, componente.getPreferredSize().width);
+            }
+            int anchoAjustado = Math.max(minimos[columna],
+                    Math.min(maximos[columna], ancho + 24));
+            modeloColumnas.getColumn(columna).setPreferredWidth(anchoAjustado);
+        }
+    }//ajustarAnchoColumnasIncidencias
 
     private String calcularPendientePago(String total, String abonado) {
         double totalNumero = parseMonto(total);

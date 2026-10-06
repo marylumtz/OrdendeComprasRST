@@ -19,7 +19,32 @@ public final class AppConfig {
         Path cwd = Paths.get(".").toAbsolutePath().normalize();
         Path relativeBases = Paths.get("src", "main", "java", "com", "mycompany", "ocxrst", "BASES");
 
-        for (Path candidate = cwd; candidate != null; candidate = candidate.getParent()) {
+        Path proyectoDesdeDirectorio = buscarProyectoRoot(cwd, relativeBases);
+        if (proyectoDesdeDirectorio != null) {
+            return proyectoDesdeDirectorio;
+        }
+
+        try {
+            Path ubicacionClases = Paths.get(AppConfig.class.getProtectionDomain()
+                    .getCodeSource().getLocation().toURI()).toAbsolutePath().normalize();
+            Path inicioBusqueda = ubicacionClases.toFile().isDirectory()
+                    ? ubicacionClases : ubicacionClases.getParent();
+            Path proyectoDesdeClases = buscarProyectoRoot(inicioBusqueda, relativeBases);
+            if (proyectoDesdeClases != null) {
+                return proyectoDesdeClases;
+            }
+        } catch (Exception ex) {
+            // Si no se puede obtener la ubicación de las clases, se usa el directorio actual.
+        }
+
+        return cwd;
+    }
+
+    private static Path buscarProyectoRoot(Path inicio, Path relativeBases) {
+        if (inicio == null) {
+            return null;
+        }
+        for (Path candidate = inicio; candidate != null; candidate = candidate.getParent()) {
             if (candidate.resolve(relativeBases).toFile().isDirectory()) {
                 return candidate;
             }
@@ -28,8 +53,7 @@ public final class AppConfig {
                 return candidate.resolve("OrdendeComprasRST");
             }
         }
-
-        return cwd;
+        return null;
     }
 
     public static File inventariosFile() {

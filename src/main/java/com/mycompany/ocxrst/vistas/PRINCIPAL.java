@@ -120,8 +120,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         jButtonNotificaciones = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
-        jLabel3 = new javax.swing.JLabel();
         panelUsuario = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
         panelEspaciador = new javax.swing.JPanel();
 
@@ -390,11 +388,9 @@ public class PRINCIPAL extends javax.swing.JFrame {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
     private javax.swing.JButton jButtonMenu;
     private javax.swing.JButton jButtonNotificaciones;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel etiquetaFechaHora;
     private javax.swing.JPopupMenu menuSesion;
     private javax.swing.JPanel panelEspaciador;

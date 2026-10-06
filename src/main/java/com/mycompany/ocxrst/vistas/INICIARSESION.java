@@ -4,10 +4,14 @@ package com.mycompany.ocxrst.vistas;
 import com.mycompany.ocxrst.IconoVentanaUtil;
 import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.config.AppConfig;
-import java.awt.Image;
+import java.awt.Graphics2D;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URL;
+import java.awt.image.BaseMultiResolutionImage;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -37,7 +41,6 @@ public class INICIARSESION extends javax.swing.JFrame {
         EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
         LOGO.setIcon(cargarImagenEscalada("/com/mycompany/ocxrst/IMAGENES/FONDO LOGIN.png", 550, 410));
-        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoAjustado("/com/mycompany/ocxrst/IMAGENES/LOGO LOGIN.png", 170, 70));
         IconoVentanaUtil.aplicar(this);
         setLocationRelativeTo(null); 
         java.awt.EventQueue.invokeLater(() -> jTextField1.requestFocusInWindow());
@@ -54,9 +57,51 @@ public class INICIARSESION extends javax.swing.JFrame {
         if (url == null) {
             return IconoVentanaUtil.obtenerIconoSeguro(rutaClasspath);
         }
-        Image imagenOriginal = new ImageIcon(url).getImage();
-        Image imagenEscalada = imagenOriginal.getScaledInstance(ancho, alto, Image.SCALE_SMOOTH);
-        return new ImageIcon(imagenEscalada);
+        BufferedImage imagenOriginal;
+        try {
+            imagenOriginal = ImageIO.read(url);
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo leer el fondo de inicio de sesión", ex);
+            return IconoVentanaUtil.obtenerIconoSeguro(rutaClasspath);
+        }
+        if (imagenOriginal == null) {
+            return IconoVentanaUtil.obtenerIconoSeguro(rutaClasspath);
+        }
+
+        BufferedImage imagenBase = redimensionarImagen(imagenOriginal, ancho, alto);
+        BufferedImage imagenAltaDensidad = redimensionarImagen(imagenOriginal, ancho * 2, alto * 2);
+        BufferedImage imagenMuyAltaDensidad = redimensionarImagen(imagenOriginal, ancho * 3, alto * 3);
+        BaseMultiResolutionImage imagenMultirresolucion = new BaseMultiResolutionImage(
+                imagenBase,
+                imagenAltaDensidad,
+                imagenMuyAltaDensidad);
+        return new ImageIcon(imagenMultirresolucion);
+    }
+
+    private static BufferedImage redimensionarImagen(BufferedImage imagenOriginal, int ancho, int alto) {
+        BufferedImage imagenEscalada = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = imagenEscalada.createGraphics();
+        try {
+            graphics.setRenderingHint(
+                    java.awt.RenderingHints.KEY_INTERPOLATION,
+                    java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            graphics.setRenderingHint(
+                    java.awt.RenderingHints.KEY_RENDERING,
+                    java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+            graphics.setRenderingHint(
+                    java.awt.RenderingHints.KEY_COLOR_RENDERING,
+                    java.awt.RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+            graphics.setRenderingHint(
+                    java.awt.RenderingHints.KEY_DITHERING,
+                    java.awt.RenderingHints.VALUE_DITHER_DISABLE);
+            graphics.setRenderingHint(
+                    java.awt.RenderingHints.KEY_ALPHA_INTERPOLATION,
+                    java.awt.RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+            graphics.drawImage(imagenOriginal, 0, 0, ancho, alto, null);
+        } finally {
+            graphics.dispose();
+        }
+        return imagenEscalada;
     }
 
     // =====================================================================
@@ -77,7 +122,6 @@ public class INICIARSESION extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         salir = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
         LOGO = new javax.swing.JLabel();
         lblBienvenido = new javax.swing.JLabel();
         lblSubtitulo = new javax.swing.JLabel();
@@ -96,10 +140,6 @@ public class INICIARSESION extends javax.swing.JFrame {
         javax.swing.border.Border bordeCampo = javax.swing.BorderFactory.createCompoundBorder(
                 javax.swing.BorderFactory.createLineBorder(colorBordeCampo, 1),
                 javax.swing.BorderFactory.createEmptyBorder(0, 14, 0, 14));
-
-        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF.png")); // NOI18N
-        jLabel1.setText("");
-        getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(18, 55, 170, 70));
 
         lblTagline.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD | java.awt.Font.ITALIC, 10));
         lblTagline.setForeground(new java.awt.Color(205, 226, 238));
@@ -201,7 +241,7 @@ public class INICIARSESION extends javax.swing.JFrame {
             String nombreMostrado = nombreUsuarioActual == null || nombreUsuarioActual.isBlank()
                     ? usuario
                     : nombreUsuarioActual;
-            javax.swing.JOptionPane.showMessageDialog(this, "Bienvenido " + nombreMostrado, "RST", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            mostrarMensaje("Bienvenido " + nombreMostrado, javax.swing.JOptionPane.INFORMATION_MESSAGE);
 
             PRINCIPAL.reiniciarAlertaEntregasSesion();
             PRINCIPAL ventana = new PRINCIPAL();
@@ -209,7 +249,41 @@ public class INICIARSESION extends javax.swing.JFrame {
 
             this.dispose();
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos", "RST", javax.swing.JOptionPane.WARNING_MESSAGE);
+            mostrarMensaje("Usuario o contraseña incorrectos", javax.swing.JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void mostrarMensaje(String mensaje, int tipoMensaje) {
+        javax.swing.JOptionPane panel = new javax.swing.JOptionPane(
+                mensaje,
+                tipoMensaje,
+                javax.swing.JOptionPane.DEFAULT_OPTION);
+        panel.setBackground(java.awt.Color.WHITE);
+        panel.setOpaque(true);
+        aplicarFondoBlanco(panel);
+
+        javax.swing.JDialog dialogo = panel.createDialog(this, "RST");
+        dialogo.getContentPane().setBackground(java.awt.Color.WHITE);
+        ((javax.swing.JComponent) dialogo.getContentPane()).setOpaque(true);
+        aplicarFondoBlanco(dialogo.getContentPane());
+        dialogo.setResizable(false);
+        dialogo.setLocationRelativeTo(this);
+        dialogo.setVisible(true);
+    }
+
+    private static void aplicarFondoBlanco(java.awt.Container contenedor) {
+        if (contenedor instanceof javax.swing.JComponent componente) {
+            componente.setBackground(java.awt.Color.WHITE);
+            componente.setOpaque(true);
+        }
+        for (java.awt.Component componente : contenedor.getComponents()) {
+            if (componente instanceof javax.swing.JComponent componenteSwing) {
+                componenteSwing.setBackground(java.awt.Color.WHITE);
+                componenteSwing.setOpaque(true);
+            }
+            if (componente instanceof java.awt.Container) {
+                aplicarFondoBlanco((java.awt.Container) componente);
+            }
         }
     }
 
@@ -259,7 +333,6 @@ public class INICIARSESION extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel LOGO;
     private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPasswordField jPasswordField1;

@@ -311,8 +311,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private static final java.awt.Color COLOR_VERDE_CLARO = new java.awt.Color(224, 246, 233);
     private static final java.awt.Color COLOR_ROJO_CLARO = new java.awt.Color(253, 226, 226);
     private static final java.awt.Color COLOR_GRIS_CLARO = new java.awt.Color(236, 239, 243);
-    private static final java.awt.Color COLOR_VERDE_EXCEL = new java.awt.Color(33, 140, 87);
-    private static final java.awt.Color COLOR_ROJO_PDF = new java.awt.Color(199, 47, 47);
 
     private void configurarDisenoVisual() {
         jPanel1.removeAll();
@@ -805,20 +803,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
             g2.drawLine(1, (int) (t * 0.45), t - 1, (int) (t * 0.45));
             g2.drawLine((int) (t * 0.3), 1, (int) (t * 0.3), 5);
             g2.drawLine((int) (t * 0.7), 1, (int) (t * 0.7), 5);
-        });
-    }
-
-    private static javax.swing.Icon iconoFiltro(java.awt.Color color) {
-        return new VectorIcon(14, color, (g2, t) -> {
-            java.awt.geom.GeneralPath embudo = new java.awt.geom.GeneralPath();
-            embudo.moveTo(1, 1);
-            embudo.lineTo(t - 1, 1);
-            embudo.lineTo(t * 0.62f, t * 0.55f);
-            embudo.lineTo(t * 0.62f, t - 1);
-            embudo.lineTo(t * 0.38f, t * 0.8f);
-            embudo.lineTo(t * 0.38f, t * 0.55f);
-            embudo.closePath();
-            g2.draw(embudo);
         });
     }
 
@@ -1404,7 +1388,15 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     String total = leerCelda(row, 21);
                     String abonado = leerCelda(row, 22);
                     String estadoRecepcion = leerCelda(row, 24);
-                    String diasFaltantesCongelados = leerCelda(row, 25);
+                    String diasAlRecibirGuardados = leerCelda(row, 25);
+                    String fechaRecepcionReal = leerCelda(row, 26);
+                    if (fechaRecepcionReal.isBlank() && "SI".equalsIgnoreCase(estadoRecepcion)) {
+                        java.time.LocalDate fechaRegistrada = obtenerFechaRecepcionRegistrada(noOrden);
+                        if (fechaRegistrada != null) {
+                            fechaRecepcionReal = fechaRegistrada.format(
+                                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        }
+                    }
                     String estatus = calcularEstatusOrden(total, abonado, estadoRecepcion);
                     String pendiente = calcularPendientePago(total, abonado);
                     sumaTotal += parseMonto(total);
@@ -1422,8 +1414,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
                         fechaTexto = fechaOrden.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
                     }
                     if (fechaEntrega != null) {
-                        if ("SI".equalsIgnoreCase(estadoRecepcion) && !diasFaltantesCongelados.isEmpty()) {
-                            diasFaltantesTexto = diasFaltantesCongelados;
+                        String fechaEntregaTextoLocal = formatearFechaCelda(fechaEntrega);
+                        if ("SI".equalsIgnoreCase(estadoRecepcion)
+                                && (!diasAlRecibirGuardados.isEmpty() || !fechaRecepcionReal.isEmpty())) {
+                            diasFaltantesTexto = calcularDiasRetrasoGuardados(
+                                    fechaEntregaTextoLocal, fechaRecepcionReal, diasAlRecibirGuardados);
                         } else {
                             java.time.LocalDate limiteEntrega = fechaEntrega.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
                             long diasFaltantes = java.time.temporal.ChronoUnit.DAYS.between(hoy, limiteEntrega);
@@ -1924,14 +1919,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
     // Historial y registro de recepciones de mercancia
     // =====================================================================
 
-    private void mostrarHistorialRecepciones(String ordenFiltro) {
-        java.util.Set<String> ordenes = new java.util.LinkedHashSet<>();
-        if (ordenFiltro != null && !ordenFiltro.isBlank()) {
-            ordenes.add(ordenFiltro);
-        }
-        mostrarHistorialRecepciones(ordenes);
-    }//mostrarHistorialRecepciones
-
     /** Construye el dialogo con los registros de recepcion filtrados. */
     private void mostrarHistorialRecepciones(java.util.Set<String> ordenesFiltro) {
         java.util.List<String[]> registros = cargarRegistrosRecepcion(ordenesFiltro);
@@ -2075,14 +2062,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 });
     }//configurarEstatusEntradaRecepciones
 
-    private java.util.List<String[]> cargarRegistrosRecepcion(String ordenFiltro) {
-        java.util.Set<String> ordenes = new java.util.LinkedHashSet<>();
-        if (ordenFiltro != null && !ordenFiltro.isBlank()) {
-            ordenes.add(ordenFiltro);
-        }
-        return cargarRegistrosRecepcion(ordenes);
-    }//cargarRegistrosRecepcion
-
     private java.util.List<String[]> cargarRegistrosRecepcion(java.util.Set<String> ordenesFiltro) {
         java.util.List<String[]> registros = new java.util.ArrayList<>();
         File archivo = AppConfig.resolveBaseFile("REGISTRORECIBIR.xlsx");
@@ -2114,7 +2093,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     ? columnas.get("MODELO") : 3;
             int indiceCantidad = columnas.containsKey("CANTIDAD")
                     ? columnas.get("CANTIDAD") : 4;
-            int indiceTipo = columnas.getOrDefault("TIPO_RECEPCION", -1);
             for (Row fila : hoja) {
                 if (fila.getRowNum() == 0) {
                     continue;
@@ -2444,124 +2422,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         return new VectorIcon(8, color, (g2, t) -> g2.fillOval(0, 0, t, t));
     }
 
-    private void exportarHistorialExcel(java.util.List<Object[]> filas, String idProveedor) {
-        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
-        selector.setDialogTitle("Exportar historial a Excel");
-        String nombreSugerido = "HistorialCompras" + (idProveedor.isEmpty() ? "" : "_" + idProveedor) + ".xlsx";
-        selector.setSelectedFile(new File(System.getProperty("user.home") + "\\Desktop\\" + nombreSugerido));
-        selector.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Excel (*.xlsx)", "xlsx"));
-        if (selector.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-        String ruta = selector.getSelectedFile().getAbsolutePath();
-        if (!ruta.toLowerCase(java.util.Locale.ROOT).endsWith(".xlsx")) {
-            ruta += ".xlsx";
-        }
-
-        String[] encabezados = {
-            "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA DE CREACI\u00d3N", "FECHA DE PAGO PROMETIDA",
-            "FECHA DE RECEPCI\u00d3N PROMETIDA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
-            "PEND. X PAGAR", "PROD. X RECIBIR", "ESTATUS"
-        };
-        try (Workbook libro = new XSSFWorkbook()) {
-            Sheet hoja = libro.createSheet("Historial");
-            org.apache.poi.ss.usermodel.CellStyle estiloEncabezado = libro.createCellStyle();
-            org.apache.poi.ss.usermodel.Font fuenteEncabezado = libro.createFont();
-            fuenteEncabezado.setBold(true);
-            fuenteEncabezado.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
-            estiloEncabezado.setFont(fuenteEncabezado);
-            estiloEncabezado.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.BLUE.getIndex());
-            estiloEncabezado.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
-
-            Row filaEncabezado = hoja.createRow(0);
-            for (int columna = 0; columna < encabezados.length; columna++) {
-                Cell celda = filaEncabezado.createCell(columna);
-                celda.setCellValue(encabezados[columna]);
-                celda.setCellStyle(estiloEncabezado);
-            }
-
-            int numeroFila = 1;
-            for (Object[] fila : filas) {
-                Row rowExcel = hoja.createRow(numeroFila++);
-                int[] indicesOrigen = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13};
-                for (int columna = 0; columna < indicesOrigen.length; columna++) {
-                    rowExcel.createCell(columna).setCellValue(String.valueOf(fila[indicesOrigen[columna]]));
-                }
-            }
-            for (int columna = 0; columna < encabezados.length; columna++) {
-                hoja.autoSizeColumn(columna);
-            }
-
-            try (FileOutputStream fos = new FileOutputStream(ruta)) {
-                libro.write(fos);
-            }
-            JOptionPane.showMessageDialog(this, "Historial exportado correctamente a Excel.");
-        } catch (Exception ex) {
-            mostrarError("No se pudo exportar el historial a Excel.", ex);
-        }
-    }//exportarHistorialExcel
-
-    private void exportarHistorialPdf(java.util.List<Object[]> filas, String idProveedor) {
-        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
-        selector.setDialogTitle("Exportar historial a PDF");
-        String nombreSugerido = "HistorialCompras" + (idProveedor.isEmpty() ? "" : "_" + idProveedor) + ".pdf";
-        selector.setSelectedFile(new File(System.getProperty("user.home") + "\\Desktop\\" + nombreSugerido));
-        selector.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF (*.pdf)", "pdf"));
-        if (selector.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
-            return;
-        }
-        String ruta = selector.getSelectedFile().getAbsolutePath();
-        if (!ruta.toLowerCase(java.util.Locale.ROOT).endsWith(".pdf")) {
-            ruta += ".pdf";
-        }
-
-        String[] encabezados = {
-            "NOMBRE PROVEEDOR", "NO. ORDEN", "FECHA DE CREACI\u00d3N", "FECHA DE PAGO PROMETIDA",
-            "FECHA DE RECEPCI\u00d3N PROMETIDA", "COTIZACI\u00d3N", "SOLICITANTE", "TOTAL", "ABONADO",
-            "PEND. X PAGAR", "PROD. X RECIBIR", "ESTATUS"
-        };
-        try {
-            com.itextpdf.kernel.pdf.PdfWriter escritor = new com.itextpdf.kernel.pdf.PdfWriter(ruta);
-            com.itextpdf.kernel.pdf.PdfDocument documentoPdf = new com.itextpdf.kernel.pdf.PdfDocument(escritor);
-            com.itextpdf.layout.Document documento = new com.itextpdf.layout.Document(documentoPdf,
-                    com.itextpdf.kernel.geom.PageSize.A4.rotate());
-            documento.setMargins(24, 24, 24, 24);
-
-            com.itextpdf.kernel.font.PdfFont negrita = com.itextpdf.kernel.font.PdfFontFactory.createFont(
-                    com.itextpdf.io.font.constants.StandardFonts.HELVETICA_BOLD);
-            com.itextpdf.kernel.font.PdfFont normal = com.itextpdf.kernel.font.PdfFontFactory.createFont(
-                    com.itextpdf.io.font.constants.StandardFonts.HELVETICA);
-            com.itextpdf.kernel.colors.DeviceRgb azulPdf = new com.itextpdf.kernel.colors.DeviceRgb(31, 112, 184);
-
-            documento.add(new com.itextpdf.layout.element.Paragraph(
-                    "Historial de \u00d3rdenes de Compra" + (idProveedor.isEmpty() ? "" : " - " + idProveedor))
-                    .setFont(negrita).setFontSize(16).setFontColor(azulPdf));
-
-            com.itextpdf.layout.element.Table tablaPdf = new com.itextpdf.layout.element.Table(
-                    com.itextpdf.layout.properties.UnitValue.createPercentArray(encabezados.length)).useAllAvailableWidth();
-            for (String encabezado : encabezados) {
-                tablaPdf.addHeaderCell(new com.itextpdf.layout.element.Cell()
-                        .add(new com.itextpdf.layout.element.Paragraph(encabezado).setFont(negrita).setFontSize(8)
-                                .setFontColor(com.itextpdf.kernel.colors.ColorConstants.WHITE))
-                        .setBackgroundColor(azulPdf)
-                        .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
-            }
-            int[] indicesOrigen = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13};
-            for (Object[] fila : filas) {
-                for (int indice : indicesOrigen) {
-                    tablaPdf.addCell(new com.itextpdf.layout.element.Cell()
-                            .add(new com.itextpdf.layout.element.Paragraph(String.valueOf(fila[indice])).setFont(normal).setFontSize(8))
-                            .setTextAlignment(com.itextpdf.layout.properties.TextAlignment.CENTER));
-                }
-            }
-            documento.add(tablaPdf);
-            documento.close();
-            JOptionPane.showMessageDialog(this, "Historial exportado correctamente a PDF.");
-        } catch (Exception ex) {
-            mostrarError("No se pudo exportar el historial a PDF.", ex);
-        }
-    }//exportarHistorialPdf
-
     private void prepararBotonIcono(javax.swing.JButton boton, javax.swing.Icon icono) {
         boton.setUI(new BotonPlanoUI());
         boton.setText(null);
@@ -2669,33 +2529,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         return "Orden " + noOrden + ": faltan " + diasFaltantes + " día(s) para pagar. Límite: "
                 + fechaLimite + ". Pendiente: " + saldo;
     }//describirAlertaPago
-
-    private void configurarAlertaDiasFaltantes(javax.swing.JTable tabla) {
-        final int columnaDias = 8;
-        javax.swing.table.DefaultTableCellRenderer renderer = new javax.swing.table.DefaultTableCellRenderer() {
-            @Override
-            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable t, Object valor,
-                    boolean seleccionado, boolean foco, int fila, int columna) {
-                java.awt.Component comp = super.getTableCellRendererComponent(t, valor, seleccionado, foco, fila, columna);
-                if (!seleccionado) {
-                    comp.setForeground(t.getForeground());
-                    comp.setBackground(t.getBackground());
-                    try {
-                        long dias = Long.parseLong(String.valueOf(valor).trim());
-                        if (dias <= 7) {
-                            comp.setForeground(new java.awt.Color(170, 0, 0));
-                            comp.setBackground(new java.awt.Color(255, 235, 235));
-                        }
-                    } catch (NumberFormatException ignored) {
-                    }
-                }
-                setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-                return comp;
-            }
-        };
-        tabla.getColumnModel().getColumn(columnaDias).setCellRenderer(renderer);
-    }//configurarAlertaDiasFaltantes
-
 
     private double parseNumeroOrdenable(Object valor) {
         if (valor == null) {
@@ -2989,6 +2822,34 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 .getOrDefault(noOrden.toUpperCase(java.util.Locale.ROOT), 0.0);
     }//obtenerProductosPendientesOrden
 
+    private java.util.Map<String, Double> obtenerRecibidosRegistradosPorProducto(String noOrden) {
+        java.util.Map<String, Double> recibidos = new java.util.HashMap<>();
+        File archivoRegistro = AppConfig.resolveBaseFile("REGISTRORECIBIR.xlsx");
+        if (!archivoRegistro.exists() || archivoRegistro.length() == 0) {
+            return recibidos;
+        }
+        try (FileInputStream fis = new FileInputStream(archivoRegistro);
+                Workbook libro = new XSSFWorkbook(fis)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (Row row : hoja) {
+                if (row.getRowNum() == 0
+                        || !noOrden.equalsIgnoreCase(leerCelda(row, 0))) {
+                    continue;
+                }
+                String codigo = leerCelda(row, 6);
+                double cantidad = parseNumeroInventario(leerCelda(row, 7));
+                if (!codigo.isBlank() && cantidad > 0) {
+                    recibidos.merge(codigo.toUpperCase(java.util.Locale.ROOT),
+                            cantidad, Double::sum);
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudieron consultar los productos recibidos de la orden " + noOrden, ex);
+        }
+        return recibidos;
+    }//obtenerRecibidosRegistradosPorProducto
+
     private void actualizarFilaHistorial(javax.swing.JTable tabla, String noOrden) {
         File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
         if (!archivoOrdenes.exists()) {
@@ -3005,7 +2866,29 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 String abonado = leerCelda(row, 22);
                 String estadoRecepcion = leerCelda(row, 24);
                 String diasFaltantesTexto = leerCelda(row, 25);
-                if (!"SI".equalsIgnoreCase(estadoRecepcion) || diasFaltantesTexto.isEmpty()) {
+                String fechaRecepcionReal = leerCelda(row, 26);
+                if (fechaRecepcionReal.isBlank() && "SI".equalsIgnoreCase(estadoRecepcion)) {
+                    java.time.LocalDate fechaRegistrada = obtenerFechaRecepcionRegistrada(noOrden);
+                    if (fechaRegistrada != null) {
+                        fechaRecepcionReal = fechaRegistrada.format(
+                                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    }
+                }
+                if (!"SI".equalsIgnoreCase(estadoRecepcion)) {
+                    java.util.Date fechaEntrega = leerFechaCelda(row, 11);
+                    if (fechaEntrega != null) {
+                        java.time.LocalDate limiteEntrega = fechaEntrega.toInstant()
+                                .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                        diasFaltantesTexto = String.valueOf(java.time.temporal.ChronoUnit.DAYS.between(
+                                java.time.LocalDate.now(), limiteEntrega));
+                    }
+                } else if (!fechaRecepcionReal.isEmpty() || !diasFaltantesTexto.isEmpty()) {
+                    java.util.Date fechaEntrega = leerFechaCelda(row, 11);
+                    if (fechaEntrega != null) {
+                        diasFaltantesTexto = calcularDiasRetrasoGuardados(
+                                formatearFechaCelda(fechaEntrega), fechaRecepcionReal, diasFaltantesTexto);
+                    }
+                } else {
                     java.util.Date fechaEntrega = leerFechaCelda(row, 11);
                     if (fechaEntrega != null) {
                         java.time.LocalDate limiteEntrega = fechaEntrega.toInstant()
@@ -3036,46 +2919,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//actualizarFilaHistorial
 
-    private void configurarColumnaNoOrdenComoEnlace(javax.swing.JTable tabla) {
-        final int columnaNoOrden = 2;
-        javax.swing.table.DefaultTableCellRenderer rendererEnlace = new javax.swing.table.DefaultTableCellRenderer() {
-            @Override
-            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable t, Object valor,
-                    boolean seleccionado, boolean foco, int fila, int columna) {
-                java.awt.Component comp = super.getTableCellRendererComponent(t, valor, seleccionado, foco, fila, columna);
-                java.util.Map<java.awt.font.TextAttribute, Object> atributos = new java.util.HashMap<>(comp.getFont().getAttributes());
-                atributos.put(java.awt.font.TextAttribute.UNDERLINE, java.awt.font.TextAttribute.UNDERLINE_ON);
-                comp.setFont(comp.getFont().deriveFont(atributos));
-                if (!seleccionado) {
-                    comp.setForeground(new java.awt.Color(0, 90, 200));
-                }
-                return comp;
-            }
-        };
-        tabla.getColumnModel().getColumn(columnaNoOrden).setCellRenderer(rendererEnlace);
-
-        tabla.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            @Override
-            public void mouseMoved(java.awt.event.MouseEvent e) {
-                int columna = tabla.columnAtPoint(e.getPoint());
-                tabla.setCursor(columna == columnaNoOrden
-                        ? java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR)
-                        : java.awt.Cursor.getDefaultCursor());
-            }
-        });
-
-        tabla.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                int fila = tabla.rowAtPoint(e.getPoint());
-                int columna = tabla.columnAtPoint(e.getPoint());
-                if (fila >= 0 && columna == columnaNoOrden) {
-                    mostrarDetalleOrden(String.valueOf(tabla.getValueAt(fila, columnaNoOrden)).trim(), tabla);
-                }
-            }
-        });
-    }//configurarColumnaNoOrdenComoEnlace
-
     private void mostrarDetalleOrden(String noOrden, javax.swing.JTable tablaHistorial) {
         if (noOrden.isEmpty()) {
             return;
@@ -3105,6 +2948,17 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     datos.put("FORMA DE PAGO", leerCelda(row, 9));
                     datos.put("M\u00c9TODO DE PAGO", leerCelda(row, 10));
                     datos.put("FECHA DE ENTREGA", formatearFechaCelda(leerFechaCelda(row, 11)));
+                    String fechaRecepcionReal = leerCelda(row, 26);
+                    if (fechaRecepcionReal.isBlank()
+                            && "SI".equalsIgnoreCase(leerCelda(row, 24))) {
+                        java.time.LocalDate fechaRegistrada = obtenerFechaRecepcionRegistrada(noOrden);
+                        if (fechaRegistrada != null) {
+                            fechaRecepcionReal = fechaRegistrada.format(
+                                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                        }
+                    }
+                    datos.put("FECHA DE RECEPCION REAL", fechaRecepcionReal);
+                    datos.put("DIAS DE RETRASO AL RECIBIR", leerCelda(row, 25));
                     datos.put("ELABOR\u00d3", leerCelda(row, 15));
                     datos.put("FECHA LÍMITE DE PAGO", formatearFechaCelda(leerFechaCelda(row, 12)));
                     datos.put("AUTORIZ\u00d3", leerCelda(row, 16));
@@ -3234,7 +3088,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 COLOR_ROJO, iconoCerrarX(COLOR_ROJO));
         tarjetasRecepcion.add(tarjetaDevoluciones.panel);
 
-        javax.swing.JPanel entrega = new javax.swing.JPanel(new java.awt.GridLayout(2, 1, 4, 2));
+        javax.swing.JPanel entrega = new javax.swing.JPanel(new java.awt.GridLayout(3, 1, 4, 2));
         entrega.setBorder(javax.swing.BorderFactory.createCompoundBorder(
                 javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
                 javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10)));
@@ -3242,15 +3096,29 @@ public class PROVEEDORES extends javax.swing.JFrame {
         javax.swing.JLabel fechaPrometida = new javax.swing.JLabel(
                 "Fecha prometida: " + datos.getOrDefault("FECHA DE ENTREGA", "-"));
         fechaPrometida.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        String fechaRecepcionRealTexto = datos.getOrDefault("FECHA DE RECEPCION REAL", "");
+        javax.swing.JLabel fechaRecepcionReal = new javax.swing.JLabel(
+                "Fecha real: " + (fechaRecepcionRealTexto.isBlank() ? "-" : fechaRecepcionRealTexto));
+        fechaRecepcionReal.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
         java.time.LocalDate fechaEsperada = obtenerFechaLocal(datos.get("FECHA DE ENTREGA"));
-        long diasRetraso = fechaEsperada == null ? 0
-                : Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(
-                        fechaEsperada, java.time.LocalDate.now()));
+        java.time.LocalDate fechaReal = obtenerFechaLocal(fechaRecepcionRealTexto);
+        long diasRetraso;
+        if (fechaEsperada == null) {
+            diasRetraso = 0;
+        } else if (fechaReal != null) {
+            diasRetraso = calcularDiasRetraso(fechaEsperada, fechaReal);
+        } else if (!datos.getOrDefault("DIAS DE RETRASO AL RECIBIR", "").isBlank()) {
+            diasRetraso = parsearDiasRetrasoGuardados(
+                    datos.get("DIAS DE RETRASO AL RECIBIR"));
+        } else {
+            diasRetraso = calcularDiasRetraso(fechaEsperada, java.time.LocalDate.now());
+        }
         javax.swing.JLabel diasRetrasoEtiqueta = new javax.swing.JLabel(
                 "Días de retraso: " + diasRetraso);
         diasRetrasoEtiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
         diasRetrasoEtiqueta.setForeground(diasRetraso > 0 ? COLOR_ROJO : COLOR_VERDE);
         entrega.add(fechaPrometida);
+        entrega.add(fechaRecepcionReal);
         entrega.add(diasRetrasoEtiqueta);
 
         javax.swing.JPanel accionesRecepcion = new javax.swing.JPanel(
@@ -3288,8 +3156,16 @@ public class PROVEEDORES extends javax.swing.JFrame {
         cargarDevolucionesEnTabla(noOrden, modeloIncidencias, tarjetaDevoluciones);
         botonIncidencia.addActionListener(e -> mostrarFormularioIncidencia(
                     noOrden, datos, modeloProductos, modeloIncidencias, tarjetaIncidencias));
-        botonDevolucion.addActionListener(e -> mostrarFormularioDevolucion(
-                    noOrden, modeloProductos, modeloIncidencias, tarjetaIncidencias, tarjetaDevoluciones));
+        botonDevolucion.addActionListener(e -> {
+            if (!hayProductosRecibidos(modeloProductos)) {
+                    JOptionPane.showMessageDialog(this,
+                            "No puedes registrar una devolución hasta recibir al menos un producto.",
+                            "Devolución no disponible", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+            }
+            mostrarFormularioDevolucion(noOrden, modeloProductos, modeloIncidencias,
+                        tarjetaIncidencias, tarjetaDevoluciones);
+        });
         javax.swing.JTable tablaIncidencias = new javax.swing.JTable(modeloIncidencias);
         tablaIncidencias.setRowHeight(24);
         tablaIncidencias.setFillsViewportHeight(true);
@@ -3640,10 +3516,15 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         javax.swing.JComboBox<String> producto = new javax.swing.JComboBox<>();
         java.util.List<String[]> productos = new java.util.ArrayList<>();
+        java.util.Map<String, Double> recibidosRegistrados =
+                obtenerRecibidosRegistradosPorProducto(noOrden);
         for (int fila = 0; fila < modeloProductos.getRowCount(); fila++) {
             String codigo = obtenerValorModelo(modeloProductos, fila, 0);
             String descripcionProducto = obtenerValorModelo(modeloProductos, fila, 1);
             int recibido = (int) parseNumeroInventario(obtenerValorModelo(modeloProductos, fila, 4));
+            int recibidoRegistrado = (int) Math.round(recibidosRegistrados.getOrDefault(
+                    codigo.toUpperCase(java.util.Locale.ROOT), 0.0));
+            recibido = Math.max(recibido, recibidoRegistrado);
             if (!codigo.isEmpty() && recibido > 0) {
                 productos.add(new String[]{codigo, descripcionProducto, String.valueOf(recibido)});
                 producto.addItem(codigo + " - " + descripcionProducto);
@@ -3939,6 +3820,55 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
     }//obtenerFechaLocal
 
+    private java.time.LocalDate obtenerFechaRecepcionRegistrada(String noOrden) {
+        File archivoRegistro = AppConfig.resolveBaseFile("REGISTRORECIBIR.xlsx");
+        if (!archivoRegistro.exists() || archivoRegistro.length() == 0) {
+            return null;
+        }
+        java.time.LocalDate fechaMasReciente = null;
+        try (FileInputStream fis = new FileInputStream(archivoRegistro);
+             Workbook libro = new XSSFWorkbook(fis)) {
+            for (Row row : libro.getSheetAt(0)) {
+                if (row.getRowNum() == 0
+                        || !noOrden.equalsIgnoreCase(leerCelda(row, 0))) {
+                    continue;
+                }
+                java.time.LocalDate fechaRegistro = obtenerFechaLocal(leerCelda(row, 2));
+                if (fechaRegistro != null
+                        && (fechaMasReciente == null || fechaRegistro.isAfter(fechaMasReciente))) {
+                    fechaMasReciente = fechaRegistro;
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo consultar la fecha real de recepción de la orden " + noOrden, ex);
+        }
+        return fechaMasReciente;
+    }//obtenerFechaRecepcionRegistrada
+
+    private long calcularDiasRetraso(java.time.LocalDate fechaEsperada, java.time.LocalDate fechaReal) {
+        return Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(fechaEsperada, fechaReal));
+    }//calcularDiasRetraso
+
+    private String calcularDiasRetrasoGuardados(String fechaEsperadaTexto, String fechaRealTexto,
+            String diasGuardados) {
+        java.time.LocalDate fechaEsperada = obtenerFechaLocal(fechaEsperadaTexto);
+        java.time.LocalDate fechaReal = obtenerFechaLocal(fechaRealTexto);
+        if (fechaEsperada != null && fechaReal != null) {
+            return String.valueOf(calcularDiasRetraso(fechaEsperada, fechaReal));
+        }
+        return String.valueOf(parsearDiasRetrasoGuardados(diasGuardados));
+    }//calcularDiasRetrasoGuardados
+
+    private long parsearDiasRetrasoGuardados(String diasGuardados) {
+        try {
+            long dias = Long.parseLong(diasGuardados.trim());
+            return Math.max(0, -dias);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }//parsearDiasRetrasoGuardados
+
     private String formatearFechaCelda(java.util.Date fecha) {
         if (fecha == null) {
             return "";
@@ -4178,6 +4108,15 @@ public class PROVEEDORES extends javax.swing.JFrame {
         return false;
     }//hayPendienteRecibir
 
+    private boolean hayProductosRecibidos(javax.swing.table.DefaultTableModel modeloProductos) {
+        for (int fila = 0; fila < modeloProductos.getRowCount(); fila++) {
+            if (parseNumeroInventario(obtenerValorModelo(modeloProductos, fila, 4)) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }//hayProductosRecibidos
+
     private boolean ordenMercanciaRecibida(String noOrden) {
         File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
         if (!archivoOrdenes.exists()) {
@@ -4248,7 +4187,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 encabezado = hoja.createRow(0);
             }
             encabezado.getCell(24, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue("MERCANCIA_RECIBIDA");
-            encabezado.getCell(25, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue("DIAS_FALTANTES_AL_RECIBIR");
+            encabezado.getCell(25, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue("DIAS_RETRASO_AL_RECIBIR");
+            encabezado.getCell(26, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue("FECHA_RECEPCION_REAL");
 
             for (Row row : hoja) {
                 if (row.getRowNum() == 0) {
@@ -4258,14 +4198,21 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     escribirCelda(row, 24, estadoRecepcion);
                     escribirCelda(row, 23, calcularEstatusOrden(
                             leerCelda(row, 21), leerCelda(row, 22), estadoRecepcion));
-                    if ("SI".equalsIgnoreCase(estadoRecepcion) && leerCelda(row, 25).isEmpty()) {
+                    if ("SI".equalsIgnoreCase(estadoRecepcion) && leerCelda(row, 26).isEmpty()) {
                         java.util.Date fechaEntrega = leerFechaCelda(row, 11);
+                        java.time.LocalDate fechaReal = obtenerFechaRecepcionRegistrada(noOrden);
+                        if (fechaReal == null) {
+                            fechaReal = java.time.LocalDate.now();
+                        }
+                        escribirCelda(row, 26, fechaReal.format(
+                                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
                         if (fechaEntrega != null) {
                             java.time.LocalDate limiteEntrega = fechaEntrega.toInstant()
                                     .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                            long diasFaltantes = java.time.temporal.ChronoUnit.DAYS.between(
-                                    java.time.LocalDate.now(), limiteEntrega);
-                            escribirCelda(row, 25, String.valueOf(diasFaltantes));
+                            escribirCelda(row, 25, String.valueOf(
+                                    calcularDiasRetraso(limiteEntrega, fechaReal)));
+                        } else {
+                            escribirCelda(row, 25, "0");
                         }
                     }
                     break;

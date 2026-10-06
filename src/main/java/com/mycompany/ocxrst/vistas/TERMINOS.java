@@ -31,8 +31,15 @@ public class TERMINOS extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         cargarTerminos();
         jButton2.addActionListener(this::jButton2ActionPerformed);
+        jPanel1.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent evento) {
+                acomodarControles();
+            }
+        });
+        acomodarControles();
     }
-    
+
     /** Lee el contenido y lo muestra en el panel de texto. */
     private void cargarTerminos() {
         File archivo = obtenerArchivoTerminos();
@@ -86,17 +93,13 @@ public class TERMINOS extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
+        jPanel1 = crearPanelConFondo();
         jButton2 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
-        jLabel6 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTextPane1 = new javax.swing.JTextPane();
-        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        jPanel1.setBackground(new java.awt.Color(255, 255, 255));
 
         jButton2.setBackground(new java.awt.Color(0, 95, 131));
         jButton2.setForeground(new java.awt.Color(255, 255, 255));
@@ -107,68 +110,60 @@ public class TERMINOS extends javax.swing.JFrame {
         jButton6.setText("< ATRAS");
         jButton6.addActionListener(this::jButton6ActionPerformed);
 
-        jLabel6.setForeground(new java.awt.Color(0, 95, 131));
-        jLabel6.setText("TERMINOS Y CONDICIONES: ");
-
         jScrollPane1.setViewportView(jTextPane1);
+        jPanel1.setLayout(null);
+        jPanel1.setPreferredSize(new java.awt.Dimension(664, 575));
 
-        jLabel1.setIcon(IconoVentanaUtil.obtenerIconoSeguro("/com/mycompany/ocxrst/IMAGENES/Logo PDF2.jpeg")); // NOI18N
-        jLabel1.setText("jLabel1");
+        jTextPane1.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        jTextPane1.setMargin(new java.awt.Insets(8, 12, 8, 12));
+        jTextPane1.setBackground(new java.awt.Color(255, 255, 255));
+        jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(159, 190, 207)));
+        jPanel1.add(jScrollPane1);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel6)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jButton6)
-                                .addGap(97, 97, 97)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 611, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(232, 232, 232)
-                        .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(26, Short.MAX_VALUE))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jButton6)
-                        .addGap(43, 43, 43))
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(11, 11, 11)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 367, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
+        jPanel1.add(jButton6);
+        jPanel1.add(jButton2);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
-        );
+        getContentPane().setLayout(new java.awt.BorderLayout());
+        getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void acomodarControles() {
+        int ancho = jPanel1.getWidth();
+        int alto = jPanel1.getHeight();
+        if (ancho <= 0 || alto <= 0) {
+            return;
+        }
+
+        int margen = Math.max(18, (int) Math.round(ancho * 0.023));
+        int separacionLateral = Math.max(8, (int) Math.round(ancho * 0.012));
+        int inicioTexto = Math.max(145, (int) Math.round(alto * 0.307));
+        int altoBoton = Math.max(36, Math.min(44, (int) Math.round(alto * 0.06)));
+        int yBotones = alto - altoBoton - Math.max(10, (int) Math.round(alto * 0.018));
+        int altoTexto = Math.max(120, yBotones - inicioTexto - Math.max(8, (int) Math.round(alto * 0.012)));
+        int anchoTexto = Math.max(200, ancho - (margen * 2));
+
+        jScrollPane1.setBounds(margen, inicioTexto, anchoTexto, altoTexto);
+        jButton6.setBounds(margen, yBotones, Math.max(110, (int) Math.round(ancho * 0.135)), altoBoton);
+        int anchoGuardar = Math.max(160, (int) Math.round(ancho * 0.232));
+        jButton2.setBounds((ancho - anchoGuardar) / 2, yBotones - 2, anchoGuardar, altoBoton + 2);
+        jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(159, 190, 207)));
+    }
+
+    private javax.swing.JPanel crearPanelConFondo() {
+        java.awt.Image fondo = IconoVentanaUtil.obtenerIconoSeguro(
+                "/com/mycompany/ocxrst/IMAGENES/FONDO TERMINOSCONDICIONES.png").getImage();
+        return new javax.swing.JPanel() {
+            @Override
+            protected void paintComponent(java.awt.Graphics graphics) {
+                super.paintComponent(graphics);
+                if (fondo != null) {
+                    graphics.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
+                }
+            }
+        };
+    }
 
     private void guardarEnArchivo(java.io.File archivo) throws java.io.IOException {
         try (java.io.BufferedWriter writer = new java.io.BufferedWriter(
@@ -237,8 +232,6 @@ public class TERMINOS extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton6;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextPane jTextPane1;

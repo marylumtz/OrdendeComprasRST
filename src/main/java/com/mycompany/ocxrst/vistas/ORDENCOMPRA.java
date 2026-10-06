@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.poi.ss.usermodel.*;
@@ -203,7 +204,27 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     jButton7.addActionListener(e -> eliminarFilaSeleccionada());
     jButton2.addActionListener(e -> buscarOSalirOrden());
-    jButton3.addActionListener(e -> guardarEnRegistroc());
+    jButton3.addActionListener(e -> {
+        if (estadoOrdenCargada != null) {
+            prepararDuplicado();
+        } else {
+            guardarEnRegistroc();
+        }
+    });
+
+    javax.swing.event.DocumentListener estadoFormularioListener = new javax.swing.event.DocumentListener() {
+        public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizarEstadoBotonPDF(); }
+        public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizarEstadoBotonPDF(); }
+        public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizarEstadoBotonPDF(); }
+    };
+    jTextField1.getDocument().addDocumentListener(estadoFormularioListener);
+    jTextField2.getDocument().addDocumentListener(estadoFormularioListener);
+    jTextAreaObservaciones.getDocument().addDocumentListener(estadoFormularioListener);
+    jTable1.getModel().addTableModelListener(e -> actualizarEstadoBotonPDF());
+    jDateChooser2.addPropertyChangeListener("date", e -> actualizarEstadoBotonPDF());
+    jDateChooserEntrega.addPropertyChangeListener("date", e -> actualizarEstadoBotonPDF());
+    jDateChooserPago.addPropertyChangeListener("date", e -> actualizarEstadoBotonPDF());
+    actualizarEstadoBotonPDF();
 
     // Visibilidad inicial de tipo de cambio según moneda seleccionada
     {
@@ -754,9 +775,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel27.setForeground(new java.awt.Color(0, 95, 131));
         jLabel27.setText("FECHA DE PAGO:");
 
-        jDateChooserEntrega.setDateFormatString("dd/MM/yyyy");
-
-        jDateChooserPago.setDateFormatString("dd/MM/yyyy");
+        java.util.Locale localeFechas = new java.util.Locale("es", "MX");
+        jDateChooser2.setLocale(localeFechas);
+        jDateChooserEntrega.setLocale(localeFechas);
+        jDateChooserPago.setLocale(localeFechas);
+        jDateChooser2.setDateFormatString("d MMM yyyy");
+        jDateChooserEntrega.setDateFormatString("d MMM yyyy");
+        jDateChooserPago.setDateFormatString("d MMM yyyy");
 
         jButton3.setBackground(new java.awt.Color(255, 102, 0));
         jButton3.setForeground(new java.awt.Color(255, 255, 255));
@@ -1820,7 +1845,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             PdfWriter  writer = new PdfWriter(ruta);
             PdfDocument pdfDoc = new PdfDocument(writer);
 
-            Document   doc    = new Document(pdfDoc, PageSize.LETTER);
+            float altoPrimeraPagina = calcularAltoPrimeraPagina();
+            PageSize tamanoOrden = new PageSize(PageSize.LETTER.getWidth(), altoPrimeraPagina);
+            Document   doc    = new Document(pdfDoc, tamanoOrden);
             doc.setMargins(36, 36, 36, 36);
 
             PdfFont bold  = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
@@ -1869,7 +1896,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             // ── INFORMACIÓN GENERAL ───────────────────────────────────────────
             String fecha = "";
             if (jDateChooser2.getDate() != null) {
-                fecha = new SimpleDateFormat("dd/MM/yyyy").format(jDateChooser2.getDate());
+                fecha = formatearFecha(jDateChooser2.getDate());
             }
             Object cfdi = jComboBox3.getSelectedItem();
 
@@ -2146,7 +2173,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     .useAllAvailableWidth()
                     .setWidth(tblWidth)
                     .setKeepTogether(true)
-                    .setMarginTop(12);
+                    .setMarginTop(57);
             for (String[] par : new String[][]{{"ELABORÓ", elaboro}, {"AUTORIZÓ", autorizo}}) {
                 firmasTbl.addCell(new Cell()
                         .add(new Paragraph("___________________________")
@@ -2162,7 +2189,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
             doc.add(firmasTbl);
 
-            // ── SEGUNDA HOJA: TÉRMINOS Y CONDICIONES ─────────────────────────
+            // La orden usa una primera página de alto dinámico; los términos
+            // comienzan siempre en una hoja carta independiente.
+            pdfDoc.setDefaultPageSize(PageSize.LETTER);
             doc.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             doc.add(seccionTitulo("TÉRMINOS Y CONDICIONES", bold, azul));
             String contenidoTerminos;
@@ -2429,7 +2458,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
 
             jTextField6.setText(String.valueOf(maxNumero + 1));
-            jTextField6.setEditable(true);
+            jTextField6.setEditable(estadoOrdenCargada == null);
 
         } catch (Exception e) {
             logger.log(java.util.logging.Level.WARNING, "No se pudo generar número de orden", e);
@@ -2769,8 +2798,36 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         return null;
     }
 
+    private float calcularAltoPrimeraPagina() {
+        DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+        int filas = 0;
+        int lineasDescripcion = 0;
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            Object codigo = modelo.getValueAt(i, 0);
+            if (codigo == null || codigo.toString().trim().isEmpty()) {
+                continue;
+            }
+            filas++;
+            String descripcion = String.valueOf(modelo.getValueAt(i, 1));
+            // Las descripciones se ajustan a la columna del PDF.
+            lineasDescripcion += Math.max(1, (descripcion.length() + 39) / 40);
+        }
+
+        int lineasObservaciones = jTextAreaObservaciones == null
+                ? 0
+                : Math.max(0, (jTextAreaObservaciones.getText().trim().length() + 95) / 96);
+
+        // Reserva el contenido fijo, las filas de productos y el bloque de firmas.
+        float altoEstimado = 750f
+                + (filas * 11f)
+                + (lineasDescripcion * 8f)
+            + (lineasObservaciones * 9f)
+            + 45f;
+        return Math.max(PageSize.LETTER.getHeight(), altoEstimado);
+    }
+
     private String formatearFecha(java.util.Date fecha) {
-        return fecha == null ? "" : new SimpleDateFormat("dd/MM/yyyy").format(fecha);
+        return fecha == null ? "" : new SimpleDateFormat("d MMM yyyy", new Locale("es", "MX")).format(fecha);
     }
 
     // =====================================================================
@@ -2790,6 +2847,22 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jButton2.setBackground(ordenCargada
                 ? new java.awt.Color(139, 0, 0)
                 : new java.awt.Color(0, 204, 51));
+    }
+
+    private void prepararDuplicado() {
+        // Se conservan todos los datos cargados y solo se reemplaza el número
+        // por el siguiente consecutivo disponible.
+        estadoOrdenCargada = null;
+        generarNumeroOrden();
+        setModoSoloLectura(false);
+        jButton3.setText("CREAR");
+        actualizarEstadoBotonPDF();
+    }
+
+    private void actualizarEstadoBotonPDF() {
+        if (jButton1 != null) {
+            jButton1.setEnabled(estadoOrdenCargada != null);
+        }
     }
 
     private void buscarOrden() {
@@ -2910,6 +2983,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 setModoSoloLectura(true);
                 estadoOrdenCargada = obtenerEstadoOrden();
                 actualizarBotonBuscar(true);
+                actualizarEstadoBotonPDF();
+                jButton3.setText("DUPLICAR");
                 actualizarBotonesEdicion(true, false);
                 return;
             }
@@ -3164,6 +3239,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         generarNumeroOrden();
         estadoOrdenCargada = null;
         actualizarBotonBuscar(false);
+        jButton3.setText("CREAR");
+        actualizarEstadoBotonPDF();
         actualizarBotonesEdicion(false, false);
     }
 
@@ -3201,6 +3278,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     /** Habilita o deshabilita la edición de todos los campos del formulario */
     private void setModoSoloLectura(boolean soloLectura) {
         modoCrear = !soloLectura;
+        // El número identifica permanentemente la orden. Solo se permite
+        // escribirlo cuando se está buscando una orden o creando una nueva.
+        jTextField6.setEditable(!soloLectura && estadoOrdenCargada == null);
         jTextField1.setEditable(false); // se activa solo al hacer clic (modo crear)
         jTextField2.setEditable(!soloLectura);
         jTextField3.setEditable(!soloLectura);

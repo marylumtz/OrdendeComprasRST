@@ -4,6 +4,7 @@ com\mycompany\ocxrst\vistas\PROVEEDORES$RoundedPanel.class
 com\mycompany\ocxrst\repository\OrdenCompraRepository.class
 com\mycompany\ocxrst\vistas\ORDENCOMPRA$5.class
 com\mycompany\ocxrst\service\InventarioService.class
+com\mycompany\ocxrst\vistas\TERMINOS$2.class
 com\mycompany\ocxrst\config\AppConfig.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$6.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$15.class
@@ -32,7 +33,6 @@ com\mycompany\ocxrst\repository\InventarioRepository.class
 com\mycompany\ocxrst\vistas\PRINCIPAL$1.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$17.class
 com\mycompany\ocxrst\vistas\ORDENCOMPRA$10.class
-com\mycompany\ocxrst\vistas\PROVEEDORES$22.class
 com\mycompany\ocxrst\service\UsuarioService.class
 com\mycompany\ocxrst\vistas\ORDENCOMPRA$4.class
 com\mycompany\ocxrst\vistas\INVENTARIOS$BordeRedondeado.class
@@ -72,3 +72,4 @@ com\mycompany\ocxrst\vistas\PROVEEDORES$BotonPlanoUI.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$13.class
 com\mycompany\ocxrst\vistas\INVENTARIOS$6.class
 com\mycompany\ocxrst\vistas\ORDENCOMPRA$1.class
+com\mycompany\ocxrst\vistas\TERMINOS$1.class

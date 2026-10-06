@@ -63,8 +63,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private static final java.awt.Color COLOR_AZUL_CLARO = new java.awt.Color(219, 234, 248);
     private static final java.awt.Color COLOR_AZUL_PALIDO = new java.awt.Color(240, 246, 253);
     private static final java.awt.Color COLOR_TEXTO_GRIS = new java.awt.Color(110, 122, 138);
-    private static final java.awt.Color COLOR_VERDE_CLARO = new java.awt.Color(224, 246, 233);
-    private static final java.awt.Color COLOR_ROJO_CLARO = new java.awt.Color(253, 226, 226);
 
     // ===================== Campos de la interfaz =====================
     private javax.swing.JPanel jPanel1;
@@ -216,29 +214,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
         panelIzquierda.add(textoTitulo, java.awt.BorderLayout.CENTER);
         panelHeader.add(panelIzquierda, java.awt.BorderLayout.WEST);
 
-        javax.swing.JPanel panelDerecha = new javax.swing.JPanel();
-        panelDerecha.setOpaque(false);
-        panelDerecha.setLayout(new javax.swing.BoxLayout(panelDerecha, javax.swing.BoxLayout.Y_AXIS));
-
-        javax.swing.JLabel breadcrumb = new javax.swing.JLabel(iconoInicio(COLOR_TEXTO_GRIS));
-        breadcrumb.setText("Inicio > Inventarios > Producto");
-        breadcrumb.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
-        breadcrumb.setForeground(COLOR_TEXTO_GRIS);
-        breadcrumb.setIconTextGap(6);
-        breadcrumb.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        breadcrumb.setAlignmentX(java.awt.Component.RIGHT_ALIGNMENT);
-
-        panelDerecha.add(breadcrumb);
-        panelHeader.add(panelDerecha, java.awt.BorderLayout.EAST);
-
         return panelHeader;
     }//crearPanelEncabezado
-
-    private void actualizarColorPildoraEstado() {
-        boolean activo = comboEstado.getSelectedIndex() == 0;
-        comboEstado.setBackground(activo ? COLOR_VERDE_CLARO : COLOR_ROJO_CLARO);
-        comboEstado.setForeground(activo ? COLOR_VERDE : COLOR_ROJO);
-    }//actualizarColorPildoraEstado
 
     private javax.swing.JPanel crearPanelCuerpo() {
         javax.swing.JPanel panelCuerpo = new javax.swing.JPanel(new java.awt.GridBagLayout());
@@ -290,7 +267,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
         gc.gridx = 0;
         gc.gridy = 0;
         gc.gridwidth = 1;
-        formulario.add(crearCampoVertical("C\u00d3DIGO", jTextField1), gc);
+        formulario.add(crearCampoVertical("* C\u00d3DIGO", jTextField1, iconoCampo(COLOR_AZUL_OSCURO)), gc);
 
         gc.gridx = 1;
         gc.gridy = 0;
@@ -302,26 +279,26 @@ public class INVENTARIOS extends javax.swing.JFrame {
         gc.gridx = 0;
         gc.gridy = 1;
         gc.gridwidth = 2;
-        formulario.add(crearCampoVertical("DESCRIPCI\u00d3N", jTextField2), gc);
+        formulario.add(crearCampoVertical("* DESCRIPCI\u00d3N", jTextField2, iconoCampo(COLOR_AZUL_OSCURO)), gc);
         gc.gridwidth = 1;
 
         gc.gridx = 0;
         gc.gridy = 2;
-        formulario.add(crearCampoVertical("CATEGOR\u00cdA", comboCategoria), gc);
+        formulario.add(crearCampoVertical("* CATEGOR\u00cdA", comboCategoria, iconoCampo(COLOR_AZUL_OSCURO)), gc);
         gc.gridx = 1;
-        formulario.add(crearCampoVertical("MARCA", comboMarca), gc);
+        formulario.add(crearCampoVertical("* MARCA", comboMarca, iconoCampo(COLOR_AZUL_OSCURO)), gc);
 
         gc.gridx = 0;
         gc.gridy = 3;
-        formulario.add(crearCampoVertical("UNIDAD", comboUnidad), gc);
+        formulario.add(crearCampoVertical("* UNIDAD", comboUnidad, iconoCampo(COLOR_AZUL_OSCURO)), gc);
         gc.gridx = 1;
-        formulario.add(crearCampoVertical("PRECIO UNITARIO", jTextField5), gc);
+        formulario.add(crearCampoVertical("* PRECIO UNITARIO", jTextField5, iconoCampo(COLOR_AZUL_OSCURO)), gc);
 
         gc.gridx = 0;
         gc.gridy = 4;
-        formulario.add(crearCampoVertical("CANTIDAD EN INVENTARIO", jTextField6), gc);
+        formulario.add(crearCampoVertical("* CANTIDAD EN INVENTARIO", jTextField6, iconoCampo(COLOR_AZUL_OSCURO)), gc);
         gc.gridx = 1;
-        formulario.add(crearCampoVertical("STOCK M\u00cdNIMO", campoStockMinimo), gc);
+        formulario.add(crearCampoVertical("* STOCK M\u00cdNIMO", campoStockMinimo, iconoCampo(COLOR_AZUL_OSCURO)), gc);
 
         areaObservaciones.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
         areaObservaciones.setRows(3);
@@ -337,7 +314,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
         gc.gridwidth = 2;
         gc.fill = java.awt.GridBagConstraints.BOTH;
         gc.weighty = 1;
-        formulario.add(crearCampoVertical("OBSERVACIONES", scrollObservaciones), gc);
+        formulario.add(crearCampoVertical("OBSERVACIONES", scrollObservaciones, iconoCampo(COLOR_AZUL_OSCURO)), gc);
 
         tarjeta.add(formulario, java.awt.BorderLayout.CENTER);
         return tarjeta;
@@ -505,11 +482,16 @@ public class INVENTARIOS extends javax.swing.JFrame {
     }//crearTituloTarjeta
 
     private javax.swing.JPanel crearCampoVertical(String etiqueta, javax.swing.JComponent campo) {
+        return crearCampoVertical(etiqueta, campo, iconoCampo(COLOR_AZUL_OSCURO));
+    }
+
+    private javax.swing.JPanel crearCampoVertical(String etiqueta, javax.swing.JComponent campo, javax.swing.Icon icono) {
         javax.swing.JPanel contenedor = new javax.swing.JPanel(new java.awt.BorderLayout(0, 4));
         contenedor.setOpaque(false);
-        javax.swing.JLabel label = new javax.swing.JLabel(etiqueta);
+        javax.swing.JLabel label = new javax.swing.JLabel(etiqueta, icono, javax.swing.SwingConstants.LEFT);
         label.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
-        label.setForeground(COLOR_TEXTO_GRIS);
+        label.setForeground(COLOR_AZUL_OSCURO);
+        label.setIconTextGap(6);
         contenedor.add(label, java.awt.BorderLayout.NORTH);
         contenedor.add(campo, java.awt.BorderLayout.CENTER);
         return contenedor;
@@ -995,53 +977,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         }
     }//cargarProductoPorCodigo
 
-    private void buscarInventario() {
-        String codigo = jTextField1.getText().trim();
-        String descripcion = jTextField2.getText().trim();
-
-        if (codigo.isEmpty() && descripcion.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Ingresa C\u00d3DIGO o DESCRIPCI\u00d3N para buscar.");
-            return;
-        }
-
-        try {
-            File archivo = obtenerArchivoInventarios();
-            try (Workbook libro = cargarLibro(archivo)) {
-                Sheet hoja = obtenerHojaInventarios(libro);
-                asegurarEncabezados(hoja);
-
-                int filaIndex = -1;
-                if (!codigo.isEmpty()) {
-                    filaIndex = buscarFilaPorCodigo(hoja, codigo);
-                }
-                if (filaIndex < 0 && !descripcion.isEmpty()) {
-                    filaIndex = buscarFilaPorDescripcion(hoja, descripcion);
-                }
-                if (filaIndex < 0) {
-                    filaInventarioActual = -1;
-                    JOptionPane.showMessageDialog(this, "No se encontr\u00f3 un producto con los datos capturados.");
-                    return;
-                }
-
-                Row fila = hoja.getRow(filaIndex);
-                if (fila == null) {
-                    filaInventarioActual = -1;
-                    JOptionPane.showMessageDialog(this, "El registro encontrado est\u00e1 vac\u00edo.");
-                    return;
-                }
-
-                cargarFilaEnFormulario(fila);
-                filaInventarioActual = filaIndex;
-                String codigoEncontrado = leerCelda(fila, 0);
-                etiquetaId.setText("ID: " + codigoEncontrado);
-                refrescarTablaProveedoresProducto(codigoEncontrado);
-                JOptionPane.showMessageDialog(this, "Producto encontrado.\nC\u00d3DIGO: " + codigoEncontrado);
-            }
-        } catch (IOException ex) {
-            mostrarError("No se pudo buscar el producto.", ex);
-        }
-    }//buscarInventario
-
     private boolean validarCamposBase() {
         if (jTextField1.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "C\u00d3DIGO es obligatorio.");
@@ -1139,19 +1074,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         }
         return -1;
     }//buscarFilaPorCodigo
-
-    private int buscarFilaPorDescripcion(Sheet hoja, String descripcion) {
-        for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
-            Row row = hoja.getRow(fila);
-            if (row == null) {
-                continue;
-            }
-            if (descripcion.equalsIgnoreCase(leerCelda(row, 1))) {
-                return fila;
-            }
-        }
-        return -1;
-    }//buscarFilaPorDescripcion
 
     private int primeraFilaDisponible(Sheet hoja) {
         for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
@@ -1418,13 +1340,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         });
     }//iconoCamion
 
-    private static javax.swing.Icon iconoBuscar(java.awt.Color color) {
-        return new VectorIcon(16, color, (g2, t) -> {
-            g2.drawOval(1, 1, t - 6, t - 6);
-            g2.drawLine(t - 6, t - 6, t - 1, t - 1);
-        });
-    }//iconoBuscar
-
     private static javax.swing.Icon iconoLimpiar(java.awt.Color color) {
         return new VectorIcon(16, color, (g2, t) -> {
             g2.drawLine(2, t - 2, t - 6, 4);
@@ -1479,21 +1394,13 @@ public class INVENTARIOS extends javax.swing.JFrame {
         });
     }//iconoChevronIzquierda
 
-    private static javax.swing.Icon iconoInicio(java.awt.Color color) {
-        return new VectorIcon(13, color, (g2, t) -> {
-            g2.drawLine(1, t / 2, t / 2, 1);
-            g2.drawLine(t / 2, 1, t - 1, t / 2);
-            g2.drawRect(3, t / 2, t - 6, t / 2 - 2);
+    private static javax.swing.Icon iconoCampo(java.awt.Color color) {
+        return new VectorIcon(15, color, (g2, t) -> {
+            g2.drawRoundRect(2, 3, t - 5, t - 6, 3, 3);
+            g2.drawLine(5, 7, t - 5, 7);
+            g2.drawLine(5, 10, t - 7, 10);
         });
-    }//iconoInicio
-
-    private static javax.swing.Icon iconoInfo(java.awt.Color color) {
-        return new VectorIcon(16, color, (g2, t) -> {
-            g2.drawOval(1, 1, t - 2, t - 2);
-            g2.fillOval(t / 2 - 1, 3, 2, 2);
-            g2.drawLine(t / 2, 7, t / 2, t - 3);
-        });
-    }//iconoInfo
+    }//iconoCampo
 
     private static javax.swing.Icon iconoRadio(boolean marcado) {
         java.awt.Color color = marcado ? new java.awt.Color(0, 130, 60) : new java.awt.Color(160, 170, 180);

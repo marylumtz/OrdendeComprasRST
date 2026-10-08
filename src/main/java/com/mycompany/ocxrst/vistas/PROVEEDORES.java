@@ -89,11 +89,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         int seleccion = opciones[0].equals(valorSeleccionado) ? 0 : JOptionPane.CLOSED_OPTION;
         if (seleccion == 0) {
             PROVEEDORES ventana = new PROVEEDORES();
-            ventana.setLocationRelativeTo(parent);
-            ventana.setVisible(true);
-            if (parent instanceof java.awt.Window ventanaAnterior) {
-                ventanaAnterior.dispose();
-            }
             java.awt.EventQueue.invokeLater(ventana::mostrarHistorialCompras);
         }
     }//mostrarAlertaEntregasPendientes

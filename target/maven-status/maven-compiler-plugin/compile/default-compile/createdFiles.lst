@@ -2,6 +2,8 @@ com\mycompany\ocxrst\vistas\ORDENCOMPRA$2.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$VectorIcon.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$RoundedPanel.class
 com\mycompany\ocxrst\repository\OrdenCompraRepository.class
+com\mycompany\ocxrst\vistas\USUARIOS$DibujoIcono.class
+com\mycompany\ocxrst\vistas\USUARIOS$BordeRedondeado.class
 com\mycompany\ocxrst\vistas\ORDENCOMPRA$5.class
 com\mycompany\ocxrst\service\InventarioService.class
 com\mycompany\ocxrst\vistas\TERMINOS$2.class
@@ -24,10 +26,13 @@ com\mycompany\ocxrst\vistas\PROVEEDORES$11.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$21.class
 com\mycompany\ocxrst\vistas\INVENTARIOS$3.class
 com\mycompany\ocxrst\vistas\PRINCIPAL$2.class
+com\mycompany\ocxrst\vistas\USUARIOS$TarjetaPanel.class
 com\mycompany\ocxrst\vistas\TERMINOS.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$3.class
+com\mycompany\ocxrst\vistas\USUARIOS$BotonPlanoUI.class
 com\mycompany\ocxrst\service\ProveedorService.class
 com\mycompany\ocxrst\vistas\PROVEEDORES.class
+com\mycompany\ocxrst\vistas\PRINCIPAL$FilaExcel.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$10.class
 com\mycompany\ocxrst\repository\InventarioRepository.class
 com\mycompany\ocxrst\vistas\PRINCIPAL$1.class
@@ -51,6 +56,7 @@ com\mycompany\ocxrst\vistas\ORDENCOMPRA$12.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$8.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$BordeRedondeado.class
 com\mycompany\ocxrst\IconoVentanaUtil.class
+com\mycompany\ocxrst\vistas\ORDENCOMPRA$15.class
 com\mycompany\ocxrst\vistas\ORDENCOMPRA$3.class
 com\mycompany\ocxrst\vistas\ORDENCOMPRA$6.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$DibujoIcono.class
@@ -60,6 +66,7 @@ com\mycompany\ocxrst\vistas\ORDENCOMPRA$14.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$ResultadoHistorial.class
 com\mycompany\ocxrst\vistas\ORDENCOMPRA$7.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$7.class
+com\mycompany\ocxrst\vistas\USUARIOS$VectorIcon.class
 com\mycompany\ocxrst\vistas\INVENTARIOS.class
 com\mycompany\ocxrst\vistas\USUARIOS.class
 com\mycompany\ocxrst\vistas\PROVEEDORES$14.class

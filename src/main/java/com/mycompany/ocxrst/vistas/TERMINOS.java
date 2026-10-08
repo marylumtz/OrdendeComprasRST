@@ -27,17 +27,11 @@ public class TERMINOS extends javax.swing.JFrame {
     public TERMINOS() {
         EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
+        configurarDisenoVisual();
         IconoVentanaUtil.aplicar(this);
         setLocationRelativeTo(null);
         cargarTerminos();
         jButton2.addActionListener(this::jButton2ActionPerformed);
-        jPanel1.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent evento) {
-                acomodarControles();
-            }
-        });
-        acomodarControles();
     }
 
     /** Lee el contenido y lo muestra en el panel de texto. */
@@ -93,7 +87,7 @@ public class TERMINOS extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = crearPanelConFondo();
+        jPanel1 = new javax.swing.JPanel();
         jButton2 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -129,40 +123,35 @@ public class TERMINOS extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void acomodarControles() {
-        int ancho = jPanel1.getWidth();
-        int alto = jPanel1.getHeight();
-        if (ancho <= 0 || alto <= 0) {
-            return;
-        }
+    private void configurarDisenoVisual() {
+        setTitle("T\u00c9RMINOS Y CONDICIONES");
+        setMinimumSize(new java.awt.Dimension(520, 420));
+        getContentPane().setBackground(java.awt.Color.WHITE);
+        jPanel1.removeAll();
+        jPanel1.setOpaque(false);
+        jPanel1.setLayout(new java.awt.BorderLayout(0, 16));
+        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
-        int margen = Math.max(18, (int) Math.round(ancho * 0.023));
-        int separacionLateral = Math.max(8, (int) Math.round(ancho * 0.012));
-        int inicioTexto = Math.max(145, (int) Math.round(alto * 0.307));
-        int altoBoton = Math.max(36, Math.min(44, (int) Math.round(alto * 0.06)));
-        int yBotones = alto - altoBoton - Math.max(10, (int) Math.round(alto * 0.018));
-        int altoTexto = Math.max(120, yBotones - inicioTexto - Math.max(8, (int) Math.round(alto * 0.012)));
-        int anchoTexto = Math.max(200, ancho - (margen * 2));
+        javax.swing.JLabel titulo = new javax.swing.JLabel("T\u00c9RMINOS Y CONDICIONES");
+        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 22));
+        titulo.setForeground(new java.awt.Color(28, 82, 132));
+        titulo.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        titulo.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        jPanel1.add(titulo, java.awt.BorderLayout.NORTH);
 
-        jScrollPane1.setBounds(margen, inicioTexto, anchoTexto, altoTexto);
-        jButton6.setBounds(margen, yBotones, Math.max(110, (int) Math.round(ancho * 0.135)), altoBoton);
-        int anchoGuardar = Math.max(160, (int) Math.round(ancho * 0.232));
-        jButton2.setBounds((ancho - anchoGuardar) / 2, yBotones - 2, anchoGuardar, altoBoton + 2);
-        jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(159, 190, 207)));
-    }
+        jScrollPane1.getViewport().setBackground(java.awt.Color.WHITE);
+        jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(
+                new java.awt.Color(198, 210, 225)));
+        jPanel1.add(jScrollPane1, java.awt.BorderLayout.CENTER);
 
-    private javax.swing.JPanel crearPanelConFondo() {
-        java.awt.Image fondo = IconoVentanaUtil.obtenerIconoSeguro(
-                "/com/mycompany/ocxrst/IMAGENES/FONDO TERMINOSCONDICIONES.png").getImage();
-        return new javax.swing.JPanel() {
-            @Override
-            protected void paintComponent(java.awt.Graphics graphics) {
-                super.paintComponent(graphics);
-                if (fondo != null) {
-                    graphics.drawImage(fondo, 0, 0, getWidth(), getHeight(), this);
-                }
-            }
-        };
+        javax.swing.JPanel barraBotones = new javax.swing.JPanel(new java.awt.BorderLayout(16, 0));
+        barraBotones.setOpaque(false);
+        jButton6.setPreferredSize(new java.awt.Dimension(120, 40));
+        jButton2.setPreferredSize(new java.awt.Dimension(180, 40));
+        barraBotones.add(jButton6, java.awt.BorderLayout.WEST);
+        barraBotones.add(jButton2, java.awt.BorderLayout.EAST);
+        jPanel1.add(barraBotones, java.awt.BorderLayout.SOUTH);
+        pack();
     }
 
     private void guardarEnArchivo(java.io.File archivo) throws java.io.IOException {

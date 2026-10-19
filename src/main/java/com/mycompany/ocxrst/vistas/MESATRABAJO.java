@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.*;
@@ -26,13 +27,22 @@ public class MESATRABAJO extends javax.swing.JFrame {
     private final JTextField buscar = new JTextField();
     private final JComboBox<String> estado = new JComboBox<>(new String[]{"Todos", "Pendiente", "En proceso", "Completada", "Cancelada"});
     private final JComboBox<String> prioridad = new JComboBox<>(new String[]{"Todas", "Alta", "Media", "Baja"});
+    private final JComboBox<String> responsable = new JComboBox<>(new String[]{"Todos"});
+    private final JTextField fechaInicio = new JTextField();
+    private final JTextField fechaFin = new JTextField();
+    private final JLabel totalRegistros = new JLabel();
     private List<Tarea> tareas = List.of();
+    private JPanel contenedorVista;
+    private JPanel vistaBusqueda;
 
     public MESATRABAJO() {
         EstiloAplicacion.aplicarTipografiaGlobal();
         setTitle("MESA DE TRABAJO");
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setContentPane(crearContenido());
+        vistaBusqueda = crearContenido();
+        contenedorVista = new JPanel(new BorderLayout());
+        contenedorVista.add(vistaBusqueda, BorderLayout.CENTER);
+        setContentPane(contenedorVista);
         setSize(1000, 680);
         setMinimumSize(new Dimension(850, 540));
         setLocationRelativeTo(null);
@@ -45,22 +55,12 @@ public class MESATRABAJO extends javax.swing.JFrame {
         fondo.setBorder(BorderFactory.createEmptyBorder(24, 24, 20, 24));
         JPanel encabezado = new JPanel(new BorderLayout(12, 0));
         encabezado.setOpaque(false);
-        JLabel icono = new JLabel(new IconoMesaTrabajo(), SwingConstants.CENTER);
-        icono.setOpaque(true); icono.setBackground(AZUL_CLARO); icono.setForeground(Color.WHITE);
-        icono.setPreferredSize(new Dimension(52, 52));
-        encabezado.add(icono, BorderLayout.WEST);
-        JPanel titulos = new JPanel();
-        titulos.setOpaque(false); titulos.setLayout(new BoxLayout(titulos, BoxLayout.Y_AXIS));
-        JLabel titulo = new JLabel("MESA DE TRABAJO");
-        titulo.setFont(new Font("Segoe UI", Font.BOLD, 24)); titulo.setForeground(AZUL);
-        JLabel subtitulo = new JLabel("Gestión y seguimiento de actividades, solicitudes y pendientes");
-        subtitulo.setForeground(new Color(100, 120, 145));
-        titulos.add(titulo); titulos.add(subtitulo); encabezado.add(titulos, BorderLayout.CENTER);
-        JButton nueva = boton("CREAR", "crear", true, e -> nuevaTarea(null));
-        JButton exportar = boton("EXPORTAR", "exportar", false, e -> exportar());
-        JButton actualizar = boton("ACTUALIZAR", "actualizar", false, e -> cargar());
+        JButton nueva = boton("Nueva tarea", "crear", true, e -> nuevaTarea(null));
+        JButton filtrosBoton = boton("Filtros", "filtros", false, e -> buscar.requestFocusInWindow());
+        JButton exportar = boton("Exportar", "exportar", false, e -> exportar());
+        JButton actualizar = boton("Actualizar", "actualizar", false, e -> cargar());
         JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
-        acciones.setOpaque(false); acciones.add(nueva); acciones.add(exportar); acciones.add(actualizar);
+        acciones.setOpaque(false); acciones.add(nueva); acciones.add(filtrosBoton); acciones.add(exportar); acciones.add(actualizar);
         encabezado.add(acciones, BorderLayout.EAST); fondo.add(encabezado, BorderLayout.NORTH);
 
         JPanel tarjeta = new JPanel(new BorderLayout(0, 12));
@@ -68,22 +68,64 @@ public class MESATRABAJO extends javax.swing.JFrame {
         tarjeta.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(205, 218, 235)),
                 BorderFactory.createEmptyBorder(16, 16, 16, 16)));
         JPanel filtros = new JPanel(new GridBagLayout()); filtros.setOpaque(false);
-        GridBagConstraints gbc = new GridBagConstraints(); gbc.insets = new Insets(0, 0, 0, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1;
-        filtros.add(campoFiltro("Buscar", buscar), gbc);
-        gbc.weightx = 0.6; filtros.add(campoFiltro("Estado", estado), gbc);
-        filtros.add(campoFiltro("Prioridad", prioridad), gbc);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(0, 0, 0, 10);
+        agregarFiltro(filtros, campoFiltro("Buscar", buscar), gbc, 0, 0.95);
+        agregarFiltro(filtros, campoFiltro("Estado", estado), gbc, 1, 0.65);
+        agregarFiltro(filtros, campoFiltro("Prioridad", prioridad), gbc, 2, 0.65);
+        agregarFiltro(filtros, campoFiltro("Responsable", responsable), gbc, 3, 0.75);
+        prepararFecha(fechaInicio, "dd/mm/aaaa");
+        prepararFecha(fechaFin, "dd/mm/aaaa");
+        agregarFiltro(filtros, campoFiltro("Fecha inicio", fechaInicio), gbc, 4, 0.7);
+        agregarFiltro(filtros, campoFiltro("Fecha fin", fechaFin), gbc, 5, 0.7);
         buscar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
             public void changedUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
         });
-        estado.addActionListener(e -> refrescarTabla()); prioridad.addActionListener(e -> refrescarTabla());
+        estado.addActionListener(e -> refrescarTabla());
+        prioridad.addActionListener(e -> refrescarTabla());
+        responsable.addActionListener(e -> refrescarTabla());
+        fechaInicio.getDocument().addDocumentListener(documentListener());
+        fechaFin.getDocument().addDocumentListener(documentListener());
         tarjeta.add(filtros, BorderLayout.NORTH);
         configurarTabla();
         tarjeta.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        JPanel pie = new JPanel(new BorderLayout());
+        pie.setOpaque(false);
+        totalRegistros.setForeground(AZUL);
+        totalRegistros.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        pie.add(totalRegistros, BorderLayout.EAST);
+        tarjeta.add(pie, BorderLayout.SOUTH);
         fondo.add(tarjeta, BorderLayout.CENTER);
         return fondo;
+    }
+
+    private void agregarFiltro(JPanel panel, JComponent componente, GridBagConstraints base, int columna, double peso) {
+        GridBagConstraints gbc = (GridBagConstraints) base.clone();
+        gbc.gridx = columna;
+        gbc.gridy = 0;
+        gbc.weightx = peso;
+        if (columna == 5) gbc.insets = new Insets(0, 0, 0, 0);
+        panel.add(componente, gbc);
+    }
+
+    private void prepararFecha(JTextField campo, String textoInicial) {
+        campo.setToolTipText("Formato: dd/MM/yyyy");
+        campo.setText("");
+        campo.putClientProperty("textoInicial", textoInicial);
+        campo.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(198, 210, 225)),
+                BorderFactory.createEmptyBorder(7, 9, 7, 9)));
+    }
+
+    private javax.swing.event.DocumentListener documentListener() {
+        return new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
+        };
     }
 
     private JPanel campoFiltro(String texto, JComponent campo) {
@@ -93,15 +135,17 @@ public class MESATRABAJO extends javax.swing.JFrame {
     }
 
     private void configurarTabla() {
-        tabla.setRowHeight(36); tabla.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        tabla.setRowHeight(42); tabla.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 11));
+        tabla.getTableHeader().setPreferredSize(new Dimension(0, 38));
         tabla.getTableHeader().setBackground(new Color(232, 238, 247)); tabla.getTableHeader().setForeground(AZUL);
         tabla.setGridColor(new Color(225, 232, 241));
         tabla.setSelectionBackground(new Color(225, 238, 250));
         tabla.setSelectionForeground(AZUL);
         tabla.getColumnModel().getColumn(0).setPreferredWidth(72);
         tabla.getColumnModel().getColumn(1).setPreferredWidth(220);
-        tabla.getColumnModel().getColumn(8).setPreferredWidth(190);
+        tabla.getColumnModel().getColumn(8).setPreferredWidth(150);
+        tabla.getColumnModel().getColumn(2).setCellRenderer(new BadgeRenderer());
         tabla.getColumnModel().getColumn(3).setCellRenderer(new BadgeRenderer());
         tabla.getColumnModel().getColumn(4).setCellRenderer(new BadgeRenderer());
         tabla.getColumnModel().getColumn(8).setCellRenderer(new ActionRenderer());
@@ -118,33 +162,101 @@ public class MESATRABAJO extends javax.swing.JFrame {
     }
 
     private void cargar() {
-        try { tareas = repository.listar(); refrescarTabla(); }
+        try {
+            tareas = repository.listar();
+            actualizarResponsables();
+            refrescarTabla();
+        }
         catch (IOException ex) { error("No se pudieron cargar las tareas.", ex); }
+    }
+
+    private void actualizarResponsables() {
+        String seleccionado = String.valueOf(responsable.getSelectedItem());
+        responsable.removeAllItems();
+        responsable.addItem("Todos");
+        tareas.stream().map(Tarea::responsable).filter(r -> r != null && !r.isBlank()).distinct().sorted()
+                .forEach(responsable::addItem);
+        responsable.setSelectedItem(seleccionado);
+        if (responsable.getSelectedIndex() < 0) responsable.setSelectedIndex(0);
     }
 
     private void refrescarTabla() {
         modelo.setRowCount(0); String texto = buscar.getText().trim().toLowerCase(Locale.ROOT);
         String est = String.valueOf(estado.getSelectedItem()), pri = String.valueOf(prioridad.getSelectedItem());
+        String resp = String.valueOf(responsable.getSelectedItem());
+        LocalDate inicio = leerFecha(fechaInicio), fin = leerFecha(fechaFin);
         tareas.stream().filter(t -> texto.isEmpty() || (t.folio() + " " + t.titulo() + " " + t.descripcion()).toLowerCase(Locale.ROOT).contains(texto))
                 .filter(t -> "Todos".equals(est) || t.estado().equals(est))
                 .filter(t -> "Todas".equals(pri) || t.prioridad().equals(pri))
+                .filter(t -> "Todos".equals(resp) || t.responsable().equals(resp))
+                .filter(t -> inicio == null || !t.inicio().isBefore(inicio))
+                .filter(t -> fin == null || !t.vencimiento().isAfter(fin))
                 .forEach(t -> modelo.addRow(new Object[]{t.folio(), t.titulo(), t.tipo(), t.estado(), t.prioridad(),
-                    t.responsable(), t.creacion().format(FECHA), t.vencimiento().format(FECHA), "VER  EDITAR  DESACTIVAR"}));
+                    t.responsable(), t.creacion().format(FECHA), t.vencimiento().format(FECHA), "VER  EDITAR  ELIMINAR"}));
+        totalRegistros.setText("Total: " + modelo.getRowCount() + " registros");
+    }
+
+    private LocalDate leerFecha(JTextField campo) {
+        String valor = campo.getText().trim();
+        if (valor.isEmpty()) return null;
+        try {
+            return LocalDate.parse(valor, FECHA);
+        } catch (java.time.format.DateTimeParseException ex) {
+            return null;
+        }
     }
 
     private void nuevaTarea(Tarea tarea) {
         NUEVATAREA dialogo = new NUEVATAREA(this, tarea, repository);
-        dialogo.setVisible(true); if (dialogo.guardado()) cargar();
+        JComponent formulario = dialogo.obtenerContenidoIntegrado(() -> volverAMesaTrabajo(dialogo));
+        dialogo.setContentPane(new JPanel());
+        dialogo.dispose();
+        mostrarVistaInterna(formulario);
+    }
+
+    private void volverAMesaTrabajo(NUEVATAREA formulario) {
+        cargar();
+        mostrarVistaPrincipal();
+    }
+
+    private void mostrarVistaInterna(JComponent vista) {
+        contenedorVista.removeAll();
+        contenedorVista.setLayout(new BorderLayout());
+        contenedorVista.add(vista, BorderLayout.CENTER);
+        contenedorVista.revalidate();
+        contenedorVista.repaint();
+        Container padre = contenedorVista.getParent();
+        if (padre != null) {
+            padre.revalidate();
+            padre.repaint();
+        }
+    }
+
+    private void mostrarVistaPrincipal() {
+        mostrarVistaInterna(vistaBusqueda);
     }
 
     private Tarea buscar(String folio) { return tareas.stream().filter(t -> t.folio().equals(folio)).findFirst().orElse(null); }
-    private void ver(String folio) { Tarea t = buscar(folio); if (t != null) JOptionPane.showMessageDialog(this, t.descripcion().isBlank() ? t.titulo() : t.descripcion(), folio, JOptionPane.INFORMATION_MESSAGE); }
+    private void ver(String folio) { Tarea t = buscar(folio); if (t != null) mostrarMensaje(t.descripcion().isBlank() ? t.titulo() : t.descripcion(), folio, JOptionPane.INFORMATION_MESSAGE); }
     private void editar(String folio) { Tarea t = buscar(folio); if (t != null) nuevaTarea(t); }
     private void desactivar(String folio) {
-        if (JOptionPane.showConfirmDialog(this, "¿Desactivar la tarea " + folio + "? El registro se conservará.",
-                "Confirmar desactivación", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
-        try { repository.desactivar(folio); cargar(); }
+        String usuario = obtenerUsuarioActual();
+        if (mostrarConfirmacion("¿Desactivar la tarea " + folio + "?",
+                "Confirmar desactivación") != JOptionPane.YES_OPTION) return;
+        try {
+            repository.desactivar(folio, usuario);
+            cargar();
+            mostrarMensaje("La tarea " + folio + " fue desactivada correctamente.",
+                    "Tarea desactivada", JOptionPane.INFORMATION_MESSAGE);
+        }
         catch (IOException ex) { error("No se pudo desactivar la tarea.", ex); }
+    }
+
+    private String obtenerUsuarioActual() {
+        String nombre = INICIARSESION.nombreUsuarioActual == null ? "" : INICIARSESION.nombreUsuarioActual.trim();
+        if (!nombre.isEmpty()) return nombre;
+        String usuario = INICIARSESION.usuarioActual == null ? "" : INICIARSESION.usuarioActual.trim();
+        return usuario.isEmpty() ? "Usuario no identificado" : usuario;
     }
     private void exportar() {
         JFileChooser chooser = EstiloAplicacion.crearSelectorArchivos();
@@ -153,7 +265,45 @@ public class MESATRABAJO extends javax.swing.JFrame {
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) try { repository.exportar(tareas, chooser.getSelectedFile().toPath()); }
         catch (IOException ex) { error("No se pudo exportar.", ex); }
     }
-    private void error(String mensaje, Exception ex) { JOptionPane.showMessageDialog(this, mensaje + "\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); }
+    private void error(String mensaje, Exception ex) { mostrarMensaje(mensaje + "\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); }
+
+    private void mostrarMensaje(String mensaje, String titulo, int tipo) {
+        JOptionPane panel = new JOptionPane(crearBarraMensaje(mensaje), tipo);
+        prepararMensaje(panel);
+        JDialog dialogo = panel.createDialog(this, titulo);
+        dialogo.setVisible(true);
+    }
+
+    private int mostrarConfirmacion(String mensaje, String titulo) {
+        JOptionPane panel = new JOptionPane(crearBarraMensaje(mensaje),
+                JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION);
+        prepararMensaje(panel);
+        JDialog dialogo = panel.createDialog(this, titulo);
+        dialogo.setVisible(true);
+        Object valor = panel.getValue();
+        return valor instanceof Integer ? (Integer) valor : JOptionPane.NO_OPTION;
+    }
+
+    private JPanel crearBarraMensaje(String mensaje) {
+        JPanel barra = new JPanel(new BorderLayout());
+        barra.setBackground(new Color(232, 235, 239));
+        barra.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
+        JLabel texto = new JLabel("<html>" + escaparHtml(mensaje).replace("\n", "<br>") + "</html>");
+        texto.setForeground(new Color(35, 42, 50));
+        barra.add(texto, BorderLayout.CENTER);
+        return barra;
+    }
+
+    private String escaparHtml(String texto) {
+        return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private void prepararMensaje(JOptionPane panel) {
+        panel.setBackground(Color.WHITE);
+        for (Component componente : panel.getComponents()) {
+            componente.setBackground(Color.WHITE);
+        }
+    }
     private JButton boton(String texto, String tipoIcono, boolean principal, ActionListener accion) {
         JButton b = new JButton(texto);
         b.setIcon(new IconoBoton(tipoIcono));
@@ -238,25 +388,6 @@ public class MESATRABAJO extends javax.swing.JFrame {
                 base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion),
                 base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion));
     }
-    private static final class IconoMesaTrabajo implements Icon {
-        @Override public int getIconWidth() { return 20; }
-        @Override public int getIconHeight() { return 20; }
-
-        @Override public void paintIcon(Component componente, Graphics graphics, int x, int y) {
-            Graphics2D g = (Graphics2D) graphics.create();
-            try {
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setColor(componente.getForeground());
-                for (int fila = 0; fila < 2; fila++) {
-                    for (int columna = 0; columna < 2; columna++) {
-                        g.fillRoundRect(x + 2 + columna * 8, y + 2 + fila * 8, 6, 6, 2, 2);
-                    }
-                }
-            } finally {
-                g.dispose();
-            }
-        }
-    }
     private static final class IconoBoton implements Icon {
         private final String tipo;
 
@@ -301,9 +432,70 @@ public class MESATRABAJO extends javax.swing.JFrame {
             return this;
         }
     }
-    private static class ActionRenderer extends DefaultTableCellRenderer {
-        @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
-            super.getTableCellRendererComponent(t, v, s, f, r, c); setHorizontalAlignment(CENTER); setForeground(AZUL); setFont(new Font("Segoe UI", Font.BOLD, 10)); return this;
+    private static class ActionRenderer extends JPanel implements TableCellRenderer {
+        private ActionRenderer() {
+            setOpaque(true);
+            setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        }
+
+        @Override public Component getTableCellRendererComponent(JTable tabla, Object valor, boolean seleccionado,
+                boolean tieneFoco, int fila, int columna) {
+            removeAll();
+            setBackground(seleccionado ? new Color(225, 238, 250) : Color.WHITE);
+            add(botonAccion(new IconoAccion("ver"), Color.WHITE, AZUL));
+            add(botonAccion(new IconoAccion("editar"), AZUL_CLARO, Color.WHITE));
+            add(botonAccion(new IconoAccion("eliminar"), new Color(247, 78, 78), Color.WHITE));
+            return this;
+        }
+
+        private JButton botonAccion(Icon icono, Color fondo, Color texto) {
+            JButton boton = new JButton(icono);
+            boton.setPreferredSize(new Dimension(38, 30));
+            boton.setBackground(fondo);
+            boton.setForeground(texto);
+            boton.setBorder(BorderFactory.createLineBorder(
+                    fondo.equals(Color.WHITE) ? new Color(198, 210, 225) : fondo));
+            boton.setFocusPainted(false);
+            boton.setContentAreaFilled(true);
+            boton.setOpaque(true);
+            return boton;
+        }
+    }
+
+    private static final class IconoAccion implements Icon {
+        private final String tipo;
+
+        private IconoAccion(String tipo) {
+            this.tipo = tipo;
+        }
+
+        @Override public int getIconWidth() { return 16; }
+        @Override public int getIconHeight() { return 16; }
+
+        @Override public void paintIcon(Component componente, Graphics graphics, int x, int y) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(componente.getForeground());
+                g.setStroke(new BasicStroke(1.7f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                if ("ver".equals(tipo)) {
+                    g.drawOval(x + 1, y + 4, 14, 8);
+                    g.fillOval(x + 6, y + 6, 4, 4);
+                } else if ("editar".equals(tipo)) {
+                    g.rotate(-Math.PI / 4, x + 8, y + 8);
+                    g.fillRoundRect(x + 6, y + 1, 4, 13, 2, 2);
+                    g.fillRect(x + 5, y + 1, 6, 3);
+                    g.rotate(Math.PI / 4, x + 8, y + 8);
+                } else {
+                    g.drawRoundRect(x + 4, y + 4, 8, 11, 1, 1);
+                    g.drawLine(x + 3, y + 3, x + 13, y + 3);
+                    g.drawLine(x + 6, y + 1, x + 10, y + 1);
+                    g.drawLine(x + 7, y + 7, x + 7, y + 12);
+                    g.drawLine(x + 10, y + 7, x + 10, y + 12);
+                }
+            } finally {
+                g.dispose();
+            }
         }
     }
 }

@@ -7,13 +7,18 @@ package com.mycompany.ocxrst.vistas;
 import com.mycompany.ocxrst.IconoVentanaUtil;
 import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.config.AppConfig;
+import com.mycompany.ocxrst.repository.ActividadRepository;
 import com.mycompany.ocxrst.repository.InventarioRepository;
 import com.mycompany.ocxrst.repository.ProveedorRepository;
+import com.mycompany.ocxrst.repository.UsuarioRepository;
 import com.mycompany.ocxrst.service.ProveedorService;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.awt.Desktop;
 import javax.swing.JOptionPane;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -48,7 +53,34 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private static final ProveedorRepository PROVEEDOR_REPOSITORY = new ProveedorRepository();
     private static final InventarioRepository INVENTARIO_REPOSITORY = new InventarioRepository();
     private final ProveedorRepository proveedorRepository = new ProveedorRepository();
+    private final ActividadRepository actividadRepository = new ActividadRepository();
+    private final UsuarioRepository usuarioRepository = new UsuarioRepository();
     private int filaProveedorActual = -1;
+    private static final int COLUMNA_FECHA_ALTA = 12;
+    private static final int COLUMNA_DOCUMENTO = 13;
+    private static final int COLUMNA_SOLICITANTE = 14;
+    private static final int COLUMNA_DEPARTAMENTO = 15;
+    private static final int COLUMNA_TIPO_PROVEEDOR = 16;
+    private static final int COLUMNA_PROYECTO = 17;
+    private static final int COLUMNA_OBSERVACIONES = 18;
+    private static final int COLUMNA_CARPETA_PDF = 19;
+    private static final String DOCUMENTO_PROVEEDOR = "FO-SG-01-00";
+    private static final File DIRECTORIO_PDF_PROVEEDORES = new File(
+            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\PROVEEDORES");
+    private final javax.swing.JTextField campoFechaAlta = new javax.swing.JTextField();
+    private final javax.swing.JTextField campoDocumento = new javax.swing.JTextField();
+    private final javax.swing.JComboBox<String> comboSolicitante = new javax.swing.JComboBox<>();
+    private final javax.swing.JTextField campoDepartamento = new javax.swing.JTextField();
+    private final javax.swing.JTextField campoTipoProveedor = new javax.swing.JTextField();
+    private final javax.swing.JTextField campoProyecto = new javax.swing.JTextField();
+    private final javax.swing.JTextArea campoObservaciones = new javax.swing.JTextArea(3, 20);
+    private final javax.swing.JPanel panelCuentasBancarias = new javax.swing.JPanel();
+    private final javax.swing.JPanel panelDocumentosPdf = new javax.swing.JPanel();
+    private final java.util.List<javax.swing.JTextField[]> camposCuentasBancarias = new java.util.ArrayList<>();
+    private final javax.swing.JPanel listaPdf = new javax.swing.JPanel();
+    private final java.util.List<File> archivosPdfPendientes = new java.util.ArrayList<>();
+    private final java.util.Map<String, String> areasPorSolicitante = new java.util.LinkedHashMap<>();
+    private String carpetaPdfProveedorActual = "";
 
     // Caché de proveedores para autocompletar: id -> "id | nombre"
     private final java.util.List<String[]> cacheProveedores = new java.util.ArrayList<>();
@@ -281,10 +313,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
         initComponents();
         configurarDisenoVisual();
         IconoVentanaUtil.aplicar(this);
-        setSize(800, 520);
+        setSize(900, 760);
         setResizable(false);
         setLocationRelativeTo(null);
         asegurarArchivoProveedores();
+        cargarSolicitantes();
         cargarCacheProveedores();
         configurarAutocompleteNombre();
         configurarEventos();
@@ -314,37 +347,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 20, 18, 20));
         jPanel1.setLayout(new java.awt.BorderLayout(0, 14));
 
-        // ----- Encabezado -----
-        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
-        encabezado.setOpaque(false);
-
-        javax.swing.JPanel titulo = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
-        titulo.setOpaque(false);
-        javax.swing.JLabel iconoGrupo = new javax.swing.JLabel(iconoGrupo(COLOR_AZUL_OSCURO, 34));
-        titulo.add(iconoGrupo, java.awt.BorderLayout.WEST);
-
-        javax.swing.JPanel textoTitulo = new javax.swing.JPanel();
-        textoTitulo.setOpaque(false);
-        textoTitulo.setLayout(new javax.swing.BoxLayout(textoTitulo, javax.swing.BoxLayout.Y_AXIS));
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel1.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
-        jLabel1.setForeground(COLOR_AZUL_OSCURO);
-        jLabel1.setText("PROVEEDORES");
-        javax.swing.JLabel subtitulo = new javax.swing.JLabel("Administra la información de tus proveedores");
-        subtitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        subtitulo.setForeground(COLOR_AZUL_OSCURO);
-        textoTitulo.add(jLabel1);
-        textoTitulo.add(subtitulo);
-        titulo.add(textoTitulo, java.awt.BorderLayout.CENTER);
-        encabezado.add(titulo, java.awt.BorderLayout.WEST);
-
-        javax.swing.JLabel lema = new javax.swing.JLabel(
-                "<html><div style='text-align:right'>SOLUCIONES HOY<br>CONEXIONES MAÑANA</div></html>");
-        lema.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 9));
-        lema.setForeground(new java.awt.Color(133, 157, 185));
-        encabezado.add(lema, java.awt.BorderLayout.EAST);
-        jPanel1.add(encabezado, java.awt.BorderLayout.NORTH);
-
         // ----- Tarjeta principal -----
         RoundedPanel tarjeta = new RoundedPanel(14, java.awt.Color.WHITE);
         tarjeta.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 22, 16, 22));
@@ -352,37 +354,70 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout());
         barra.setOpaque(false);
-        prepararBoton(jButton6, "ATRÁS", iconoChevronIzquierda(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
-        barra.add(jButton6, java.awt.BorderLayout.WEST);
 
         javax.swing.JLabel registro = new javax.swing.JLabel("REGISTRO DE PROVEEDOR",
                 iconoEdificio(COLOR_AZUL_OSCURO, 20), javax.swing.SwingConstants.LEFT);
         registro.setIconTextGap(8);
         registro.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
         registro.setForeground(COLOR_AZUL_OSCURO);
-        javax.swing.JPanel contenedorRegistro = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
+        javax.swing.JPanel contenedorRegistro = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         contenedorRegistro.setOpaque(false);
         contenedorRegistro.add(registro);
-        barra.add(contenedorRegistro, java.awt.BorderLayout.EAST);
+        barra.add(contenedorRegistro, java.awt.BorderLayout.WEST);
         tarjeta.add(barra, java.awt.BorderLayout.NORTH);
 
         javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
         formulario.setOpaque(false);
         agregarCampo(formulario, 0, iconoId(COLOR_AZUL_OSCURO), "ID:", jTextFieldId,
-                "Ingrese el ID del proveedor", true);
-        agregarCampo(formulario, 1, iconoEdificio(COLOR_AZUL_OSCURO, 18), "NOMBRE O RAZÓN SOCIAL:", jTextField1,
+                "ID asignado automáticamente", true);
+        agregarCampo(formulario, 1, iconoDocumento(COLOR_AZUL_OSCURO), "FECHA DE ALTA:", campoFechaAlta,
+                "Se asigna automáticamente", true);
+        agregarCampo(formulario, 2, iconoDocumento(COLOR_AZUL_OSCURO), "DOCUMENTO:", campoDocumento,
+                "Código de formato", false);
+        agregarCampo(formulario, 3, iconoContacto(COLOR_AZUL_OSCURO), "NOMBRE DEL SOLICITANTE:",
+                comboSolicitante, "Selecciona un usuario registrado", false);
+        agregarCampo(formulario, 4, iconoEdificio(COLOR_AZUL_OSCURO, 18), "NOMBRE O RAZÓN SOCIAL:", jTextField1,
                 "Nombre o razón social", false);
-        agregarCampo(formulario, 2, iconoDocumento(COLOR_AZUL_OSCURO), "RFC:", jTextField2,
-                "RFC (Ej. XAXX010101000)", false);
-        agregarCampo(formulario, 3, iconoTelefono(COLOR_AZUL_OSCURO), "TELÉFONO:", jTextField3,
-                "Número telefónico", false);
-        agregarCampo(formulario, 4, iconoCorreo(COLOR_AZUL_OSCURO), "CORREO:", jTextField4,
-                "correo@ejemplo.com", false);
         agregarCampo(formulario, 5, iconoUbicacion(COLOR_AZUL_OSCURO), "DIRECCIÓN:", jTextField5,
                 "Dirección completa", false);
-        agregarCampo(formulario, 6, iconoContacto(COLOR_AZUL_OSCURO), "CONTACTO:", jTextField6,
-                "Nombre del contacto", false);
-        tarjeta.add(formulario, java.awt.BorderLayout.CENTER);
+        agregarCampo(formulario, 6, iconoTelefono(COLOR_AZUL_OSCURO), "TELÉFONO:", jTextField3,
+                "Número telefónico", false);
+        agregarCampo(formulario, 7, iconoContacto(COLOR_AZUL_OSCURO), "DEPARTAMENTO:", campoDepartamento,
+                "Departamento del proveedor", false);
+        agregarCampo(formulario, 8, iconoDocumento(COLOR_AZUL_OSCURO), "RFC:", jTextField2,
+                "RFC (Ej. XAXX010101000)", false);
+        configurarPanelCuentasBancarias();
+        agregarCampo(formulario, 9, iconoDocumento(COLOR_AZUL_OSCURO), "CUENTAS BANCARIAS:", panelCuentasBancarias,
+                "Puedes agregar varias cuentas bancarias", false);
+        agregarCampo(formulario, 10, iconoCorreo(COLOR_AZUL_OSCURO), "CORREO:", jTextField4,
+                "correo@ejemplo.com", false);
+        agregarCampo(formulario, 11, iconoDocumento(COLOR_AZUL_OSCURO), "TIPO DE PROVEEDOR:", campoTipoProveedor,
+                "Tipo de proveedor", false);
+        agregarCampo(formulario, 12, iconoDocumento(COLOR_AZUL_OSCURO), "PROYECTO:", campoProyecto,
+                "Proyecto relacionado", false);
+        campoObservaciones.setLineWrap(true);
+        campoObservaciones.setWrapStyleWord(true);
+        javax.swing.JScrollPane observacionesScroll = new javax.swing.JScrollPane(campoObservaciones);
+        observacionesScroll.setPreferredSize(new java.awt.Dimension(430, 58));
+        observacionesScroll.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        observacionesScroll.setViewportBorder(javax.swing.BorderFactory.createEmptyBorder());
+        agregarCampo(formulario, 13, iconoDocumento(COLOR_AZUL_OSCURO), "OBSERVACIONES:", observacionesScroll,
+                "Observaciones adicionales", false);
+        configurarPanelPdf();
+        agregarCampo(formulario, 14, iconoDocumento(COLOR_AZUL_OSCURO), "DOCUMENTOS PDF:", panelDocumentosPdf,
+                "Adjunta uno o varios archivos PDF", false);
+
+        javax.swing.JScrollPane formularioScroll = new javax.swing.JScrollPane(formulario);
+        formularioScroll.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        formularioScroll.setViewportBorder(javax.swing.BorderFactory.createEmptyBorder());
+        formularioScroll.setOpaque(false);
+        formularioScroll.getViewport().setOpaque(false);
+        formularioScroll.setWheelScrollingEnabled(true);
+        formularioScroll.getVerticalScrollBar().setUnitIncrement(36);
+        formularioScroll.getVerticalScrollBar().setBlockIncrement(180);
+        formulario.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        tarjeta.add(formularioScroll, java.awt.BorderLayout.CENTER);
+        restablecerDatosSolicitud();
 
         javax.swing.JPanel acciones = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 10, 0));
         acciones.setOpaque(false);
@@ -408,12 +443,12 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }
 
     private void agregarCampo(javax.swing.JPanel formulario, int fila, javax.swing.Icon icono, String etiqueta,
-            javax.swing.JTextField campo, String textoAyuda, boolean soloLectura) {
+            javax.swing.JComponent campo, String textoAyuda, boolean soloLectura) {
         javax.swing.JLabel iconoLabel = new javax.swing.JLabel(icono);
 
         javax.swing.JPanel contenedorEtiqueta = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 3, 0));
         contenedorEtiqueta.setOpaque(false);
-        contenedorEtiqueta.setPreferredSize(new java.awt.Dimension(215, 20));
+        contenedorEtiqueta.setPreferredSize(new java.awt.Dimension(215, 18));
         javax.swing.JLabel etiquetaLabel = new javax.swing.JLabel(etiqueta);
         etiquetaLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
         etiquetaLabel.setForeground(new java.awt.Color(34, 76, 119));
@@ -425,29 +460,253 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         campo.setToolTipText(textoAyuda);
         campo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        campo.setPreferredSize(new java.awt.Dimension(120, 30));
-        campo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
-                javax.swing.BorderFactory.createEmptyBorder(4, 10, 4, 10)));
-        campo.setBackground(soloLectura ? new java.awt.Color(247, 250, 253) : java.awt.Color.WHITE);
-        campo.setEditable(!soloLectura);
+        if (campo instanceof javax.swing.JTextField) {
+            javax.swing.JTextField campoTexto = (javax.swing.JTextField) campo;
+                campoTexto.setPreferredSize(new java.awt.Dimension(430, 28));
+            campoTexto.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                    javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                    javax.swing.BorderFactory.createEmptyBorder(4, 10, 4, 10)));
+            campoTexto.setBackground(soloLectura ? new java.awt.Color(247, 250, 253) : java.awt.Color.WHITE);
+            campoTexto.setEditable(!soloLectura);
+        } else if (campo instanceof javax.swing.JComboBox) {
+            campo.setPreferredSize(new java.awt.Dimension(430, 28));
+        }
 
         java.awt.GridBagConstraints c = new java.awt.GridBagConstraints();
         c.gridy = fila;
-        c.insets = new java.awt.Insets(4, 0, 4, 10);
+        c.insets = new java.awt.Insets(2, 0, 2, 10);
         c.anchor = java.awt.GridBagConstraints.CENTER;
         c.gridx = 0;
         c.weightx = 0;
         formulario.add(iconoLabel, c);
         c.gridx = 1;
         c.anchor = java.awt.GridBagConstraints.LINE_END;
-        c.insets = new java.awt.Insets(4, 0, 4, 14);
+        c.insets = new java.awt.Insets(2, 0, 2, 14);
         formulario.add(contenedorEtiqueta, c);
         c.gridx = 2;
-        c.weightx = 1;
+        c.weightx = 0;
         c.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        c.insets = new java.awt.Insets(4, 0, 4, 0);
+        c.insets = new java.awt.Insets(2, 0, 2, 0);
         formulario.add(campo, c);
+    }
+
+    private void configurarPanelCuentasBancarias() {
+        panelCuentasBancarias.setOpaque(false);
+        panelCuentasBancarias.setLayout(new javax.swing.BoxLayout(panelCuentasBancarias, javax.swing.BoxLayout.Y_AXIS));
+        if (camposCuentasBancarias.isEmpty()) {
+            agregarCuentaBancaria("", "");
+        }
+        reconstruirPanelCuentasBancarias();
+    }
+
+    private void agregarCuentaBancaria(String numeroCuenta, String clabe) {
+        agregarCuentaBancaria("", numeroCuenta, clabe);
+    }
+
+    private void agregarCuentaBancaria(String banco, String numeroCuenta, String clabe) {
+        javax.swing.JTextField campoBanco = new javax.swing.JTextField(banco);
+        javax.swing.JTextField campoCuenta = new javax.swing.JTextField(numeroCuenta);
+        javax.swing.JTextField campoClabe = new javax.swing.JTextField(clabe);
+        prepararCampoCuenta(campoBanco);
+        prepararCampoCuenta(campoCuenta);
+        prepararCampoCuenta(campoClabe);
+        camposCuentasBancarias.add(new javax.swing.JTextField[]{campoBanco, campoCuenta, campoClabe});
+        reconstruirPanelCuentasBancarias();
+    }
+
+    private void prepararCampoCuenta(javax.swing.JTextField campo) {
+        campo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        campo.setPreferredSize(new java.awt.Dimension(100, 30));
+        campo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                javax.swing.BorderFactory.createEmptyBorder(4, 8, 4, 8)));
+    }
+
+    private void reconstruirPanelCuentasBancarias() {
+        panelCuentasBancarias.removeAll();
+        javax.swing.JPanel encabezadoCuentas = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 8, 0));
+        encabezadoCuentas.setOpaque(false);
+        encabezadoCuentas.add(new javax.swing.JLabel("BANCO"));
+        encabezadoCuentas.add(new javax.swing.JLabel("NO. CUENTA"));
+        encabezadoCuentas.add(new javax.swing.JLabel("CLABE"));
+        encabezadoCuentas.add(new javax.swing.JLabel(""));
+        panelCuentasBancarias.add(encabezadoCuentas);
+
+        for (int i = 0; i < camposCuentasBancarias.size(); i++) {
+            final int indice = i;
+            javax.swing.JPanel filaCuenta = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 8, 0));
+            filaCuenta.setOpaque(false);
+            filaCuenta.add(camposCuentasBancarias.get(i)[0]);
+            filaCuenta.add(camposCuentasBancarias.get(i)[1]);
+            filaCuenta.add(camposCuentasBancarias.get(i)[2]);
+            javax.swing.JButton quitar = new javax.swing.JButton("Quitar");
+            quitar.addActionListener(e -> {
+                javax.swing.JTextField[] cuenta = camposCuentasBancarias.get(indice);
+                boolean tieneInformacionCompleta = !cuenta[0].getText().trim().isEmpty()
+                        && !cuenta[1].getText().trim().isEmpty()
+                        && !cuenta[2].getText().trim().isEmpty();
+                if (tieneInformacionCompleta) {
+                    int confirmacion = javax.swing.JOptionPane.showConfirmDialog(this,
+                            "¿Deseas eliminar la cuenta bancaria \"" + cuenta[1].getText().trim() + "\"?",
+                            "Confirmar eliminación", javax.swing.JOptionPane.YES_NO_OPTION,
+                            javax.swing.JOptionPane.WARNING_MESSAGE);
+                    if (confirmacion != javax.swing.JOptionPane.YES_OPTION) {
+                        return;
+                    }
+                }
+                camposCuentasBancarias.remove(indice);
+                if (camposCuentasBancarias.isEmpty()) {
+                    agregarCuentaBancaria("", "");
+                } else {
+                    reconstruirPanelCuentasBancarias();
+                }
+            });
+            filaCuenta.add(quitar);
+            panelCuentasBancarias.add(filaCuenta);
+        }
+
+        javax.swing.JButton agregarCuenta = new javax.swing.JButton("AGREGAR CUENTA");
+        agregarCuenta.addActionListener(e -> agregarCuentaBancaria("", ""));
+        javax.swing.JPanel accionesCuenta = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 4));
+        accionesCuenta.setOpaque(false);
+        accionesCuenta.add(agregarCuenta);
+        panelCuentasBancarias.add(accionesCuenta);
+        panelCuentasBancarias.revalidate();
+        panelCuentasBancarias.repaint();
+    }
+
+    private void configurarPanelPdf() {
+        panelDocumentosPdf.setOpaque(false);
+        panelDocumentosPdf.setLayout(new java.awt.BorderLayout(0, 6));
+        javax.swing.JButton seleccionarPdf = new javax.swing.JButton("SELECCIONAR PDF");
+        seleccionarPdf.addActionListener(e -> seleccionarArchivosPdf());
+        listaPdf.setOpaque(false);
+        listaPdf.setLayout(new javax.swing.BoxLayout(listaPdf, javax.swing.BoxLayout.Y_AXIS));
+        javax.swing.JScrollPane listaScroll = new javax.swing.JScrollPane(listaPdf);
+        listaScroll.setPreferredSize(new java.awt.Dimension(120, 80));
+        panelDocumentosPdf.add(seleccionarPdf, java.awt.BorderLayout.NORTH);
+        panelDocumentosPdf.add(listaScroll, java.awt.BorderLayout.CENTER);
+        refrescarListaPdf(carpetaPdfProveedorActual);
+    }
+
+    private void seleccionarArchivosPdf() {
+        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
+        selector.setDialogTitle("Selecciona los documentos PDF del proveedor");
+        selector.setMultiSelectionEnabled(true);
+        selector.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Archivos PDF", "pdf"));
+        if (selector.showOpenDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        for (File archivo : selector.getSelectedFiles()) {
+            if (!archivo.isFile() || !archivo.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".pdf")) {
+                JOptionPane.showMessageDialog(this, "Solo se pueden adjuntar archivos PDF.");
+                continue;
+            }
+            if (archivosPdfPendientes.stream().noneMatch(actual -> actual.equals(archivo))) {
+                archivosPdfPendientes.add(archivo);
+            }
+        }
+        refrescarListaPdf(carpetaPdfProveedorActual);
+    }
+
+    private void refrescarListaPdf(String nombreCarpeta) {
+        listaPdf.removeAll();
+        try {
+            if (nombreCarpeta != null && !nombreCarpeta.isBlank()) {
+                File carpeta = new File(DIRECTORIO_PDF_PROVEEDORES, nombreCarpeta);
+                if (carpeta.isDirectory()) {
+                    File[] existentes = carpeta.listFiles((directorio, nombre) ->
+                            nombre.toLowerCase(java.util.Locale.ROOT).endsWith(".pdf"));
+                    if (existentes == null) {
+                        mostrarError("No se pudieron listar los PDF de la carpeta del proveedor.",
+                                new IOException(carpeta.getAbsolutePath()));
+                        return;
+                    }
+                    java.util.Arrays.sort(existentes, java.util.Comparator.comparing(File::getName));
+                    for (File existente : existentes) {
+                        agregarDocumentoPdf(existente, false);
+                    }
+                }
+            }
+        } catch (SecurityException ex) {
+            mostrarError("No se pudieron listar los PDF del proveedor.", ex);
+        }
+        for (File pendiente : archivosPdfPendientes) {
+            agregarDocumentoPdf(pendiente, true);
+        }
+        if (listaPdf.getComponentCount() == 0) {
+            listaPdf.add(new javax.swing.JLabel("No hay documentos PDF adjuntos."));
+        }
+        listaPdf.revalidate();
+        listaPdf.repaint();
+    }
+
+    private void agregarDocumentoPdf(File archivo, boolean pendiente) {
+        javax.swing.JPanel fila = new javax.swing.JPanel(new java.awt.BorderLayout(8, 0));
+        fila.setOpaque(false);
+        fila.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 2, 2, 2));
+
+        javax.swing.JLabel nombre = new javax.swing.JLabel(
+                archivo.getName() + (pendiente ? " (pendiente de guardar)" : ""));
+        nombre.setToolTipText(archivo.getAbsolutePath());
+        fila.add(nombre, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel acciones = new javax.swing.JPanel(new java.awt.FlowLayout(
+                java.awt.FlowLayout.RIGHT, 4, 0));
+        acciones.setOpaque(false);
+        javax.swing.JButton ver = new javax.swing.JButton("VER");
+        ver.setToolTipText("Abrir vista previa del PDF");
+        ver.addActionListener(e -> abrirPdf(archivo));
+        javax.swing.JButton eliminar = new javax.swing.JButton("ELIMINAR");
+        eliminar.setToolTipText("Eliminar este documento PDF");
+        eliminar.addActionListener(e -> eliminarPdf(archivo, pendiente));
+        acciones.add(ver);
+        acciones.add(eliminar);
+        fila.add(acciones, java.awt.BorderLayout.EAST);
+        listaPdf.add(fila);
+    }
+
+    private void abrirPdf(File archivo) {
+        if (!archivo.isFile()) {
+            mostrarError("El documento PDF ya no existe.", new IOException(archivo.getAbsolutePath()));
+            refrescarListaPdf(carpetaPdfProveedorActual);
+            return;
+        }
+        if (!Desktop.isDesktopSupported() || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+            mostrarError("Este equipo no permite abrir documentos PDF desde la aplicación.",
+                    new IOException("La acción OPEN no está disponible."));
+            return;
+        }
+        try {
+            Desktop.getDesktop().open(archivo);
+        } catch (IOException | SecurityException ex) {
+            mostrarError("No se pudo abrir el documento PDF.", ex);
+        }
+    }
+
+    private void eliminarPdf(File archivo, boolean pendiente) {
+        int respuesta = JOptionPane.showConfirmDialog(this,
+                "¿Deseas eliminar el documento \"" + archivo.getName() + "\"?",
+                "Eliminar documento PDF", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (respuesta != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            if (pendiente) {
+                archivosPdfPendientes.removeIf(actual -> actual.equals(archivo));
+            } else {
+                Path raiz = DIRECTORIO_PDF_PROVEEDORES.toPath().toAbsolutePath().normalize();
+                Path archivoNormalizado = archivo.toPath().toAbsolutePath().normalize();
+                if (!archivoNormalizado.startsWith(raiz)) {
+                    throw new IOException("La ruta del documento no pertenece a la carpeta autorizada.");
+                }
+                Files.deleteIfExists(archivoNormalizado);
+            }
+            refrescarListaPdf(carpetaPdfProveedorActual);
+        } catch (IOException | SecurityException ex) {
+            mostrarError("No se pudo eliminar el documento PDF.", ex);
+        }
     }
 
     private void prepararBoton(javax.swing.JButton boton, String texto, javax.swing.Icon icono,
@@ -692,20 +951,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
             g2.drawOval(t / 2 - 3, 1, 6, 6);
             java.awt.geom.Arc2D cuerpo = new java.awt.geom.Arc2D.Double(2, 8, t - 4, 11, 0, 180, java.awt.geom.Arc2D.OPEN);
             g2.draw(cuerpo);
-        });
-    }
-
-    private static javax.swing.Icon iconoGrupo(java.awt.Color color, int tamano) {
-        return new VectorIcon(tamano, color, (g2, t) -> {
-            int r = t / 3;
-            g2.fillOval(1, t / 2 - r / 2, r, r);
-            g2.fillOval(t / 2, t / 2 - r / 2, r, r);
-            java.awt.geom.Arc2D cuerpoIzq = new java.awt.geom.Arc2D.Double(-t / 6.0, t / 2.0 + r / 2.0 - 2,
-                    t * 0.7, t * 0.6, 0, 180, java.awt.geom.Arc2D.OPEN);
-            java.awt.geom.Arc2D cuerpoDer = new java.awt.geom.Arc2D.Double(t / 3.0, t / 2.0 + r / 2.0 - 2,
-                    t * 0.7, t * 0.6, 0, 180, java.awt.geom.Arc2D.OPEN);
-            g2.draw(cuerpoIzq);
-            g2.draw(cuerpoDer);
         });
     }
 
@@ -1112,8 +1357,50 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jButton1.addActionListener(e -> crearProveedor());
         jButton2.addActionListener(e -> editarProveedor());
         jButton3.addActionListener(e -> alternarEstadoProveedor());
+        comboSolicitante.addActionListener(e -> actualizarDepartamentoSolicitante());
         restablecerIndicadorEstado();
     }//configurarEventos
+
+    private void cargarSolicitantes() {
+        comboSolicitante.removeAllItems();
+        comboSolicitante.addItem("-- Selecciona --");
+        areasPorSolicitante.clear();
+        try {
+            usuarioRepository.asegurarArchivoUsuarios();
+            File archivoUsuarios = usuarioRepository.obtenerArchivoUsuarios();
+            try (Workbook libro = usuarioRepository.cargarLibro(archivoUsuarios)) {
+                Sheet hoja = usuarioRepository.obtenerHojaUsuarios(libro);
+                for (int numeroFila = 1; numeroFila <= hoja.getLastRowNum(); numeroFila++) {
+                    Row fila = hoja.getRow(numeroFila);
+                    if (fila == null) {
+                        continue;
+                    }
+                    String nombre = usuarioRepository.leerCelda(fila, 2);
+                    if (nombre.isBlank()) {
+                        nombre = usuarioRepository.leerCelda(fila, 0);
+                    }
+                    if (nombre.isBlank() || areasPorSolicitante.containsKey(nombre)) {
+                        continue;
+                    }
+                    areasPorSolicitante.put(nombre, usuarioRepository.leerCelda(fila, 3));
+                    comboSolicitante.addItem(nombre);
+                }
+            }
+        } catch (IOException | IllegalStateException ex) {
+            mostrarError("No se pudieron cargar los solicitantes desde USUARIOS.xlsx.", ex);
+        }
+    }
+
+    private void actualizarDepartamentoSolicitante() {
+        Object solicitanteSeleccionado = comboSolicitante.getSelectedItem();
+        if (solicitanteSeleccionado == null) {
+            return;
+        }
+        String area = areasPorSolicitante.get(solicitanteSeleccionado.toString());
+        if (area != null && !area.isBlank()) {
+            campoDepartamento.setText(area);
+        }
+    }
 
     private void asegurarArchivoProveedores() {
         try {
@@ -1152,6 +1439,13 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 idCreado = generarIdProveedor(hoja, jTextField1.getText().trim());
                 escribirCelda(fila, 0, idCreado);
                 guardarDatosPrincipalesEnFila(fila);
+                guardarDatosSolicitudEnFila(fila);
+                carpetaPdfProveedorActual = prepararCarpetaPdfProveedor(
+                        jTextField1.getText().trim(), idCreado,
+                        filaProveedorActual < 0 ? carpetaPdfProveedorActual : "");
+                escribirCelda(fila, COLUMNA_CARPETA_PDF, carpetaPdfProveedorActual);
+                guardarArchivosPdfPendientes(carpetaPdfProveedorActual);
+                proveedorRepository.guardarCuentasBancarias(libro, idCreado, obtenerCuentasBancariasFormulario());
                 completarValoresComercialesPorDefecto(fila);
                 escribirCelda(fila, 11, "1");
 
@@ -1161,10 +1455,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
             }
 
             jTextFieldId.setText(idCreado);
+            registrarActividadProveedor("Proveedor dado de alta", idCreado);
             JOptionPane.showMessageDialog(this, "Proveedor creado.\nID asignado: " + idCreado + "\nEstado: ACTIVO (1)");
             limpiarFormulario(false);
             cargarCacheProveedores();
-        } catch (IOException ex) {
+        } catch (IOException | SecurityException ex) {
             mostrarError("No se pudo crear el proveedor.", ex);
         }
     }//crearProveedor
@@ -1204,6 +1499,14 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     escribirCelda(fila, 0, generarIdProveedor(hoja, jTextField1.getText().trim()));
                 }
                 guardarDatosPrincipalesEnFila(fila);
+                guardarDatosSolicitudEnFila(fila);
+                carpetaPdfProveedorActual = prepararCarpetaPdfProveedor(
+                        jTextField1.getText().trim(), leerCelda(fila, 0),
+                        leerCelda(fila, COLUMNA_CARPETA_PDF));
+                escribirCelda(fila, COLUMNA_CARPETA_PDF, carpetaPdfProveedorActual);
+                guardarArchivosPdfPendientes(carpetaPdfProveedorActual);
+                proveedorRepository.guardarCuentasBancarias(
+                        libro, leerCelda(fila, 0), obtenerCuentasBancariasFormulario());
                 completarValoresComercialesPorDefecto(fila);
 
                 if (leerCelda(fila, 11).isEmpty()) {
@@ -1218,10 +1521,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
                 jTextFieldId.setText(leerCelda(fila, 0));
             }
-
+            registrarActividadProveedor("Proveedor actualizado", jTextFieldId.getText().trim());
             JOptionPane.showMessageDialog(this, "Proveedor actualizado correctamente.");
             cargarCacheProveedores();
-        } catch (IOException ex) {
+        } catch (IOException | SecurityException ex) {
             mostrarError("No se pudo editar el proveedor.", ex);
         }
     }//editarProveedor
@@ -1256,6 +1559,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 actualizarIndicadorEstado(nuevoEstado);
 
                 filaProveedorActual = filaIndex;
+                registrarActividadProveedor(
+                        "Proveedor " + ("1".equals(nuevoEstado) ? "activado" : "desactivado"),
+                        leerCelda(fila, 0));
             }
         } catch (IOException ex) {
             mostrarError("No se pudo cambiar el estado del proveedor.", ex);
@@ -1303,6 +1609,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 }
 
                 cargarFilaEnFormulario(fila);
+                cargarCuentasBancariasFormulario(libro, leerCelda(fila, 0));
+                carpetaPdfProveedorActual = leerCelda(fila, COLUMNA_CARPETA_PDF);
+                archivosPdfPendientes.clear();
+                refrescarListaPdf(carpetaPdfProveedorActual);
                 filaProveedorActual = filaIndex;
 
                 String estado = normalizarEstado(leerCelda(fila, 11));
@@ -4411,8 +4721,158 @@ public class PROVEEDORES extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "RFC es obligatorio.");
             return false;
         }
+        if (comboSolicitante.getSelectedIndex() <= 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona el NOMBRE DEL SOLICITANTE desde USUARIOS.xlsx.");
+            return false;
+        }
         return true;
     }//validarCamposBase
+
+    private void guardarDatosSolicitudEnFila(Row fila) {
+        if (campoFechaAlta.getText().isBlank()) {
+            campoFechaAlta.setText(fechaActual());
+        }
+        if (campoDocumento.getText().isBlank()) {
+            campoDocumento.setText(DOCUMENTO_PROVEEDOR);
+        }
+        escribirCelda(fila, COLUMNA_FECHA_ALTA, campoFechaAlta.getText());
+        escribirCelda(fila, COLUMNA_DOCUMENTO, campoDocumento.getText());
+        Object solicitante = comboSolicitante.getSelectedItem();
+        escribirCelda(fila, COLUMNA_SOLICITANTE,
+                solicitante == null || "-- Selecciona --".equals(solicitante.toString())
+                        ? "" : solicitante.toString());
+        escribirCelda(fila, COLUMNA_DEPARTAMENTO, campoDepartamento.getText());
+        escribirCelda(fila, COLUMNA_TIPO_PROVEEDOR, campoTipoProveedor.getText());
+        escribirCelda(fila, COLUMNA_PROYECTO, campoProyecto.getText());
+        escribirCelda(fila, COLUMNA_OBSERVACIONES, campoObservaciones.getText());
+    }
+
+    private String fechaActual() {
+        return java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    private void registrarActividadProveedor(String actividad, String referencia) {
+        String usuario = INICIARSESION.nombreUsuarioActual;
+        if (usuario == null || usuario.isBlank()) {
+            usuario = INICIARSESION.usuarioActual;
+        }
+        if (usuario == null || usuario.isBlank()) {
+            usuario = "Usuario no identificado";
+        }
+        try {
+            actividadRepository.registrar("Proveedores", actividad, referencia, usuario);
+        } catch (IOException ex) {
+            mostrarError("El proveedor se guardó, pero no se pudo registrar la actividad en el tablero.", ex);
+        }
+    }
+
+    private java.util.List<String[]> obtenerCuentasBancariasFormulario() {
+        java.util.List<String[]> cuentas = new java.util.ArrayList<>();
+        for (javax.swing.JTextField[] campos : camposCuentasBancarias) {
+            cuentas.add(new String[]{campos[0].getText().trim(), campos[1].getText().trim(),
+                campos[2].getText().trim()});
+        }
+        return cuentas;
+    }
+
+    private void cargarCuentasBancariasFormulario(Workbook libro, String idProveedor) {
+        camposCuentasBancarias.clear();
+        java.util.List<String[]> cuentas = proveedorRepository.obtenerCuentasBancarias(libro, idProveedor);
+        if (cuentas.isEmpty()) {
+            agregarCuentaBancaria("", "");
+            return;
+        }
+        for (String[] cuenta : cuentas) {
+            agregarCuentaBancaria(cuenta[0], cuenta[1], cuenta[2]);
+        }
+        reconstruirPanelCuentasBancarias();
+    }
+
+    private String prepararCarpetaPdfProveedor(String nombreProveedor, String idProveedor, String carpetaAnterior)
+            throws IOException {
+        Path raiz = DIRECTORIO_PDF_PROVEEDORES.toPath().toAbsolutePath().normalize();
+        Files.createDirectories(raiz);
+        String nombreBase = sanitizarNombreCarpeta(nombreProveedor);
+        if (nombreBase.isBlank()) {
+            nombreBase = "Proveedor";
+        }
+        Path carpetaVieja = carpetaAnterior == null || carpetaAnterior.isBlank()
+                ? null : raiz.resolve(carpetaAnterior).normalize();
+        if (carpetaVieja != null && !carpetaVieja.startsWith(raiz)) {
+            carpetaVieja = null;
+        }
+
+        Path destino = raiz.resolve(nombreBase).normalize();
+        if (carpetaVieja != null && Files.isDirectory(carpetaVieja)) {
+            if (carpetaVieja.equals(destino)) {
+                return carpetaVieja.getFileName().toString();
+            }
+            if (Files.exists(destino)) {
+                destino = raiz.resolve(nombreBase + " - " + sanitizarNombreCarpeta(idProveedor)).normalize();
+            }
+            if (Files.exists(destino)) {
+                throw new IOException("Ya existe una carpeta para el proveedor: " + destino);
+            }
+            Files.move(carpetaVieja, destino);
+        } else if (Files.exists(destino)) {
+            destino = raiz.resolve(nombreBase + " - " + sanitizarNombreCarpeta(idProveedor)).normalize();
+        }
+        if (!destino.startsWith(raiz)) {
+            throw new IOException("El nombre del proveedor no produjo una ruta de carpeta válida.");
+        }
+        Files.createDirectories(destino);
+        return destino.getFileName().toString();
+    }
+
+    private String sanitizarNombreCarpeta(String nombre) {
+        if (nombre == null) {
+            return "";
+        }
+        return nombre.trim().replaceAll("[<>:\"/\\\\|?*\\p{Cntrl}]", "_")
+                .replaceAll("[. ]+$", "");
+    }
+
+    private void guardarArchivosPdfPendientes(String nombreCarpeta) throws IOException {
+        Path carpetaDestino = DIRECTORIO_PDF_PROVEEDORES.toPath().toAbsolutePath()
+                .normalize().resolve(nombreCarpeta).normalize();
+        if (!carpetaDestino.startsWith(DIRECTORIO_PDF_PROVEEDORES.toPath().toAbsolutePath().normalize())) {
+            throw new IOException("La carpeta de destino de los PDF no es válida.");
+        }
+        Files.createDirectories(carpetaDestino);
+        for (File archivo : archivosPdfPendientes) {
+            if (!archivo.isFile() || !archivo.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".pdf")) {
+                throw new IOException("El archivo seleccionado ya no existe o no es un PDF: " + archivo.getName());
+            }
+            Path archivoDestino = carpetaDestino.resolve(archivo.getName());
+            if (Files.exists(archivoDestino)) {
+                if (Files.mismatch(archivo.toPath(), archivoDestino) == -1) {
+                    continue;
+                }
+                String nombre = archivo.getName();
+                String base = nombre.substring(0, nombre.lastIndexOf('.'));
+                String extension = nombre.substring(nombre.lastIndexOf('.'));
+                int sufijo = 1;
+                do {
+                    archivoDestino = carpetaDestino.resolve(base + " (" + sufijo++ + ")" + extension);
+                } while (Files.exists(archivoDestino));
+            }
+            Files.copy(archivo.toPath(), archivoDestino);
+        }
+        archivosPdfPendientes.clear();
+        refrescarListaPdf(nombreCarpeta);
+    }
+
+    private void restablecerDatosSolicitud() {
+        campoFechaAlta.setText(fechaActual());
+        campoDocumento.setText(DOCUMENTO_PROVEEDOR);
+        if (comboSolicitante.getItemCount() > 0) {
+            comboSolicitante.setSelectedIndex(0);
+        }
+        campoDepartamento.setText("");
+        campoTipoProveedor.setText("");
+        campoProyecto.setText("");
+        campoObservaciones.setText("");
+    }
 
     private int resolverFilaProveedor(Sheet hoja) {
         if (filaProveedorActual > 0 && filaProveedorActual <= hoja.getLastRowNum()) {
@@ -4477,6 +4937,19 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jTextField4.setText(leerCelda(fila, 4));
         jTextField5.setText(leerCelda(fila, 5));
         jTextField6.setText(leerCelda(fila, 6));
+        String fechaAlta = leerCelda(fila, COLUMNA_FECHA_ALTA);
+        campoFechaAlta.setText(fechaAlta.isBlank() ? "" : fechaAlta);
+        String documento = leerCelda(fila, COLUMNA_DOCUMENTO);
+        campoDocumento.setText(documento.isBlank() ? DOCUMENTO_PROVEEDOR : documento);
+        String solicitante = leerCelda(fila, COLUMNA_SOLICITANTE);
+        comboSolicitante.setSelectedItem("-- Selecciona --");
+        if (!solicitante.isBlank()) {
+            comboSolicitante.setSelectedItem(solicitante);
+        }
+        campoDepartamento.setText(leerCelda(fila, COLUMNA_DEPARTAMENTO));
+        campoTipoProveedor.setText(leerCelda(fila, COLUMNA_TIPO_PROVEEDOR));
+        campoProyecto.setText(leerCelda(fila, COLUMNA_PROYECTO));
+        campoObservaciones.setText(leerCelda(fila, COLUMNA_OBSERVACIONES));
     }//cargarFilaEnFormulario
 
     private void limpiarFormulario(boolean conservarNombre) {
@@ -4489,6 +4962,12 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jTextField4.setText("");
         jTextField5.setText("");
         jTextField6.setText("");
+        restablecerDatosSolicitud();
+        camposCuentasBancarias.clear();
+        agregarCuentaBancaria("", "");
+        carpetaPdfProveedorActual = "";
+        archivosPdfPendientes.clear();
+        refrescarListaPdf("");
         filaProveedorActual = -1;
         restablecerIndicadorEstado();
     }//limpiarFormulario

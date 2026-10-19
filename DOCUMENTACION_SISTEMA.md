@@ -272,10 +272,12 @@ OrdendeComprasRST/
 │   ├── INVENTARIOS.java        (Gestión inventarios)
 │   ├── TERMINOS.java           (Términos y condiciones)
 │   ├── IconoVentanaUtil.java   (Utilería de iconos)
-│   └── BASES/
+├── data/
+│   ├── BASES/
 │       ├── USUARIOS.xlsx
 │       ├── PROVEEDORES.xlsx
 │       ├── INVENTARIOS.xlsx
+│   └── RECURSOS/
 │       └── Términos y Condiciones.txt
 ├── src/main/resources/com/mycompany/ocxrst/
 │   ├── IMAGENES/
@@ -297,14 +299,14 @@ OrdendeComprasRST/
 
 ### Base de datos:
 - **Tipo:** Archivos Excel (.xlsx)
-- **Ubicación:** `C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\BASES\`
+- **Ubicación:** `C:\OCXRST\OrdendeComprasRST\data\BASES\`
 - **Archivos:**
   - `USUARIOS.xlsx` - Credenciales y datos de usuarios
   - `PROVEEDORES.xlsx` - Catálogo de proveedores
   - `INVENTARIOS.xlsx` - Catálogo de productos
 
 ### Características de desarrollador:
-- **Java Version:** 17+
+- **Java Version:** 25+
 - **Build Tool:** Maven
 - **IDE:** NetBeans
 - **Look and Feel:** Nimbus
@@ -385,4 +387,3 @@ USUARIO → INICIARSESION → Validación Excel
 **Autor:** Maria Luisa Martinez
 **Fecha:** Marzo 2026
 **Estado:** Producción
-

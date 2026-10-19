@@ -62,17 +62,7 @@ public class TERMINOS extends javax.swing.JFrame {
             return base;
         }
 
-        Path proyecto = java.nio.file.Paths.get(".").toAbsolutePath().normalize();
-        File fallback = proyecto.resolve("src")
-                .resolve("main")
-                .resolve("java")
-                .resolve("com")
-                .resolve("mycompany")
-                .resolve("ocxrst")
-                .resolve("RECURSOS")
-                .resolve("Términos y Condiciones.txt")
-                .toFile();
-        return fallback;
+        return base;
     }
 
     // =====================================================================
@@ -129,15 +119,8 @@ public class TERMINOS extends javax.swing.JFrame {
         getContentPane().setBackground(java.awt.Color.WHITE);
         jPanel1.removeAll();
         jPanel1.setOpaque(false);
-        jPanel1.setLayout(new java.awt.BorderLayout(0, 16));
-        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 24, 18, 24));
-
-        javax.swing.JLabel titulo = new javax.swing.JLabel("T\u00c9RMINOS Y CONDICIONES");
-        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 22));
-        titulo.setForeground(new java.awt.Color(28, 82, 132));
-        titulo.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        titulo.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 8, 0));
-        jPanel1.add(titulo, java.awt.BorderLayout.NORTH);
+        jPanel1.setLayout(new java.awt.BorderLayout(0, 12));
+        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 24, 18, 24));
 
         jScrollPane1.getViewport().setBackground(java.awt.Color.WHITE);
         jScrollPane1.setBorder(javax.swing.BorderFactory.createLineBorder(
@@ -163,21 +146,12 @@ public class TERMINOS extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            java.net.URL url = getClass().getResource("/com/mycompany/ocxrst/RECURSOS/Términos y Condiciones.txt");
-            java.io.File archivoTarget = new java.io.File(url.toURI());
-
-            // Guardar en target/classes (cambios inmediatos en ejecución)
-            guardarEnArchivo(archivoTarget);
-
-            // Guardar también en src/main/java (persistencia ante recompilaciones)
-            java.io.File archivoSrc = new java.io.File(
-                archivoTarget.getAbsolutePath()
-                    .replace("\\target\\classes\\", "\\src\\main\\java\\")
-                    .replace("/target/classes/", "/src/main/java/")
-            );
-            if (archivoSrc.exists()) {
-                guardarEnArchivo(archivoSrc);
+            java.io.File archivo = AppConfig.terminosFile();
+            java.io.File parent = archivo.getParentFile();
+            if (parent != null) {
+                parent.mkdirs();
             }
+            guardarEnArchivo(archivo);
 
             javax.swing.JOptionPane.showMessageDialog(this, "Términos guardados correctamente.", "Guardado", javax.swing.JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {

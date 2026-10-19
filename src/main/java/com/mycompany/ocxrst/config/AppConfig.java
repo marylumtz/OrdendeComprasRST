@@ -1,14 +1,17 @@
 package com.mycompany.ocxrst.config;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class AppConfig {
 
     private static final Path PROJECT_ROOT = resolveProjectRoot();
-    private static final Path BASES_DIR = PROJECT_ROOT.resolve("src").resolve("main").resolve("java")
-            .resolve("com").resolve("mycompany").resolve("ocxrst").resolve("BASES");
+    private static final Path DATA_DIR = PROJECT_ROOT.resolve("data");
+    private static final Path BASES_DIR = DATA_DIR.resolve("BASES");
+    private static final Path RECURSOS_DIR = DATA_DIR.resolve("RECURSOS");
 
     private AppConfig() {
     }
@@ -17,7 +20,7 @@ public final class AppConfig {
     // buscamos el proyecto real en vez de asumir que "." ya lo es.
     private static Path resolveProjectRoot() {
         Path cwd = Paths.get(".").toAbsolutePath().normalize();
-        Path relativeBases = Paths.get("src", "main", "java", "com", "mycompany", "ocxrst", "BASES");
+        Path relativeBases = Paths.get("data", "BASES");
 
         Path proyectoDesdeDirectorio = buscarProyectoRoot(cwd, relativeBases);
         if (proyectoDesdeDirectorio != null) {
@@ -104,10 +107,12 @@ public final class AppConfig {
         return resolveBaseFile("INTORDENDECOMPRA.xlsx");
     }
 
+    public static File actividadesFile() {
+        return resolveBaseFile("ACTIVIDADES.xlsx");
+    }
+
     public static File terminosFile() {
-        return PROJECT_ROOT.resolve("src").resolve("main").resolve("java")
-                .resolve("com").resolve("mycompany").resolve("ocxrst")
-                .resolve("RECURSOS").resolve("Términos y Condiciones.txt").toFile();
+        return RECURSOS_DIR.resolve("Términos y Condiciones.txt").toFile();
     }
 
     public static File getBasesDir() {
@@ -120,17 +125,20 @@ public final class AppConfig {
             return directPath.toFile();
         }
 
-        Path fallback = PROJECT_ROOT.resolve("src").resolve("main").resolve("java")
-                .resolve("com").resolve("mycompany").resolve("ocxrst").resolve("BASES")
-                .resolve(fileName);
-        if (fallback.toFile().exists()) {
-            return fallback.toFile();
-        }
-
         File parent = directPath.getParent().toFile();
         if (parent != null && !parent.exists()) {
             parent.mkdirs();
         }
         return directPath.toFile();
+    }
+
+    public static byte[] recursoBytes(String ruta) throws IOException {
+        try (InputStream entrada = AppConfig.class.getResourceAsStream(
+                "/com/mycompany/ocxrst/" + ruta)) {
+            if (entrada == null) {
+                throw new IOException("No se encontró el recurso: " + ruta);
+            }
+            return entrada.readAllBytes();
+        }
     }
 }

@@ -17,8 +17,6 @@ public final class IconoVentanaUtil {
 
     private static final String RUTA_ICONO_PRINCIPAL = "/com/mycompany/ocxrst/IMAGENES/Compu.png";
     private static final String RUTA_ICONO_RESPALDO = "/com/mycompany/ocxrst/IMAGENES/LOGO.jpg";
-    private static final String RUTA_ICONO_PRINCIPAL_LOCAL = "src/main/java/com/mycompany/ocxrst/IMAGENES/Compu.png";
-    private static final String RUTA_ICONO_RESPALDO_LOCAL = "src/main/java/com/mycompany/ocxrst/IMAGENES/LOGO.jpg";
     private static final int[] TAMANOS_ICONO = {16, 24, 32, 48, 64, 128, 256, 512};
 
     private static volatile List<Image> iconosCache;
@@ -49,9 +47,6 @@ public final class IconoVentanaUtil {
             }
 
             Image iconoBase = cargarDesdeClasspath();
-            if (iconoBase == null) {
-                iconoBase = cargarDesdeArchivo();
-            }
             if (iconoBase == null) {
                 iconosCache = Collections.emptyList();
                 return iconosCache;
@@ -144,22 +139,6 @@ public final class IconoVentanaUtil {
         return new ImageIcon(url).getImage();
     }
 
-    private static Image cargarDesdeArchivo() {
-        Image iconoPrincipal = cargarImagenArchivo(RUTA_ICONO_PRINCIPAL_LOCAL);
-        if (iconoPrincipal != null) {
-            return iconoPrincipal;
-        }
-        return cargarImagenArchivo(RUTA_ICONO_RESPALDO_LOCAL);
-    }
-
-    private static Image cargarImagenArchivo(String ruta) {
-        File archivo = new File(ruta);
-        if (!archivo.exists()) {
-            return null;
-        }
-        return new ImageIcon(archivo.getAbsolutePath()).getImage();
-    }
-
     public static ImageIcon obtenerIconoSeguro(String rutaClasspath) {
         if (rutaClasspath == null || rutaClasspath.isEmpty()) {
             return new ImageIcon();
@@ -167,11 +146,6 @@ public final class IconoVentanaUtil {
         URL url = IconoVentanaUtil.class.getResource(rutaClasspath);
         if (url != null) {
             return new ImageIcon(url);
-        }
-        String rutaLimpia = rutaClasspath.startsWith("/") ? rutaClasspath.substring(1) : rutaClasspath;
-        File archivo = new File("src/main/java/" + rutaLimpia);
-        if (archivo.exists()) {
-            return new ImageIcon(archivo.getAbsolutePath());
         }
         return new ImageIcon();
     }

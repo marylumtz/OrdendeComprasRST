@@ -28,6 +28,7 @@ public final class TareaRepository {
     private static final String ENCABEZADO_ANTERIOR = "T\u00cdTULO / DESCRIPCI\u00d3N";
     private static final String[] DETALLES = {"FOLIO", "DESCRIPCI\u00d3N DETALLADA",
         "FECHA INICIO", "FOLIO RELACIONADO", "OBSERVACIONES"};
+    private static final String[] AUDITORIA = {"FECHA Y HORA", "USUARIO", "FOLIO", "ACCION"};
     private static final Object LOCK = new Object();
     private final Path archivo;
 
@@ -103,6 +104,10 @@ public final class TareaRepository {
     }
 
     public void desactivar(String folio) throws IOException {
+        desactivar(folio, "Sistema");
+    }
+
+    public void desactivar(String folio, String usuario) throws IOException {
         synchronized (LOCK) {
             try (Workbook libro = abrir()) {
                 List<Tarea> tareas = new ArrayList<>(leer(libro));
@@ -121,9 +126,28 @@ public final class TareaRepository {
                         actual.prioridad(), actual.responsable(), actual.creacion(), actual.vencimiento(),
                         actual.descripcion(), actual.inicio(), actual.folioRelacionado(), actual.observaciones(),
                         actual.adjuntos()));
+                registrarAuditoria(libro, folio, usuario);
                 escribir(libro, tareas);
                 guardarLibro(libro, archivo);
             }
+        }
+    }
+
+    private static void registrarAuditoria(Workbook libro, String folio, String usuario) {
+        Sheet hoja = libro.getSheet("AUDITORIA");
+        if (hoja == null) {
+            hoja = libro.createSheet("AUDITORIA");
+            escribirFila(hoja.createRow(0), AUDITORIA);
+            hoja.createFreezePane(0, 1);
+        }
+        int siguiente = hoja.getLastRowNum() + 1;
+        String actor = usuario == null || usuario.isBlank() ? "Usuario no identificado" : usuario.trim();
+        escribirFila(hoja.createRow(siguiente),
+                java.time.LocalDateTime.now().format(
+                        java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
+                actor, folio, "Desactivacion de tarea");
+        for (int i = 0; i < AUDITORIA.length; i++) {
+            hoja.autoSizeColumn(i);
         }
     }
 

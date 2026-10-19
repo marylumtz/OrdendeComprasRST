@@ -16,7 +16,12 @@ public class ProveedorRepository {
 
     public static final String[] ENCABEZADOS = {
         "ID_PROVEEDOR", "NOMBRE_RAZON_SOCIAL", "RFC", "TELEFONO", "CORREO",
-        "DIRECCION", "CONTACTO", "PAGO", "METODO_PAGO", "TIEMPO_ENTREGA", "FORMA_PAGO", "ACTIVO"
+        "DIRECCION", "CONTACTO", "PAGO", "METODO_PAGO", "TIEMPO_ENTREGA", "FORMA_PAGO", "ACTIVO",
+        "FECHA_ALTA", "DOCUMENTO", "NOMBRE_SOLICITANTE", "DEPARTAMENTO", "TIPO_PROVEEDOR",
+        "PROYECTO", "OBSERVACIONES", "CARPETA_PDF"
+    };
+    public static final String[] ENCABEZADOS_CUENTAS_BANCARIAS = {
+        "ID_PROVEEDOR", "BANCO", "NO_CUENTA", "CLABE"
     };
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
 
@@ -114,6 +119,66 @@ public class ProveedorRepository {
     public void escribirCelda(Row fila, int columna, String valor) {
         Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
         celda.setCellValue(valor == null ? "" : valor.trim());
+    }
+
+    public java.util.List<String[]> obtenerCuentasBancarias(Workbook libro, String idProveedor) {
+        java.util.List<String[]> cuentas = new java.util.ArrayList<>();
+        Sheet hoja = libro.getSheet("CUENTAS_BANCARIAS");
+        if (hoja == null || idProveedor == null || idProveedor.isBlank()) {
+            return cuentas;
+        }
+        boolean formatoAnterior = "NO_CUENTA".equalsIgnoreCase(leerCelda(hoja.getRow(0), 1));
+        for (int numeroFila = 1; numeroFila <= hoja.getLastRowNum(); numeroFila++) {
+            Row fila = hoja.getRow(numeroFila);
+            if (fila != null && idProveedor.equalsIgnoreCase(leerCelda(fila, 0))) {
+                if (formatoAnterior) {
+                    cuentas.add(new String[]{"", leerCelda(fila, 1), leerCelda(fila, 2)});
+                } else {
+                    cuentas.add(new String[]{leerCelda(fila, 1), leerCelda(fila, 2), leerCelda(fila, 3)});
+                }
+            }
+        }
+        return cuentas;
+    }
+
+    public void guardarCuentasBancarias(Workbook libro, String idProveedor, java.util.List<String[]> cuentas) {
+        Sheet hoja = libro.getSheet("CUENTAS_BANCARIAS");
+        if (hoja == null) {
+            hoja = libro.createSheet("CUENTAS_BANCARIAS");
+        }
+        asegurarEncabezadosCuentasBancarias(hoja);
+
+        for (int numeroFila = hoja.getLastRowNum(); numeroFila >= 1; numeroFila--) {
+            Row fila = hoja.getRow(numeroFila);
+            if (fila != null && idProveedor.equalsIgnoreCase(leerCelda(fila, 0))) {
+                hoja.removeRow(fila);
+                if (numeroFila < hoja.getLastRowNum()) {
+                    hoja.shiftRows(numeroFila + 1, hoja.getLastRowNum(), -1);
+                }
+            }
+        }
+
+        for (String[] cuenta : cuentas) {
+            if (cuenta == null || (cuenta[0].isBlank() && cuenta[1].isBlank() && cuenta[2].isBlank())) {
+                continue;
+            }
+            Row fila = hoja.createRow(hoja.getLastRowNum() + 1);
+            escribirCelda(fila, 0, idProveedor);
+            escribirCelda(fila, 1, cuenta[0]);
+            escribirCelda(fila, 2, cuenta[1]);
+            escribirCelda(fila, 3, cuenta[2]);
+        }
+    }
+
+    private void asegurarEncabezadosCuentasBancarias(Sheet hoja) {
+        Row encabezado = hoja.getRow(0);
+        if (encabezado == null) {
+            encabezado = hoja.createRow(0);
+        }
+        for (int columna = 0; columna < ENCABEZADOS_CUENTAS_BANCARIAS.length; columna++) {
+            Cell celda = encabezado.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+            celda.setCellValue(ENCABEZADOS_CUENTAS_BANCARIAS[columna]);
+        }
     }
 
     /**

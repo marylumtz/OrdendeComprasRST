@@ -3,6 +3,7 @@ package com.mycompany.ocxrst.vistas;
 import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.IconoVentanaUtil;
 import com.mycompany.ocxrst.config.AppConfig;
+import com.mycompany.ocxrst.repository.ActividadRepository;
 import com.mycompany.ocxrst.repository.ProveedorRepository;
 import com.mycompany.ocxrst.service.InventarioService;
 import java.awt.BorderLayout;
@@ -48,14 +49,19 @@ public class PRINCIPAL extends javax.swing.JFrame {
     private static final Color AZUL_MENU = new Color(0x01, 0x45, 0xAB);
     private static final Color TEXTO = new Color(38, 52, 88);
     private final ProveedorRepository proveedorRepository = new ProveedorRepository();
+    private final ActividadRepository actividadRepository = new ActividadRepository();
     private JButton jButtonNotificaciones;
     private JButton jButtonMenu;
     private JButton botonMenuActivo;
+    private JLabel etiquetaEncabezado;
     private JLabel etiquetaFechaHora;
     private javax.swing.JPopupMenu menuSesion;
     private Timer reloj;
+    private Timer actualizadorTablero;
     private int totalNotificaciones;
     private JPanel panelVistas;
+    private JPanel cuerpoTablero;
+    private JScrollPane scrollTablero;
 
     public PRINCIPAL() {
         EstiloAplicacion.aplicarTipografiaGlobal();
@@ -78,11 +84,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
         setContentPane(fondo);
         fondo.add(crearMenuLateral(), BorderLayout.WEST);
         fondo.add(crearContenido(), BorderLayout.CENTER);
-        JPanel capaFecha = new JPanel(new BorderLayout());
-        capaFecha.setOpaque(false);
-        capaFecha.add(etiquetaFechaHora, BorderLayout.SOUTH);
-        setGlassPane(capaFecha);
-        capaFecha.setVisible(true);
     }
 
     private JPanel crearMenuLateral() {
@@ -91,8 +92,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         lateral.setBorder(BorderFactory.createEmptyBorder(86, 0, 0, 0));
         JPanel menu = new JPanel();
         menu.setPreferredSize(new Dimension(186, 627));
-        menu.setBackground(new Color(255, 255, 255, 150));
-        menu.setOpaque(true);
+        menu.setOpaque(false);
         menu.setBorder(BorderFactory.createEmptyBorder(14, 4, 14, 4));
         menu.setLayout(new BoxLayout(menu, BoxLayout.Y_AXIS));
 
@@ -116,12 +116,12 @@ public class PRINCIPAL extends javax.swing.JFrame {
         menu.add(crearBotonMenu("Términos y condiciones", "terminos", e -> abrirTerminos()));
         lateral.add(menu, BorderLayout.NORTH);
         etiquetaFechaHora = new JLabel("", SwingConstants.CENTER);
-        etiquetaFechaHora.setForeground(Color.WHITE);
+        etiquetaFechaHora.setForeground(AZUL);
         etiquetaFechaHora.setOpaque(false);
-        etiquetaFechaHora.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        etiquetaFechaHora.setPreferredSize(new Dimension(360, 28));
+        etiquetaFechaHora.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        etiquetaFechaHora.setPreferredSize(new Dimension(340, 20));
         etiquetaFechaHora.setHorizontalAlignment(SwingConstants.RIGHT);
-        etiquetaFechaHora.setBorder(BorderFactory.createEmptyBorder(0, 0, 13, 60));
+        etiquetaFechaHora.setBorder(BorderFactory.createEmptyBorder(0, 0, 2, 2));
         return lateral;
     }
 
@@ -270,30 +270,42 @@ public class PRINCIPAL extends javax.swing.JFrame {
     private JPanel crearContenido() {
         JPanel contenido = new JPanel(new BorderLayout(0, 12));
         contenido.setOpaque(false);
-        contenido.setBorder(BorderFactory.createEmptyBorder(14, 8, 44, 8));
+        contenido.setBorder(BorderFactory.createEmptyBorder(14, 8, 10, 8));
 
         JPanel encabezado = new JPanel(new BorderLayout());
         encabezado.setOpaque(false);
-        JLabel bienvenida = new JLabel();
-        bienvenida.setForeground(AZUL);
-        bienvenida.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        bienvenida.setBorder(BorderFactory.createEmptyBorder(60, 0, 0, 0));
-        encabezado.add(bienvenida, BorderLayout.CENTER);
+        etiquetaEncabezado = new JLabel();
+        etiquetaEncabezado.setForeground(AZUL);
+        etiquetaEncabezado.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        etiquetaEncabezado.setBorder(BorderFactory.createEmptyBorder(48, 0, 0, 8));
+        actualizarEncabezado("INICIO");
+        encabezado.add(etiquetaEncabezado, BorderLayout.WEST);
+
+        etiquetaFechaHora.setForeground(Color.WHITE);
+        etiquetaFechaHora.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        etiquetaFechaHora.setPreferredSize(new Dimension(310, 38));
+        etiquetaFechaHora.setHorizontalAlignment(SwingConstants.CENTER);
+        etiquetaFechaHora.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
         JPanel acciones = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
         acciones.setOpaque(false);
+        acciones.add(etiquetaFechaHora);
         jButtonNotificaciones = new JButton();
         jButtonNotificaciones.setFont(new Font("Segoe UI", Font.BOLD, 12));
         jButtonNotificaciones.setForeground(Color.WHITE);
         jButtonNotificaciones.setFocusPainted(false);
+        jButtonNotificaciones.setBorder(BorderFactory.createEmptyBorder(7, 12, 7, 12));
+        jButtonNotificaciones.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButtonNotificaciones.addActionListener(e -> PROVEEDORES.mostrarAlertaEntregasPendientes(this));
-        acciones.add(jButtonNotificaciones);
         jButtonMenu = new JButton(nombreUsuario());
+        jButtonMenu.setIcon(new IconoMenu("usuarios"));
+        jButtonMenu.setIconTextGap(7);
         jButtonMenu.setFont(new Font("Segoe UI", Font.BOLD, 12));
         jButtonMenu.setForeground(AZUL);
         jButtonMenu.setBackground(Color.WHITE);
         jButtonMenu.setFocusPainted(false);
+        jButtonMenu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButtonMenu.addActionListener(e -> menuSesion.show(jButtonMenu, 0, jButtonMenu.getHeight()));
-        acciones.add(jButtonMenu);
         JButton botonCerrar = new JButton("×");
         botonCerrar.setFont(new Font("Segoe UI", Font.BOLD, 20));
         botonCerrar.setForeground(Color.WHITE);
@@ -302,40 +314,59 @@ public class PRINCIPAL extends javax.swing.JFrame {
         botonCerrar.setFocusPainted(false);
         botonCerrar.setToolTipText("Cerrar");
         botonCerrar.addActionListener(e -> confirmarSalida());
+        acciones.add(jButtonNotificaciones);
+        acciones.add(jButtonMenu);
         acciones.add(botonCerrar);
         encabezado.add(acciones, BorderLayout.EAST);
         contenido.add(encabezado, BorderLayout.NORTH);
 
-        JPanel cuerpo = new JPanel();
-        cuerpo.setOpaque(true);
-        cuerpo.setBackground(Color.WHITE);
-        cuerpo.setLayout(new BoxLayout(cuerpo, BoxLayout.Y_AXIS));
-        cuerpo.add(crearTarjetasIndicadores());
-        cuerpo.add(Box.createVerticalStrut(12));
-        JPanel centro = new JPanel(new GridLayout(1, 2, 12, 0));
-        centro.setOpaque(false);
-        centro.setPreferredSize(new Dimension(0, 281));
-        centro.setMaximumSize(new Dimension(Integer.MAX_VALUE, 281));
-        centro.add(crearPanelTabla("Mis pendientes", cargarPendientes()));
-        centro.add(crearPanelTabla("Actividad reciente", cargarActividad()));
-        cuerpo.add(centro);
-        cuerpo.add(Box.createVerticalStrut(12));
-        JPanel inferior = new JPanel(new GridLayout(1, 2, 12, 0));
-        inferior.setOpaque(false);
-        inferior.add(crearPanelTabla("Stock bajo", cargarStockBajo()));
-        inferior.add(crearPanelAccesos());
-        cuerpo.add(inferior);
-        JScrollPane scroll = new JScrollPane(cuerpo);
-        scroll.setBorder(null);
-        scroll.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
+        cuerpoTablero = new JPanel();
+        cuerpoTablero.setOpaque(false);
+        cuerpoTablero.setBackground(Color.WHITE);
+        cuerpoTablero.setLayout(new BoxLayout(cuerpoTablero, BoxLayout.Y_AXIS));
+        reconstruirTablero();
+        scrollTablero = new JScrollPane(cuerpoTablero);
+        scrollTablero.setBorder(null);
+        scrollTablero.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollTablero.setOpaque(false);
+        scrollTablero.getViewport().setOpaque(false);
         panelVistas = new JPanel(new CardLayout());
         panelVistas.setOpaque(false);
-        panelVistas.add(scroll, "INICIO");
+        panelVistas.add(scrollTablero, "INICIO");
         panelVistas.add(crearPaginaConstruccion(), "CONSTRUCCION");
         contenido.add(panelVistas, BorderLayout.CENTER);
         return contenido;
+    }
+
+    private void reconstruirTablero() {
+        cuerpoTablero.removeAll();
+        cuerpoTablero.add(crearTarjetasIndicadores());
+        cuerpoTablero.add(Box.createVerticalStrut(10));
+        JPanel centro = new JPanel(new GridLayout(1, 2, 12, 0));
+        centro.setOpaque(false);
+        centro.setPreferredSize(new Dimension(0, 194));
+        centro.setMaximumSize(new Dimension(Integer.MAX_VALUE, 194));
+        centro.add(crearPanelTabla("Mis pendientes", cargarPendientes()));
+        centro.add(crearPanelActividadReciente());
+        cuerpoTablero.add(centro);
+        cuerpoTablero.add(Box.createVerticalStrut(10));
+        JPanel operaciones = new JPanel(new GridLayout(1, 2, 12, 0));
+        operaciones.setOpaque(false);
+        operaciones.setPreferredSize(new Dimension(0, 190));
+        operaciones.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
+        operaciones.add(crearPanelTabla("Stock bajo", cargarStockBajo()));
+        operaciones.add(crearPanelAccesos());
+        cuerpoTablero.add(operaciones);
+        cuerpoTablero.add(Box.createVerticalStrut(10));
+        JPanel resumen = new JPanel(new GridLayout(1, 2, 12, 0));
+        resumen.setOpaque(false);
+        resumen.setPreferredSize(new Dimension(0, 138));
+        resumen.setMaximumSize(new Dimension(Integer.MAX_VALUE, 138));
+        resumen.add(crearPanelAlertas());
+        resumen.add(crearPanelResumenGraficos());
+        cuerpoTablero.add(resumen);
+        cuerpoTablero.revalidate();
+        cuerpoTablero.repaint();
     }
 
     private JPanel crearPaginaConstruccion() {
@@ -349,58 +380,69 @@ public class PRINCIPAL extends javax.swing.JFrame {
     }
 
     private JPanel crearTarjetasIndicadores() {
-        JPanel tarjetas = new JPanel(new GridLayout(1, 5, 10, 0));
+        JPanel tarjetas = new JPanel(new GridLayout(1, 4, 10, 0));
         tarjetas.setOpaque(false);
         int ordenes = PROVEEDORES.contarOrdenesRegistradas();
         int pendientes = PROVEEDORES.contarEntregasPorRevisar();
-        int proveedores = PROVEEDORES.contarProveedoresActivos();
+        int alertas = PROVEEDORES.contarAlertasEntregasPendientes();
         int stockBajo = contarStockBajo();
-        int usuarios = contarFilas(AppConfig.usuariosFile());
         tarjetas.add(crearTarjeta(String.valueOf(ordenes), "Órdenes de compra", "Total registradas",
                 new Color(224, 234, 255), "orden", new Color(61, 96, 190)));
-        tarjetas.add(crearTarjeta(String.valueOf(pendientes), "Pendientes", "Requieren atención",
-                new Color(255, 244, 190), "pendiente", new Color(218, 155, 0)));
-        tarjetas.add(crearTarjeta(String.valueOf(PROVEEDORES.contarAlertasEntregasPendientes()), "Alertas", "Entregas o pagos",
+        tarjetas.add(crearTarjeta(String.valueOf(pendientes), "Entregas por revisar", "Requieren seguimiento",
+                new Color(255, 237, 239), "pendiente", new Color(210, 48, 65)));
+        tarjetas.add(crearTarjeta(String.valueOf(alertas), "Alertas de entrega y pago", "Requieren atención",
                 new Color(255, 220, 220), "alerta", new Color(225, 76, 85)));
-        tarjetas.add(crearTarjeta(String.valueOf(stockBajo), "Stock bajo", "Productos por revisar",
+        tarjetas.add(crearTarjeta(String.valueOf(stockBajo), "Productos con stock bajo", "Necesitan reposición",
                 new Color(222, 246, 220), "inventario", new Color(35, 161, 91)));
-        tarjetas.add(crearTarjeta(String.valueOf(proveedores), "Proveedores", usuarios + " usuarios activos",
-                new Color(247, 224, 248), "proveedor", new Color(157, 24, 191)));
-        Dimension tamanoTarjetas = tarjetas.getPreferredSize();
-        tarjetas.setPreferredSize(new Dimension(tamanoTarjetas.width + 19, tamanoTarjetas.height));
-        tarjetas.setMaximumSize(new Dimension(Integer.MAX_VALUE, tamanoTarjetas.height));
+        tarjetas.setPreferredSize(new Dimension(0, 86));
+        tarjetas.setMaximumSize(new Dimension(Integer.MAX_VALUE, 86));
         return tarjetas;
     }
 
     private JPanel crearTarjeta(String valor, String titulo, String detalle, Color fondo,
             String tipoIcono, Color colorIcono) {
-        JPanel tarjeta = new JPanel();
-        tarjeta.setLayout(new BoxLayout(tarjeta, BoxLayout.Y_AXIS));
+        JPanel tarjeta = new JPanel(new BorderLayout(10, 0));
         tarjeta.setBackground(fondo);
         tarjeta.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(210, 220, 235)),
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)));
-        JPanel cabecera = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 12, 0));
-        cabecera.setOpaque(false);
+                BorderFactory.createEmptyBorder(9, 10, 9, 8)));
+        tarjeta.setToolTipText(titulo + ": " + valor + " · " + detalle);
+        tarjeta.setPreferredSize(new Dimension(180, 86));
+
+        JPanel iconoContenedor = new JPanel(new GridBagLayout());
+        iconoContenedor.setPreferredSize(new Dimension(44, 44));
+        iconoContenedor.setBackground(new Color(colorIcono.getRed(), colorIcono.getGreen(), colorIcono.getBlue(), 28));
+        iconoContenedor.setBorder(BorderFactory.createLineBorder(new Color(colorIcono.getRed(), colorIcono.getGreen(), colorIcono.getBlue(), 40)));
         JLabel icono = new JLabel(new IconoMenu(tipoIcono));
         icono.setForeground(colorIcono);
-        JLabel numero = new JLabel(valor, SwingConstants.CENTER);
-        numero.setFont(new Font("Segoe UI", Font.BOLD, 25));
+        iconoContenedor.add(icono);
+        tarjeta.add(iconoContenedor, BorderLayout.WEST);
+
+        JPanel contenido = new JPanel();
+        contenido.setOpaque(false);
+        contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
+        JLabel numero = new JLabel(valor);
+        numero.setFont(new Font("Segoe UI", Font.BOLD, 23));
         numero.setForeground(AZUL);
-        cabecera.add(icono);
-        cabecera.add(numero);
-        JLabel nombre = new JLabel(titulo, SwingConstants.CENTER);
-        nombre.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        JLabel nombre = new JLabel(titulo);
+        nombre.setFont(new Font("Segoe UI", Font.BOLD, 11));
         nombre.setForeground(TEXTO);
-        JLabel descripcion = new JLabel(detalle, SwingConstants.CENTER);
+        JLabel descripcion = new JLabel("<html><span style='white-space:nowrap'>" + escaparHtml(detalle) + "</span></html>");
         descripcion.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         descripcion.setForeground(new Color(90, 105, 125));
-        cabecera.setAlignmentX(Component.CENTER_ALIGNMENT);
-        nombre.setAlignmentX(Component.CENTER_ALIGNMENT);
-        descripcion.setAlignmentX(Component.CENTER_ALIGNMENT);
-        tarjeta.add(cabecera);
-        tarjeta.add(nombre);
-        tarjeta.add(descripcion);
+        contenido.add(numero);
+        contenido.add(nombre);
+        contenido.add(descripcion);
+        tarjeta.add(contenido, BorderLayout.CENTER);
+
+        JLabel flecha = new JLabel("›");
+        flecha.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        flecha.setForeground(new Color(72, 92, 125));
+        tarjeta.add(flecha, BorderLayout.EAST);
         return tarjeta;
+    }
+
+    private String escaparHtml(String texto) {
+        return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     private JPanel crearPanelTabla(String titulo, Object[][] datos) {
@@ -408,22 +450,97 @@ public class PRINCIPAL extends javax.swing.JFrame {
         panel.setBackground(new Color(255, 255, 255, 235));
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(215, 224, 238)),
                 BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+        JPanel barraTitulo = new JPanel(new BorderLayout());
+        barraTitulo.setOpaque(false);
         JLabel encabezado = new JLabel(titulo);
+        encabezado.setIcon(new IconoMenu("Stock bajo".equals(titulo) ? "inventario" : "orden"));
+        encabezado.setIconTextGap(7);
         encabezado.setFont(new Font("Segoe UI", Font.BOLD, 14));
         encabezado.setForeground(AZUL);
-        panel.add(encabezado, BorderLayout.NORTH);
+        barraTitulo.add(encabezado, BorderLayout.WEST);
+        JButton verModulo = new JButton("Stock bajo".equals(titulo) ? "Ver inventario" : "Ver órdenes");
+        prepararEnlacePanel(verModulo);
+        verModulo.addActionListener(e -> {
+            if ("Stock bajo".equals(titulo)) {
+                abrirInventarios();
+            } else {
+                abrirOrdenes();
+            }
+        });
+        barraTitulo.add(verModulo, BorderLayout.EAST);
+        panel.add(barraTitulo, BorderLayout.NORTH);
         String[] columnas = "Stock bajo".equals(titulo)
                 ? new String[]{"Código", "Producto", "Existencia", "Mínimo"}
-                : new String[]{"Orden", "Actividad", "Proveedor", "Fecha"};
+                : new String[]{"Folio", "Estado", "Proveedor", "Fecha"};
         JTable tabla = new JTable(new DefaultTableModel(datos, columnas) {
             @Override public boolean isCellEditable(int fila, int columna) { return false; }
         });
-        tabla.setRowHeight(26);
-        tabla.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 11));
+        tabla.setRowHeight("Stock bajo".equals(titulo) ? 24 : 25);
+        tabla.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         tabla.setForeground(TEXTO);
+        tabla.setGridColor(new Color(229, 235, 243));
+        tabla.setShowVerticalLines(false);
+        tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 10));
+        tabla.getTableHeader().setForeground(AZUL);
+        tabla.getTableHeader().setBackground(new Color(239, 244, 250));
+        tabla.getTableHeader().setReorderingAllowed(false);
         panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
         return panel;
+    }
+
+    private JPanel crearPanelActividadReciente() {
+        JPanel panel = new JPanel(new BorderLayout(0, 5));
+        panel.setBackground(new Color(255, 255, 255, 235));
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(215, 224, 238)),
+                BorderFactory.createEmptyBorder(7, 8, 7, 8)));
+
+        JPanel encabezado = new JPanel(new BorderLayout(6, 0));
+        encabezado.setOpaque(false);
+        JLabel titulo = new JLabel("Actividad reciente");
+        titulo.setIcon(new IconoMenu("tablero"));
+        titulo.setIconTextGap(6);
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        titulo.setForeground(AZUL);
+        encabezado.add(titulo, BorderLayout.WEST);
+
+        JButton verTodas = new JButton("Ver órdenes");
+        prepararEnlacePanel(verTodas);
+        verTodas.addActionListener(e -> abrirOrdenes());
+        encabezado.add(verTodas, BorderLayout.EAST);
+        panel.add(encabezado, BorderLayout.NORTH);
+
+        String[] columnas = {"Fecha", "Módulo", "Actividad", "Folio / Referencia", "Usuario"};
+        Object[][] actividades = cargarActividad();
+        DefaultTableModel modelo = new DefaultTableModel(actividades, columnas) {
+            @Override public boolean isCellEditable(int fila, int columna) { return false; }
+        };
+        JTable tabla = new JTable(modelo);
+        tabla.setRowHeight(24);
+        tabla.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        tabla.setForeground(TEXTO);
+        tabla.setGridColor(new Color(232, 229, 221));
+        tabla.setShowVerticalLines(false);
+        tabla.setIntercellSpacing(new Dimension(1, 0));
+        tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 10));
+        tabla.getTableHeader().setForeground(AZUL);
+        tabla.getTableHeader().setBackground(new Color(241, 239, 247));
+        tabla.getTableHeader().setReorderingAllowed(false);
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(86);
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(95);
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(112);
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(105);
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(92);
+        panel.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void prepararEnlacePanel(JButton boton) {
+        boton.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        boton.setForeground(new Color(30, 87, 170));
+        boton.setBorderPainted(false);
+        boton.setContentAreaFilled(false);
+        boton.setFocusPainted(false);
+        boton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
     }
 
     private JPanel crearPanelAccesos() {
@@ -431,29 +548,242 @@ public class PRINCIPAL extends javax.swing.JFrame {
         panel.setBackground(new Color(255, 255, 255, 235));
         panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(215, 224, 238)),
                 BorderFactory.createEmptyBorder(8, 8, 8, 8)));
-        JLabel titulo = new JLabel("Accesos rápidos");
+        JLabel titulo = new JLabel("Accesos rápidos", new IconoMenu("tablero"), SwingConstants.LEFT);
+        titulo.setIconTextGap(7);
         titulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
         titulo.setForeground(AZUL);
         panel.add(titulo, BorderLayout.NORTH);
         JPanel botones = new JPanel(new GridLayout(2, 2, 8, 8));
         botones.setOpaque(false);
-        botones.add(crearAcceso("ÓRDENES DE COMPRA", e -> abrirOrdenes()));
-        botones.add(crearAcceso("PROVEEDORES", e -> abrirProveedores()));
-        botones.add(crearAcceso("INVENTARIOS", e -> abrirInventarios()));
-        botones.add(crearAcceso("USUARIOS", e -> abrirUsuarios()));
+        botones.add(crearAcceso("Órdenes de compra", "orden", new Color(224, 239, 255),
+                new Color(30, 93, 188), e -> abrirOrdenes()));
+        botones.add(crearAcceso("Proveedores", "proveedor", new Color(235, 229, 255),
+                new Color(90, 54, 180), e -> abrirProveedores()));
+        botones.add(crearAcceso("Inventarios", "inventario", new Color(222, 246, 239),
+                new Color(18, 126, 101), e -> abrirInventarios()));
+        botones.add(crearAcceso("Usuarios", "usuarios", new Color(255, 239, 216),
+                new Color(177, 103, 12), e -> abrirUsuarios()));
         panel.add(botones, BorderLayout.CENTER);
         return panel;
     }
 
-    private JButton crearAcceso(String texto, ActionListener accion) {
-        JButton boton = new JButton("<html><b>" + texto + "</b><br><font size='2'>Abrir módulo</font></html>");
-        boton.setHorizontalAlignment(SwingConstants.LEFT);
-        boton.setForeground(AZUL);
-        boton.setBackground(new Color(235, 242, 255));
+    private JButton crearAcceso(String texto, String tipoIcono, Color fondo,
+            Color color, ActionListener accion) {
+        JButton boton = new JButton(texto, new IconoMenu(tipoIcono));
+        boton.setHorizontalAlignment(SwingConstants.CENTER);
+        boton.setHorizontalTextPosition(SwingConstants.CENTER);
+        boton.setVerticalTextPosition(SwingConstants.BOTTOM);
+        boton.setIconTextGap(5);
+        boton.setForeground(color);
+        boton.setBackground(fondo);
+        boton.setFont(new Font("Segoe UI", Font.BOLD, 10));
         boton.setFocusPainted(false);
-        boton.setBorder(BorderFactory.createLineBorder(new Color(190, 207, 235)));
+        boton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(210, 220, 235)),
+                BorderFactory.createEmptyBorder(5, 4, 5, 4)));
+        boton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         boton.addActionListener(accion);
         return boton;
+    }
+
+    private JPanel crearPanelAlertas() {
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(new Color(255, 255, 255, 235));
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(215, 224, 238)),
+                BorderFactory.createEmptyBorder(8, 8, 7, 8)));
+
+        int entregasPorRevisar = PROVEEDORES.contarEntregasPorRevisar();
+        int alertasComerciales = PROVEEDORES.contarAlertasEntregasPendientes();
+        int productosBajos = contarStockBajo();
+        boolean hayAlertas = entregasPorRevisar > 0 || alertasComerciales > 0 || productosBajos > 0;
+        JPanel encabezado = new JPanel(new BorderLayout());
+        encabezado.setOpaque(false);
+        JLabel titulo = new JLabel("Alertas del sistema", new IconoMenu("alerta"), SwingConstants.LEFT);
+        titulo.setIconTextGap(7);
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        titulo.setForeground(AZUL);
+        encabezado.add(titulo, BorderLayout.WEST);
+        JButton verAlertas = new JButton(alertasComerciales > 0 ? "Ver detalles"
+                : productosBajos > 0 ? "Ver inventario" : "Ver órdenes");
+        prepararEnlacePanel(verAlertas);
+        verAlertas.setVisible(hayAlertas);
+        verAlertas.addActionListener(e -> {
+            if (alertasComerciales > 0) {
+                PROVEEDORES.mostrarAlertaEntregasPendientes(this);
+            } else if (productosBajos > 0) {
+                abrirInventarios();
+            } else {
+                abrirOrdenes();
+            }
+        });
+        encabezado.add(verAlertas, BorderLayout.EAST);
+        panel.add(encabezado, BorderLayout.NORTH);
+
+        JPanel filas = new JPanel();
+        filas.setOpaque(false);
+        filas.setLayout(new BoxLayout(filas, BoxLayout.Y_AXIS));
+        if (!hayAlertas) {
+            filas.add(crearFilaAlerta("Todo está al día", "No hay pendientes que requieran atención.",
+                    "OK", new Color(35, 161, 91)));
+        } else {
+            if (entregasPorRevisar > 0) {
+                filas.add(crearFilaAlerta("Entregas por revisar", "Órdenes pendientes de confirmar.",
+                        String.valueOf(entregasPorRevisar), new Color(208, 68, 76)));
+            }
+            if (alertasComerciales > 0) {
+                filas.add(crearFilaAlerta("Vencimientos y pagos", "Alertas de entrega o pago registradas.",
+                        String.valueOf(alertasComerciales), new Color(218, 155, 0)));
+            }
+            if (productosBajos > 0) {
+                filas.add(crearFilaAlerta("Stock bajo", "Productos que alcanzaron su mínimo.",
+                        String.valueOf(productosBajos), new Color(30, 115, 190)));
+            }
+        }
+        panel.add(filas, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel crearFilaAlerta(String titulo, String detalle, String cantidad, Color color) {
+        JPanel fila = new JPanel(new BorderLayout(8, 0));
+        fila.setOpaque(false);
+        fila.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(232, 237, 244)));
+        JPanel texto = new JPanel();
+        texto.setOpaque(false);
+        texto.setLayout(new BoxLayout(texto, BoxLayout.Y_AXIS));
+        JLabel nombre = new JLabel(titulo);
+        nombre.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        nombre.setForeground(TEXTO);
+        JLabel descripcion = new JLabel(detalle);
+        descripcion.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+        descripcion.setForeground(new Color(95, 108, 128));
+        texto.add(nombre);
+        texto.add(descripcion);
+        fila.add(texto, BorderLayout.CENTER);
+
+        JLabel valor = new JLabel(cantidad, SwingConstants.CENTER);
+        valor.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        valor.setForeground(color);
+        valor.setOpaque(true);
+        valor.setBackground(new Color(color.getRed(), color.getGreen(), color.getBlue(), 24));
+        valor.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+        fila.add(valor, BorderLayout.EAST);
+        fila.setPreferredSize(new Dimension(0, 29));
+        fila.setMaximumSize(new Dimension(Integer.MAX_VALUE, 29));
+        return fila;
+    }
+
+    private JPanel crearPanelResumenGraficos() {
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.setBackground(new Color(255, 255, 255, 235));
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(215, 224, 238)),
+                BorderFactory.createEmptyBorder(8, 8, 7, 8)));
+        JLabel titulo = new JLabel("Gráficos y resumen", new IconoMenu("reportes"), SwingConstants.LEFT);
+        titulo.setIconTextGap(7);
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        titulo.setForeground(AZUL);
+        panel.add(titulo, BorderLayout.NORTH);
+
+        int ordenes = PROVEEDORES.contarOrdenesRegistradas();
+        int pendientes = Math.min(ordenes, PROVEEDORES.contarEntregasPorRevisar());
+        int productos = contarInventarioActivo();
+        int stockBajo = Math.min(productos, contarStockBajo());
+        JPanel graficas = new JPanel(new GridLayout(1, 2, 8, 0));
+        graficas.setOpaque(false);
+        graficas.add(crearResumenDona("Órdenes de compra", pendientes, ordenes - pendientes,
+                "Por revisar", "Revisadas", new Color(255, 190, 55), new Color(51, 142, 229)));
+        graficas.add(crearResumenDona("Estado del inventario", stockBajo, productos - stockBajo,
+                "Stock bajo", "En rango", new Color(239, 79, 79), new Color(44, 185, 132)));
+        panel.add(graficas, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel crearResumenDona(String titulo, int primero, int segundo, String leyendaPrimera,
+            String leyendaSegunda, Color colorPrimero, Color colorSegundo) {
+        JPanel resumen = new JPanel(new BorderLayout(6, 2));
+        resumen.setOpaque(false);
+        JLabel encabezado = new JLabel(titulo);
+        encabezado.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        encabezado.setForeground(TEXTO);
+        resumen.add(encabezado, BorderLayout.NORTH);
+
+        JPanel contenido = new JPanel(new BorderLayout(7, 0));
+        contenido.setOpaque(false);
+        GraficaDona dona = new GraficaDona(primero, segundo, colorPrimero, colorSegundo);
+        dona.setToolTipText(titulo + ": " + (primero + segundo) + " registros");
+        contenido.add(dona, BorderLayout.WEST);
+        JPanel leyendas = new JPanel();
+        leyendas.setOpaque(false);
+        leyendas.setLayout(new BoxLayout(leyendas, BoxLayout.Y_AXIS));
+        leyendas.add(crearLeyenda(colorPrimero, leyendaPrimera, primero));
+        leyendas.add(Box.createVerticalStrut(5));
+        leyendas.add(crearLeyenda(colorSegundo, leyendaSegunda, segundo));
+        contenido.add(leyendas, BorderLayout.CENTER);
+        resumen.add(contenido, BorderLayout.CENTER);
+        return resumen;
+    }
+
+    private JPanel crearLeyenda(Color color, String texto, int cantidad) {
+        JPanel leyenda = new JPanel(new BorderLayout(5, 0));
+        leyenda.setOpaque(false);
+        JPanel muestra = new JPanel();
+        muestra.setBackground(color);
+        muestra.setPreferredSize(new Dimension(9, 9));
+        muestra.setMaximumSize(new Dimension(9, 9));
+        leyenda.add(muestra, BorderLayout.WEST);
+        JLabel etiqueta = new JLabel(texto + "  " + cantidad);
+        etiqueta.setFont(new Font("Segoe UI", Font.PLAIN, 9));
+        etiqueta.setForeground(TEXTO);
+        leyenda.add(etiqueta, BorderLayout.CENTER);
+        return leyenda;
+    }
+
+    private static final class GraficaDona extends JPanel {
+        private final int primero;
+        private final int segundo;
+        private final Color colorPrimero;
+        private final Color colorSegundo;
+
+        GraficaDona(int primero, int segundo, Color colorPrimero, Color colorSegundo) {
+            this.primero = Math.max(0, primero);
+            this.segundo = Math.max(0, segundo);
+            this.colorPrimero = colorPrimero;
+            this.colorSegundo = colorSegundo;
+            setOpaque(false);
+            setPreferredSize(new Dimension(62, 62));
+            setMinimumSize(new Dimension(50, 50));
+        }
+
+        @Override
+        protected void paintComponent(java.awt.Graphics g) {
+            super.paintComponent(g);
+            java.awt.Graphics2D grafico = (java.awt.Graphics2D) g.create();
+            grafico.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+            int diametro = Math.max(1, Math.min(getWidth(), getHeight()) - 12);
+            int x = (getWidth() - diametro) / 2;
+            int y = (getHeight() - diametro) / 2;
+            int total = primero + segundo;
+            grafico.setStroke(new java.awt.BasicStroke(8f, java.awt.BasicStroke.CAP_BUTT,
+                    java.awt.BasicStroke.JOIN_ROUND));
+            if (total == 0) {
+                grafico.setColor(new Color(225, 232, 240));
+                grafico.drawArc(x, y, diametro, diametro, 0, 360);
+            } else {
+                int recorridoPrimero = Math.round(360f * primero / total);
+                grafico.setColor(colorPrimero);
+                grafico.drawArc(x, y, diametro, diametro, 90, -recorridoPrimero);
+                grafico.setColor(colorSegundo);
+                grafico.drawArc(x, y, diametro, diametro, 90 - recorridoPrimero,
+                        -(360 - recorridoPrimero));
+            }
+            String etiqueta = String.valueOf(total);
+            grafico.setColor(AZUL);
+            grafico.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            java.awt.FontMetrics metricas = grafico.getFontMetrics();
+            grafico.drawString(etiqueta, (getWidth() - metricas.stringWidth(etiqueta)) / 2,
+                    (getHeight() + metricas.getAscent() - metricas.getDescent()) / 2);
+            grafico.dispose();
+        }
     }
 
     private Object[][] cargarPendientes() {
@@ -468,9 +798,20 @@ public class PRINCIPAL extends javax.swing.JFrame {
 
     private Object[][] cargarActividad() {
         List<Object[]> filas = new ArrayList<>();
+        leerFilas(actividadRepository.obtenerArchivoActividades(), (row, formato) -> {
+            if (filas.size() < 5 && !leer(row, 0).isBlank()) {
+                filas.add(new Object[]{leer(row, 0), leer(row, 1), leer(row, 2),
+                    leer(row, 3), leer(row, 4)});
+            }
+        });
         leerFilas(AppConfig.registroCFile(), (row, formato) -> {
             if (filas.size() < 5 && !leer(row, 0).isBlank()) {
-                filas.add(new Object[]{leer(row, 0), "Orden registrada", proveedorRepository.obtenerNombrePorId(leer(row, 4)), leer(row, 1)});
+                String usuario = leer(row, 15);
+                if (usuario.isBlank()) {
+                    usuario = nombreUsuario();
+                }
+                filas.add(new Object[]{leer(row, 1), "Órdenes de compra", "Orden registrada",
+                    leer(row, 0), usuario});
             }
         });
         return filas.toArray(new Object[0][]);
@@ -501,9 +842,14 @@ public class PRINCIPAL extends javax.swing.JFrame {
         return total[0];
     }
 
-    private int contarFilas(File archivo) {
-        final int[] total = {0};
-        leerFilas(archivo, (row, formato) -> { if (!leer(row, 0).isBlank()) total[0]++; });
+    private int contarInventarioActivo() {
+        int[] total = {0};
+        leerFilas(AppConfig.inventariosFile(), (row, formato) -> {
+            if (!leer(row, 0).isBlank()
+                    && "1".equals(InventarioService.normalizarEstado(leer(row, 5)))) {
+                total[0]++;
+            }
+        });
         return total[0];
     }
 
@@ -548,6 +894,16 @@ public class PRINCIPAL extends javax.swing.JFrame {
         actualizarFechaHora();
         reloj = new Timer(1000, e -> actualizarFechaHora());
         reloj.start();
+        actualizadorTablero = new Timer(5000, e -> actualizarTableroSilencioso());
+        actualizadorTablero.setRepeats(true);
+        actualizadorTablero.start();
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent evento) {
+                reloj.stop();
+                actualizadorTablero.stop();
+            }
+        });
     }
 
     private void actualizarFechaHora() {
@@ -566,11 +922,63 @@ public class PRINCIPAL extends javax.swing.JFrame {
     }
 
     private void refrescarTablero() {
+        actualizarTableroSilencioso();
         mostrarVista("INICIO", null);
+    }
+
+    private void actualizarTableroSilencioso() {
+        if (cuerpoTablero == null || !isDisplayable()) return;
+        reconstruirTablero();
     }
 
     private void mostrarPaginaConstruccion() {
         mostrarVista("CONSTRUCCION", null);
+    }
+
+    private void actualizarEncabezado(String vista) {
+        if (etiquetaEncabezado == null) {
+            return;
+        }
+        String titulo;
+        String descripcion;
+        switch (vista) {
+            case "MESATRABAJO":
+                titulo = "Mesa de trabajo";
+                descripcion = "Tareas pendientes, actividades prioritarias y seguimiento operativo.";
+                break;
+            case "ORDENES":
+                titulo = "Órdenes de compra";
+                descripcion = "Creación, consulta y seguimiento de órdenes de compra.";
+                break;
+            case "PROVEEDORES":
+                titulo = "Proveedores";
+                descripcion = "Administración del directorio, condiciones comerciales e historial.";
+                break;
+            case "INVENTARIOS":
+                titulo = "Inventarios";
+                descripcion = "Existencias, entradas, salidas y movimientos de productos.";
+                break;
+            case "USUARIOS":
+                titulo = "Usuarios";
+                descripcion = "Gestión de usuarios, permisos y accesos.";
+                break;
+            case "REPORTES":
+            case "CONSTRUCCION":
+                titulo = "Reportes";
+                descripcion = "Información operativa, estadísticas y resultados del sistema.";
+                break;
+            case "TERMINOS":
+                titulo = "Términos y condiciones";
+                descripcion = "Consulta de los términos y condiciones de uso del sistema.";
+                break;
+            case "INICIO":
+            default:
+                titulo = "Inicio";
+                descripcion = "Resumen general de actividades, pendientes y alertas del sistema.";
+                break;
+        }
+        etiquetaEncabezado.setText("<html><b>" + titulo + "</b><br>"
+                + "<font size='3'>" + descripcion + "</font></html>");
     }
 
     private void abrirMesaTrabajo() {
@@ -637,6 +1045,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
     }
 
     private void mostrarVista(String nombre, javax.swing.JFrame ventana) {
+        actualizarEncabezado(nombre);
         ((CardLayout) panelVistas.getLayout()).show(panelVistas, nombre);
         if (ventana != null) {
             ventana.setVisible(false);
@@ -666,7 +1075,10 @@ public class PRINCIPAL extends javax.swing.JFrame {
     public static void actualizarAlarmasEnTiempoReal() {
         java.awt.EventQueue.invokeLater(() -> {
             for (java.awt.Window ventana : java.awt.Window.getWindows()) {
-                if (ventana instanceof PRINCIPAL principal && principal.isDisplayable()) principal.actualizarBotonNotificaciones();
+                if (ventana instanceof PRINCIPAL principal && principal.isDisplayable()) {
+                    principal.actualizarBotonNotificaciones();
+                    principal.actualizarTableroSilencioso();
+                }
             }
         });
     }

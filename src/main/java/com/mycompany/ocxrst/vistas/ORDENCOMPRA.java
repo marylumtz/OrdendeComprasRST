@@ -18,7 +18,16 @@ import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.kernel.geom.Rectangle;
+import com.itextpdf.signatures.BouncyCastleDigest;
+import com.itextpdf.signatures.DigestAlgorithms;
+import com.itextpdf.signatures.IExternalDigest;
+import com.itextpdf.signatures.IExternalSignature;
+import com.itextpdf.signatures.PdfSigner;
+import com.itextpdf.signatures.PrivateKeySignature;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
@@ -34,12 +43,20 @@ import com.itextpdf.layout.properties.AreaBreakType;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.Security;
+import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 /**
  *
  * @author Maria Luisa Martinez
@@ -65,7 +82,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private final java.util.Map<String, String> monedaLeyendaMap = new java.util.HashMap<>();
     private boolean ultimoProductoDesactivado;
     private static final int DESPLAZAMIENTO_X = -14;
-    private static final int DESPLAZAMIENTO_Y = -49;
+    private static final int DESPLAZAMIENTO_Y = -25;
     private static final int ALTO_EXTRA_PRODUCTOS = 70;
     /** Espacio adicional agregado a la sección 4 (Condiciones de compra) y
      *  desplazamiento aplicado a todas las secciones siguientes para que
@@ -85,6 +102,32 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private boolean seleccionandoProveedor = false;
     private boolean modoCrear = false;
     private String estadoOrdenCargada;
+    private javax.swing.JButton jButtonDesactivar;
+    private javax.swing.JPanel panelNavegacionOrdenes;
+    private javax.swing.JButton botonPrimeraOrden;
+    private javax.swing.JButton botonAnteriorOrden;
+    private javax.swing.JButton botonSiguienteOrden;
+    private javax.swing.JButton botonUltimaOrden;
+    private javax.swing.JButton jButtonFirmar;
+    private javax.swing.JScrollPane desplazamientoFormulario;
+    private javax.swing.JPanel panelBusquedaOrdenes;
+    private java.awt.Container contenedorVista;
+    private File ultimoPdfGenerado;
+
+    private static final class DatosFirma {
+        private final PrivateKey clavePrivada;
+        private final java.security.cert.Certificate[] cadena;
+        private final String rol;
+        private final String alias;
+
+        private DatosFirma(PrivateKey clavePrivada,
+                java.security.cert.Certificate[] cadena, String rol, String alias) {
+            this.clavePrivada = clavePrivada;
+            this.cadena = cadena;
+            this.rol = rol;
+            this.alias = alias;
+        }
+    }
 
     // =====================================================================
     // Construccion de la ventana y configuracion visual
@@ -94,6 +137,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     public ORDENCOMPRA() {
         EstiloAplicacion.aplicarTipografiaGlobal();
         initComponents();
+        contenedorVista = getContentPane();
 
         // Campo libre de observaciones/notas de la orden. Se crea aquí, antes de
         // aplicarDisenoReferencia(), porque ese método necesita posicionar estos
@@ -108,6 +152,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jScrollPaneObservaciones.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         jPanel1.add(jLabelObservaciones);
         jPanel1.add(jScrollPaneObservaciones);
+        jButtonDesactivar = new javax.swing.JButton("DESACTIVAR");
+        jPanel1.add(jButtonDesactivar);
+        crearNavegacionOrdenes();
 
         aplicarDisenoReferencia();
         configurarDesplazamiento();
@@ -123,6 +170,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         cargarCacheProveedores();
         actualizarTotales();
         generarNumeroOrden();
+        mostrarBusquedaOrdenes();
         setLocationRelativeTo(null); 
     
     jTextField1.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -346,7 +394,15 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jButtonEditar.addActionListener(e -> onBotonEditarGuardarClick());
     jPanel1.add(jButtonEditar);
     jPanel1.setComponentZOrder(jButtonEditar, 0);
+    prepararBotonCabecera(jButtonEditar, "EDITAR", new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
+    jButtonFirmar = new javax.swing.JButton("FIRMAR PDF");
+    jButtonFirmar.addActionListener(e -> firmarPdf());
+    jPanel1.add(jButtonFirmar);
+    jPanel1.setComponentZOrder(jButtonFirmar, 0);
+    prepararBotonCabecera(jButtonFirmar, "FIRMAR PDF", new java.awt.Color(0, 128, 96), java.awt.Color.WHITE);
     posicionarBotonesCabecera(jPanel1.getPreferredSize().width);
+    jButtonFirmar.setBounds(732, 38, 92, 30);
+    actualizarEstadoBotonFirma();
     actualizarBotonesEdicion(false, false);
 
     jPanel1.addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -360,9 +416,64 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private void posicionarBotonesCabecera(int anchoPanel) {
-        int editarX = anchoPanel - 62 - 155;
-        jButtonEditar.setBounds(editarX, 4, 155, 24);
-        jButton2.setBounds(editarX - 135, 4, 125, 24);
+        int y = 4;
+        jButton2.setBounds(300, y, 100, 30);
+        jButton3.setBounds(408, y, 100, 30);
+        jButtonEditar.setBounds(516, y, 100, 30);
+        jButtonDesactivar.setBounds(624, y, 100, 30);
+        jButton1.setBounds(732, y, 92, 30);
+        panelNavegacionOrdenes.setBounds(832, y, 108, 30);
+    }
+
+    private void crearNavegacionOrdenes() {
+        botonPrimeraOrden = botonNavegacion("|<", this::irPrimeraOrden);
+        botonAnteriorOrden = botonNavegacion("<", () -> navegarOrden(-1));
+        botonSiguienteOrden = botonNavegacion(">", () -> navegarOrden(1));
+        botonUltimaOrden = botonNavegacion(">|", this::irUltimaOrden);
+        panelNavegacionOrdenes = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 2, 0));
+        panelNavegacionOrdenes.setOpaque(true);
+        panelNavegacionOrdenes.setBackground(new java.awt.Color(255, 238, 218));
+        panelNavegacionOrdenes.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(245, 112, 32), 2));
+        panelNavegacionOrdenes.add(botonPrimeraOrden);
+        panelNavegacionOrdenes.add(botonAnteriorOrden);
+        panelNavegacionOrdenes.add(botonSiguienteOrden);
+        panelNavegacionOrdenes.add(botonUltimaOrden);
+        jPanel1.add(panelNavegacionOrdenes);
+    }
+
+    private javax.swing.JButton botonNavegacion(String texto, Runnable accion) {
+        javax.swing.JButton boton = new javax.swing.JButton(texto);
+        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        boton.setForeground(new java.awt.Color(28, 82, 132));
+        boton.setBackground(java.awt.Color.WHITE);
+        boton.setFocusPainted(false);
+        boton.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        boton.setContentAreaFilled(false);
+        boton.setOpaque(false);
+        boton.setRolloverEnabled(false);
+        boton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        boton.addActionListener(e -> accion.run());
+        return boton;
+    }
+
+    private void prepararBotonCabecera(javax.swing.JButton boton, String texto,
+            java.awt.Color fondo, java.awt.Color textoColor) {
+        boton.setText(texto);
+        boton.setBackground(fondo);
+        boton.setForeground(textoColor);
+        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        boton.setFocusPainted(false);
+        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(180, 195, 215)),
+                javax.swing.BorderFactory.createEmptyBorder(4, 8, 4, 8)));
+        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+    }
+
+    private void prepararValorProveedor(javax.swing.JLabel valor) {
+        valor.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        valor.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+        valor.setForeground(new java.awt.Color(38, 52, 88));
+        valor.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 4, 1, 2));
     }
 
     private javax.swing.JPanel crearPanelConFondo() {
@@ -409,7 +520,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jPanel1.setPreferredSize(new java.awt.Dimension(962, 735));
         setResizable(true);
 
-        jButton6.setVisible(false);
+        jButton6.setVisible(true);
+        jButton6.setText("ATRÁS");
+        prepararBotonCabecera(jButton6, "ATRÁS", new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
+        posicionar(jButton6, 22, 28, 100, 30);
         posicionar(jLabel5, 430, 64, 100, 22);
         posicionar(jLabel1, 280, 78, 400, 38);
         posicionar(jLabel9, 62, 140, 105, 22);
@@ -423,14 +537,19 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         posicionar(jLabel17, 552, 168, 78, 22);
         posicionar(jComboBox3, 638, 168, 206, 24);
 
-        posicionar(jLabel2, 70, 227, 90, 22);
-        posicionar(jLabel8, 174, 227, 330, 22);
-        posicionar(jLabel29, 70, 254, 90, 22);
-        posicionar(jLabel30, 174, 254, 330, 22);
-        posicionar(jLabel14, 70, 281, 90, 22);
-        posicionar(jLabel15, 174, 281, 330, 38);
-        posicionar(jLabel31, 70, 309, 90, 22);
-        posicionar(jLabel32, 174, 309, 330, 22);
+        posicionar(jLabel2, 70, 222, 90, 22);
+        posicionar(jLabel8, 174, 222, 330, 22);
+        posicionar(jLabel29, 70, 249, 90, 22);
+        posicionar(jLabel30, 174, 249, 330, 22);
+        posicionar(jLabel14, 70, 276, 90, 22);
+        posicionar(jLabel15, 174, 274, 330, 30);
+        posicionar(jLabel31, 70, 304, 90, 22);
+        posicionar(jLabel32, 174, 305, 330, 20);
+        prepararValorProveedor(jLabel8);
+        prepararValorProveedor(jLabel30);
+        prepararValorProveedor(jLabel15);
+        prepararValorProveedor(jLabel32);
+        jLabel15.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 10));
         posicionar(jLabel7, 560, 227, 90, 22);
         posicionar(jComboBox1, 660, 227, 228, 24);
         posicionar(jLabel4, 560, 254, 90, 22);
@@ -471,8 +590,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         posicionar(jLabel24, 765, 646 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 135, 22);
         posicionar(jLabel22, 650, 672 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 105, 22);
         posicionar(jLabel25, 765, 672 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 135, 22);
-        posicionar(jButton3, 48, 710 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 427, 40);
-        posicionar(jButton1, 487, 710 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4 + ALTO_OBSERVACIONES, 427, 40);
+        jButton3.setText("NUEVO");
+        jButton1.setText("IMPRIMIR");
+        jButtonDesactivar.setEnabled(false);
+        prepararBotonCabecera(jButton2, "BUSCAR", new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
+        prepararBotonCabecera(jButton3, "NUEVO", new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
+        prepararBotonCabecera(jButtonDesactivar, "DESACTIVAR", new java.awt.Color(170, 178, 188), java.awt.Color.WHITE);
+        prepararBotonCabecera(jButton1, "IMPRIMIR", java.awt.Color.WHITE, new java.awt.Color(28, 82, 132));
         ajustarTamanoPanelAlContenido();
         pack();
         jPanel1.revalidate();
@@ -494,21 +618,320 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private void configurarDesplazamiento() {
-        javax.swing.JScrollPane desplazamiento = new javax.swing.JScrollPane(jPanel1);
-        desplazamiento.setBorder(javax.swing.BorderFactory.createEmptyBorder());
-        desplazamiento.setHorizontalScrollBarPolicy(
+        desplazamientoFormulario = new javax.swing.JScrollPane(jPanel1);
+        desplazamientoFormulario.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        desplazamientoFormulario.setHorizontalScrollBarPolicy(
                 javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        desplazamiento.setVerticalScrollBarPolicy(
+        desplazamientoFormulario.setVerticalScrollBarPolicy(
                 javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        desplazamiento.getVerticalScrollBar().setUnitIncrement(18);
-        desplazamiento.getViewport().setBackground(java.awt.Color.WHITE);
+        desplazamientoFormulario.getVerticalScrollBar().setUnitIncrement(18);
+        desplazamientoFormulario.getViewport().setBackground(java.awt.Color.WHITE);
 
-        getContentPane().removeAll();
-        getContentPane().setLayout(new java.awt.BorderLayout());
-        getContentPane().add(desplazamiento, java.awt.BorderLayout.CENTER);
+        contenedorVista.removeAll();
+        contenedorVista.setLayout(new java.awt.BorderLayout());
+        contenedorVista.add(desplazamientoFormulario, java.awt.BorderLayout.CENTER);
         setSize(962, 735);
         setMinimumSize(new java.awt.Dimension(520, 420));
         setLocationRelativeTo(null);
+    }
+
+    private void mostrarBusquedaOrdenes() {
+        if (panelBusquedaOrdenes == null) {
+            panelBusquedaOrdenes = crearPanelBusquedaOrdenes();
+        }
+        mostrarVistaInterna(panelBusquedaOrdenes);
+        setTitle("ÓRDENES DE COMPRA");
+        setSize(1000, 680);
+        setMinimumSize(new java.awt.Dimension(850, 540));
+        cargarOrdenesEnBusqueda();
+    }
+
+    private void mostrarVistaInterna(java.awt.Component vista) {
+        java.awt.Container padreActual = vista.getParent();
+        if (padreActual != null && padreActual != contenedorVista) {
+            padreActual.remove(vista);
+            padreActual.revalidate();
+            padreActual.repaint();
+        }
+        contenedorVista.removeAll();
+        contenedorVista.setLayout(new java.awt.BorderLayout());
+        contenedorVista.add(vista, java.awt.BorderLayout.CENTER);
+        contenedorVista.revalidate();
+        contenedorVista.repaint();
+        java.awt.Container padre = contenedorVista.getParent();
+        if (padre != null) {
+            padre.revalidate();
+            padre.repaint();
+        }
+    }
+
+    private javax.swing.JPanel crearPanelBusquedaOrdenes() {
+        final java.awt.Color azul = new java.awt.Color(28, 82, 132);
+        javax.swing.JPanel fondo = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
+        fondo.setBackground(new java.awt.Color(240, 246, 253));
+        fondo.setBorder(javax.swing.BorderFactory.createEmptyBorder(24, 24, 20, 24));
+
+        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        encabezado.setOpaque(false);
+
+        javax.swing.JButton nueva = botonBusqueda("+  Nueva orden de compra", true);
+        nueva.addActionListener(e -> abrirNuevaOrden());
+        javax.swing.JButton actualizar = botonBusqueda("Actualizar", false);
+        actualizar.addActionListener(e -> cargarOrdenesEnBusqueda());
+        javax.swing.JPanel acciones = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 5));
+        acciones.setOpaque(false);
+        acciones.add(nueva);
+        acciones.add(actualizar);
+        encabezado.add(acciones, java.awt.BorderLayout.EAST);
+        fondo.add(encabezado, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel tarjeta = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
+        tarjeta.setBackground(java.awt.Color.WHITE);
+        tarjeta.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(205, 218, 235)),
+                javax.swing.BorderFactory.createEmptyBorder(16, 16, 16, 16)));
+
+        javax.swing.JPanel filtros = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        filtros.setOpaque(false);
+        javax.swing.JTextField buscar = new javax.swing.JTextField();
+        javax.swing.JTextField fechaInicio = new javax.swing.JTextField();
+        javax.swing.JTextField fechaFin = new javax.swing.JTextField();
+        buscar.setName("buscarOrden");
+        fechaInicio.setName("fechaInicioOrden");
+        fechaFin.setName("fechaFinOrden");
+        prepararCampoBusqueda(fechaInicio);
+        prepararCampoBusqueda(fechaFin);
+        agregarFiltroBusqueda(filtros, "Buscar", buscar, 0, 1.8);
+        agregarFiltroBusqueda(filtros, "Fecha inicio", fechaInicio, 1, 0.8);
+        agregarFiltroBusqueda(filtros, "Fecha fin", fechaFin, 2, 0.8);
+        javax.swing.JButton limpiar = botonBusqueda("Limpiar filtros", false);
+        limpiar.addActionListener(e -> {
+            buscar.setText("");
+            fechaInicio.setText("");
+            fechaFin.setText("");
+        });
+        agregarFiltroBusqueda(filtros, "", limpiar, 3, 0.7);
+        tarjeta.add(filtros, java.awt.BorderLayout.NORTH);
+
+        javax.swing.table.DefaultTableModel modeloBusqueda = new javax.swing.table.DefaultTableModel(
+                new String[]{"NO.", "FECHA", "PROVEEDOR", "SOLICITANTE", "PROYECTO", "TOTAL", "ACCIONES"}, 0) {
+            @Override public boolean isCellEditable(int fila, int columna) { return false; }
+        };
+        javax.swing.JTable tabla = new javax.swing.JTable(modeloBusqueda);
+        tabla.setName("tablaOrdenes");
+        tabla.setRowHeight(42);
+        tabla.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        tabla.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        tabla.getTableHeader().setPreferredSize(new java.awt.Dimension(0, 38));
+        tabla.getTableHeader().setBackground(new java.awt.Color(232, 238, 247));
+        tabla.getTableHeader().setForeground(azul);
+        tabla.setGridColor(new java.awt.Color(225, 232, 241));
+        tabla.setSelectionBackground(new java.awt.Color(225, 238, 250));
+        tabla.setSelectionForeground(azul);
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(70);
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(220);
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(110);
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(80);
+        final int[] celdaAccionHover = {-1, -1};
+        tabla.getColumnModel().getColumn(6).setCellRenderer((tablaActual, valor, seleccionado, tieneFoco, fila, columna) -> {
+            javax.swing.JLabel enlace = new javax.swing.JLabel();
+            boolean hover = fila == celdaAccionHover[0] && columna == celdaAccionHover[1];
+            java.awt.Component celdaBase = tablaActual.getDefaultRenderer(Object.class)
+                    .getTableCellRendererComponent(tablaActual,
+                            tablaActual.getValueAt(fila, 0), seleccionado, tieneFoco, fila, 0);
+            enlace.setText(hover ? "<html><u><font color='#1F70B8'>VER</font></u></html>" : "VER");
+            enlace.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            enlace.setFont(tablaActual.getFont());
+            enlace.setForeground(seleccionado
+                    ? tablaActual.getSelectionForeground()
+                    : new java.awt.Color(28, 82, 132));
+            enlace.setOpaque(true);
+            enlace.setBackground(celdaBase.getBackground());
+            return enlace;
+        });
+        tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                int fila = tabla.rowAtPoint(e.getPoint());
+                int columna = tabla.columnAtPoint(e.getPoint());
+                if (fila < 0 || columna != 6) return;
+                String numero = String.valueOf(modeloBusqueda.getValueAt(fila, 0));
+                abrirOrdenDesdeBusqueda(numero, false);
+            }
+
+            @Override public void mouseExited(java.awt.event.MouseEvent e) {
+                celdaAccionHover[0] = -1;
+                celdaAccionHover[1] = -1;
+                tabla.repaint();
+                tabla.setCursor(java.awt.Cursor.getDefaultCursor());
+            }
+        });
+        tabla.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override public void mouseMoved(java.awt.event.MouseEvent e) {
+                int fila = tabla.rowAtPoint(e.getPoint());
+                int columna = tabla.columnAtPoint(e.getPoint());
+                int filaAnterior = celdaAccionHover[0];
+                int columnaAnterior = celdaAccionHover[1];
+                if (fila >= 0 && columna == 6) {
+                    celdaAccionHover[0] = fila;
+                    celdaAccionHover[1] = columna;
+                    tabla.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+                } else {
+                    celdaAccionHover[0] = -1;
+                    celdaAccionHover[1] = -1;
+                    tabla.setCursor(java.awt.Cursor.getDefaultCursor());
+                }
+                if (filaAnterior != celdaAccionHover[0] || columnaAnterior != celdaAccionHover[1]) {
+                    tabla.repaint();
+                }
+            }
+        });
+        javax.swing.JLabel total = new javax.swing.JLabel();
+        total.setName("totalOrdenes");
+        total.setForeground(azul);
+        total.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        tarjeta.add(new javax.swing.JScrollPane(tabla), java.awt.BorderLayout.CENTER);
+        javax.swing.JPanel pie = new javax.swing.JPanel(new java.awt.BorderLayout());
+        pie.setOpaque(false);
+        pie.add(total, java.awt.BorderLayout.EAST);
+        tarjeta.add(pie, java.awt.BorderLayout.SOUTH);
+        fondo.add(tarjeta, java.awt.BorderLayout.CENTER);
+
+        java.beans.PropertyChangeListener actualizarTabla = e -> cargarOrdenesEnTabla(
+                buscar, fechaInicio, fechaFin, modeloBusqueda, total);
+        buscar.getDocument().addDocumentListener(documentListenerBusqueda(actualizarTabla));
+        fechaInicio.getDocument().addDocumentListener(documentListenerBusqueda(actualizarTabla));
+        fechaFin.getDocument().addDocumentListener(documentListenerBusqueda(actualizarTabla));
+        fondo.putClientProperty("controlesBusqueda", new Object[]{buscar, fechaInicio, fechaFin, modeloBusqueda, total});
+        return fondo;
+    }
+
+    private javax.swing.JButton botonBusqueda(String texto, boolean principal) {
+        javax.swing.JButton boton = new javax.swing.JButton(texto);
+        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        boton.setFocusPainted(false);
+        boton.setPreferredSize(new java.awt.Dimension(principal ? 190 : 135, 44));
+        boton.setBackground(principal ? new java.awt.Color(31, 112, 184) : java.awt.Color.WHITE);
+        boton.setForeground(principal ? java.awt.Color.WHITE : new java.awt.Color(28, 82, 132));
+        boton.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(31, 112, 184), 1));
+        return boton;
+    }
+
+    private void prepararCampoBusqueda(javax.swing.JTextField campo) {
+        campo.setToolTipText("Formato: dd/MM/yyyy");
+        campo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(198, 210, 225)),
+                javax.swing.BorderFactory.createEmptyBorder(7, 9, 7, 9)));
+    }
+
+    private void agregarFiltroBusqueda(javax.swing.JPanel panel, String texto, java.awt.Component campo,
+            int columna, double peso) {
+        javax.swing.JPanel envoltura = new javax.swing.JPanel(new java.awt.BorderLayout(0, 4));
+        envoltura.setOpaque(false);
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel(texto);
+        etiqueta.setForeground(new java.awt.Color(28, 82, 132));
+        etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        envoltura.add(etiqueta, java.awt.BorderLayout.NORTH);
+        envoltura.add(campo, java.awt.BorderLayout.CENTER);
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.gridx = columna; gbc.gridy = 0; gbc.weightx = peso; gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gbc.insets = new java.awt.Insets(0, 0, 0, 10);
+        panel.add(envoltura, gbc);
+    }
+
+    private javax.swing.event.DocumentListener documentListenerBusqueda(java.beans.PropertyChangeListener listener) {
+        return new javax.swing.event.DocumentListener() {
+            private void actualizar() { listener.propertyChange(null); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+        };
+    }
+
+    private void cargarOrdenesEnBusqueda() {
+        if (panelBusquedaOrdenes == null) return;
+        Object[] controles = (Object[]) panelBusquedaOrdenes.getClientProperty("controlesBusqueda");
+        cargarOrdenesEnTabla((javax.swing.JTextField) controles[0], (javax.swing.JTextField) controles[1],
+                (javax.swing.JTextField) controles[2], (javax.swing.table.DefaultTableModel) controles[3],
+                (javax.swing.JLabel) controles[4]);
+    }
+
+    private void cargarOrdenesEnTabla(javax.swing.JTextField buscar, javax.swing.JTextField fechaInicio,
+            javax.swing.JTextField fechaFin, javax.swing.table.DefaultTableModel modelo, javax.swing.JLabel total) {
+        modelo.setRowCount(0);
+        String texto = buscar.getText().trim().toLowerCase(java.util.Locale.ROOT);
+        java.util.Date inicio = parsearFechaBusqueda(fechaInicio.getText());
+        java.util.Date fin = parsearFechaBusqueda(fechaFin.getText());
+        java.io.File archivo = new java.io.File(RUTA_REGISTROC);
+        if (archivo.isFile()) {
+            try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+                for (Row fila : libro.getSheetAt(0)) {
+                    if (fila.getRowNum() == 0 || fila.getCell(0) == null) continue;
+                    String numero = dataFormatter.formatCellValue(fila.getCell(0)).trim();
+                    String proveedor = nombreProveedor(dataFormatter.formatCellValue(fila.getCell(4)).trim());
+                    String fecha = dataFormatter.formatCellValue(fila.getCell(1)).trim();
+                    String solicitante = dataFormatter.formatCellValue(fila.getCell(6)).trim();
+                    String proyecto = dataFormatter.formatCellValue(fila.getCell(7)).trim();
+                    String totalOrden = dataFormatter.formatCellValue(fila.getCell(21)).trim();
+                    java.util.Date fechaOrden = leerFechaCelda(fila.getCell(1));
+                    String datos = (numero + " " + proveedor + " " + solicitante + " " + proyecto).toLowerCase(java.util.Locale.ROOT);
+                    if (!texto.isEmpty() && !datos.contains(texto)) continue;
+                    if (inicio != null && (fechaOrden == null || fechaOrden.before(inicio))) continue;
+                    if (fin != null && (fechaOrden == null || fechaOrden.after(fin))) continue;
+                    modelo.addRow(new Object[]{numero, fecha, proveedor, solicitante, proyecto, totalOrden, "VER"});
+                }
+            } catch (IOException ex) {
+                logger.log(java.util.logging.Level.WARNING, "No se pudieron cargar las órdenes para búsqueda.", ex);
+                JOptionPane.showMessageDialog(this, "No se pudieron cargar las órdenes:\n" + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        total.setText("Total: " + modelo.getRowCount() + " registros");
+    }
+
+    private String nombreProveedor(String id) {
+        for (String[] proveedor : cacheProveedores) {
+            if (proveedor[0].equalsIgnoreCase(id)) return proveedor[1];
+        }
+        return id;
+    }
+
+    private java.util.Date parsearFechaBusqueda(String texto) {
+        if (texto == null || texto.trim().isEmpty()) return null;
+        try {
+            SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
+            formato.setLenient(false);
+            return formato.parse(texto.trim());
+        } catch (java.text.ParseException ex) {
+            return null;
+        }
+    }
+
+    private void abrirNuevaOrden() {
+        mostrarFormulario();
+        estadoOrdenCargada = null;
+        salirDeOrden();
+        setModoSoloLectura(false);
+        contenedorVista.revalidate();
+        contenedorVista.repaint();
+    }
+
+    private void mostrarFormulario() {
+        mostrarVistaInterna(desplazamientoFormulario);
+        setTitle("NUEVA ORDEN DE COMPRA");
+        setSize(962, 735);
+        contenedorVista.revalidate();
+        contenedorVista.repaint();
+    }
+
+    private void abrirOrdenDesdeBusqueda(String numero, boolean editar) {
+        cargarOrdenPorNumero(Integer.parseInt(numero));
+        mostrarVistaInterna(desplazamientoFormulario);
+        setTitle("ORDEN DE COMPRA " + numero);
+        setSize(962, 735);
+        if (editar) activarEdicionOrden();
+        revalidate();
+        repaint();
     }
 
     private void posicionar(java.awt.Component componente, int x, int y, int ancho, int alto) {
@@ -1091,11 +1514,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        PRINCIPAL ventana = new PRINCIPAL();
-        ventana.setVisible(true); // 👉 abre la nueva ventana
-
-        this.dispose(); // 👉 cierra el login        
+        volverAOrdenes();
     }//GEN-LAST:event_jButton6ActionPerformed
+
+    /** Regresa a la misma vista general que se muestra al elegir Órdenes de compra. */
+    private void volverAOrdenes() {
+        mostrarBusquedaOrdenes();
+    }
 
     // =====================================================================
     // Catalogos, autocompletado y calculo de totales
@@ -1796,25 +2221,22 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField3ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        generarPDF();
+        generarPDFYFirmar(null);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // ─────────────────────────────────────────────────────────────────────────
     //  PDF GENERATION
     // ─────────────────────────────────────────────────────────────────────────
-    private static final String LOGO_PDF_PATH =
-        "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\IMAGENES\\Logo PDF.png";
-
     // =====================================================================
     // Validacion y generacion de documentos PDF
     // =====================================================================
 
-    private void generarPDF() {
-        String errorValidacion = validarCampos();
+    private boolean generarPDF() {
+        String errorValidacion = validarCampos(false);
         if (errorValidacion != null) {
             JOptionPane.showMessageDialog(this, errorValidacion,
                     "Campos incompletos", JOptionPane.WARNING_MESSAGE);
-            return;
+            return false;
         }
 
         String noOrden = jTextField6.getText().trim();
@@ -1825,7 +2247,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         fc.setDialogTitle("Guardar Orden de Compra");
         fc.setSelectedFile(new File(System.getProperty("user.home") + "\\Desktop\\" + nombreArchivo));
         fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("PDF (*.pdf)", "pdf"));
-        if (fc.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return;
+        if (fc.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) return false;
 
         String ruta = fc.getSelectedFile().getAbsolutePath();
         if (!ruta.toLowerCase().endsWith(".pdf")) ruta += ".pdf";
@@ -1837,7 +2259,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     "Confirmar reemplazo", JOptionPane.YES_NO_OPTION,
                     JOptionPane.QUESTION_MESSAGE);
             if (reemplazar != JOptionPane.YES_OPTION) {
-                return;
+                return false;
             }
         }
 
@@ -1861,7 +2283,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             Table header = new Table(UnitValue.createPercentArray(new float[]{25, 50, 25}))
                     .useAllAvailableWidth().setMarginBottom(3);
 
-            Image logo = new Image(ImageDataFactory.create(LOGO_PDF_PATH)).scaleToFit(130, 55);
+            Image logo = new Image(ImageDataFactory.create(
+                    AppConfig.recursoBytes("IMAGENES/Logo PDF.png"))).scaleToFit(130, 55);
             header.addCell(new Cell().add(logo)
                     .setBorder(Border.NO_BORDER).setPadding(4)
                     .setVerticalAlignment(VerticalAlignment.MIDDLE));
@@ -2208,13 +2631,274 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
             doc.close();
 
-            JOptionPane.showMessageDialog(this, "PDF generado exitosamente.", "Listo", JOptionPane.INFORMATION_MESSAGE);
-            try { java.awt.Desktop.getDesktop().open(new File(ruta)); } catch (Exception ignored) {}
+            ultimoPdfGenerado = archivoPDF;
+            actualizarEstadoBotonFirma();
+            JOptionPane.showMessageDialog(this,
+                    "PDF generado exitosamente.\n"
+                    + "Ahora se solicitará la firma digital.",
+                    "Listo", JOptionPane.INFORMATION_MESSAGE);
+            return true;
 
         } catch (Exception ex) {
             logger.log(java.util.logging.Level.SEVERE, "Error generando PDF", ex);
             JOptionPane.showMessageDialog(this, "Error al generar el PDF:\n" + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private boolean generarPDFYFirmar(String rolForzado) {
+        DatosFirma datosFirma = seleccionarDatosFirma(rolForzado);
+        if (datosFirma == null) {
+            return false;
+        }
+        if (!generarPDF()) {
+            return false;
+        }
+        try {
+            ultimoPdfGenerado = firmarArchivoPdf(ultimoPdfGenerado,
+                    datosFirma.clavePrivada, datosFirma.cadena,
+                    datosFirma.rol, datosFirma.alias);
+            actualizarEstadoBotonFirma();
+            abrirPdf(ultimoPdfGenerado);
+            JOptionPane.showMessageDialog(this,
+                    "PDF firmado digitalmente como " + datosFirma.rol + ".\n"
+                    + "Se creó el archivo:\n" + ultimoPdfGenerado.getName(),
+                    "Firma completada", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo firmar el PDF generado.", ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo firmar el PDF:\n" + ex.getMessage(),
+                    "Error de firma", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private DatosFirma seleccionarDatosFirma(String rolForzado) {
+        String rolFirma = rolForzado;
+        if (rolFirma == null) {
+            Object rol = JOptionPane.showInputDialog(this,
+                    "Selecciona el rol que firmará el PDF:",
+                    "Firma digital", JOptionPane.QUESTION_MESSAGE, null,
+                    new String[]{"ELABORÓ", "AUTORIZÓ"}, "ELABORÓ");
+            if (rol == null) {
+                return null;
+            }
+            rolFirma = rol.toString();
+        }
+        if ("AUTORIZÓ".equals(rolFirma)
+                && (ultimoPdfGenerado == null || !pdfTieneFirma("Firma_ELABORO"))) {
+            JOptionPane.showMessageDialog(this,
+                    "Primero debes firmar el PDF como ELABORÓ.",
+                    "Orden de firmas", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+
+        try {
+            KeyStore almacen = KeyStore.getInstance("Windows-MY");
+            almacen.load(null, null);
+            java.util.List<String> aliases = new java.util.ArrayList<>();
+            java.util.List<String> opciones = new java.util.ArrayList<>();
+            java.util.Enumeration<String> nombres = almacen.aliases();
+            while (nombres.hasMoreElements()) {
+                String alias = nombres.nextElement();
+                if (!almacen.isKeyEntry(alias)) {
+                    continue;
+                }
+                java.security.cert.Certificate certificado = almacen.getCertificate(alias);
+                if (certificado instanceof X509Certificate x509) {
+                    aliases.add(alias);
+                    opciones.add(alias + " - " + x509.getSubjectX500Principal().getName());
+                }
+            }
+            if (opciones.isEmpty()) {
+                throw new java.security.KeyStoreException(
+                        "No se encontraron certificados con clave privada en Windows.");
+            }
+
+            Object seleccion = JOptionPane.showInputDialog(this,
+                    "Selecciona el certificado que se usará para " + rolFirma + ":",
+                    "Certificado digital", JOptionPane.QUESTION_MESSAGE, null,
+                    opciones.toArray(), opciones.get(0));
+            if (seleccion == null) {
+                return null;
+            }
+            int indice = opciones.indexOf(seleccion.toString());
+            String alias = aliases.get(indice);
+            Key clave = almacen.getKey(alias, null);
+            if (!(clave instanceof PrivateKey privada)) {
+                throw new java.security.KeyStoreException(
+                        "El certificado seleccionado no tiene una clave privada accesible.");
+            }
+            return new DatosFirma(privada, almacen.getCertificateChain(alias), rolFirma, alias);
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo seleccionar el certificado.", ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo acceder al certificado:\n" + ex.getMessage(),
+                    "Error de certificado", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+
+    private void actualizarEstadoBotonFirma() {
+        if (jButtonFirmar != null) {
+            jButtonFirmar.setEnabled(ultimoPdfGenerado != null
+                    && ultimoPdfGenerado.isFile());
+        }
+    }
+
+    private boolean firmarPdf() {
+        return firmarPdf(null);
+    }
+
+    private boolean firmarPdf(String rolForzado) {
+        if (ultimoPdfGenerado == null || !ultimoPdfGenerado.isFile()) {
+            JOptionPane.showMessageDialog(this,
+                    "Primero genera el PDF con el botón IMPRIMIR.",
+                    "PDF requerido", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        String rolFirma = rolForzado;
+        if (rolFirma == null) {
+            Object rol = JOptionPane.showInputDialog(this,
+                    "Selecciona el rol que firmará el PDF:",
+                    "Firma digital", JOptionPane.QUESTION_MESSAGE, null,
+                    new String[]{"ELABORÓ", "AUTORIZÓ"}, "ELABORÓ");
+            if (rol == null) {
+                return false;
+            }
+            rolFirma = rol.toString();
+        }
+        if ("AUTORIZÓ".equals(rolFirma) && !pdfTieneFirma("Firma_ELABORO")) {
+            JOptionPane.showMessageDialog(this,
+                    "Primero debes firmar el PDF como ELABORÓ.",
+                    "Orden de firmas", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        try {
+            KeyStore almacen = KeyStore.getInstance("Windows-MY");
+            almacen.load(null, null);
+            java.util.List<String> aliases = new java.util.ArrayList<>();
+            java.util.List<String> opciones = new java.util.ArrayList<>();
+            java.util.Enumeration<String> nombres = almacen.aliases();
+            while (nombres.hasMoreElements()) {
+                String alias = nombres.nextElement();
+                if (!almacen.isKeyEntry(alias)) {
+                    continue;
+                }
+                java.security.cert.Certificate certificado = almacen.getCertificate(alias);
+                if (certificado instanceof X509Certificate x509) {
+                    aliases.add(alias);
+                    opciones.add(alias + " - " + x509.getSubjectX500Principal().getName());
+                }
+            }
+            if (opciones.isEmpty()) {
+                throw new java.security.KeyStoreException(
+                        "No se encontraron certificados con clave privada en Windows.");
+            }
+
+            Object seleccion = JOptionPane.showInputDialog(this,
+                    "Selecciona el certificado que se usará para " + rolFirma + ":",
+                    "Certificado digital", JOptionPane.QUESTION_MESSAGE, null,
+                    opciones.toArray(), opciones.get(0));
+            if (seleccion == null) {
+                return false;
+            }
+            int indice = opciones.indexOf(seleccion.toString());
+            String alias = aliases.get(indice);
+            Key clave = almacen.getKey(alias, null);
+            if (!(clave instanceof PrivateKey privada)) {
+                throw new java.security.KeyStoreException(
+                        "El certificado seleccionado no tiene una clave privada accesible.");
+            }
+            java.security.cert.Certificate[] cadena = almacen.getCertificateChain(alias);
+            ultimoPdfGenerado = firmarArchivoPdf(ultimoPdfGenerado, privada, cadena, rolFirma, alias);
+            actualizarEstadoBotonFirma();
+            abrirPdf(ultimoPdfGenerado);
+            JOptionPane.showMessageDialog(this,
+                    "PDF firmado digitalmente como " + rolFirma + ".\n"
+                            + "Se creó un nuevo archivo firmado:\n" + ultimoPdfGenerado.getName(),
+                    "Firma completada", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo firmar el PDF.", ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo firmar el PDF:\n" + ex.getMessage(),
+                    "Error de firma", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private void abrirPdf(File archivo) throws IOException {
+        if (!java.awt.Desktop.isDesktopSupported()) {
+            throw new IOException("El sistema no permite abrir archivos PDF automáticamente.");
+        }
+        java.awt.Desktop.getDesktop().open(archivo);
+    }
+
+    private File firmarArchivoPdf(File archivo, PrivateKey privada,
+            java.security.cert.Certificate[] cadena, String rol, String alias) throws Exception {
+        if (Security.getProvider("BC") == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+        File temporal = File.createTempFile("orden-firmada-", ".pdf", archivo.getParentFile());
+        File firmado = new File(archivo.getParentFile(),
+                quitarExtension(archivo.getName()) + "_firmado_"
+                + new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()) + ".pdf");
+        PdfSigner firmante = null;
+        try {
+            firmante = new PdfSigner(new PdfReader(archivo),
+                    new PdfWriter(temporal), new com.itextpdf.kernel.pdf.StampingProperties());
+            int pagina;
+            try (PdfDocument documento = new PdfDocument(new PdfReader(archivo))) {
+                pagina = documento.getNumberOfPages();
+            }
+            float y = "AUTORIZÓ".equals(rol) ? 36 : 96;
+            firmante.setFieldName("Firma_" + ("ELABORÓ".equals(rol) ? "ELABORO" : "AUTORIZO"));
+            firmante.getSignatureAppearance()
+                    .setReason("Firma digital de orden de compra")
+                    .setLocation("Sistema OCXRST")
+                    .setPageNumber(pagina)
+                    .setPageRect(new Rectangle(36, y, 240, 48))
+                    .setLayer2Text(rol + "\nFirmado digitalmente\nCertificado: " + alias);
+            IExternalDigest digest = new BouncyCastleDigest();
+            IExternalSignature firma = new PrivateKeySignature(privada,
+                    DigestAlgorithms.SHA256, "BC");
+            firmante.signDetached(digest, firma, cadena, null, null, null, 0,
+                    PdfSigner.CryptoStandard.CADES);
+            firmante.getDocument().close();
+            firmante = null;
+            Files.move(temporal.toPath(), firmado.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING);
+            return firmado;
+        } finally {
+            if (firmante != null) {
+                firmante.getDocument().close();
+            }
+            if (temporal.isFile()) {
+                Files.deleteIfExists(temporal.toPath());
+            }
+        }
+    }
+
+    private String quitarExtension(String nombre) {
+        int punto = nombre.lastIndexOf('.');
+        return punto > 0 ? nombre.substring(0, punto) : nombre;
+    }
+
+    private boolean pdfTieneFirma(String campo) {
+        try (PdfDocument documento = new PdfDocument(new PdfReader(ultimoPdfGenerado))) {
+            PdfAcroForm formulario = PdfAcroForm.getAcroForm(documento, false);
+            return formulario != null && formulario.getFormFields().containsKey(campo);
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.FINE,
+                    "No se pudo consultar el estado de firmas del PDF.", ex);
+            return false;
         }
     }
 
@@ -2283,6 +2967,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
      * @return null si todo es correcto, o un mensaje indicando los campos faltantes.
      */
     private String validarCampos() {
+        return validarCampos(true);
+    }
+
+    private String validarCampos(boolean validarLimiteFechas) {
         java.util.List<String> faltantes = new java.util.ArrayList<>();
 
         // ID Proveedor
@@ -2344,7 +3032,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (jDateChooserPago.getDate() == null) {
                 faltantes.add("• FECHA DE PAGO");
         }
-        if (!esAdministrador()) {
+        if (validarLimiteFechas && !esAdministrador()) {
             if (esFechaAnteriorAHoy(jDateChooserEntrega.getDate())) {
                 faltantes.add("• FECHA DE ENTREGA (no puede ser anterior a hoy)");
             }
@@ -2415,6 +3103,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         java.util.Date fechaMinima = !soloLectura && !administrador
                 ? java.sql.Date.valueOf(java.time.LocalDate.now())
                 : null;
+        jDateChooser2.setMinSelectableDate(fechaMinima);
         jDateChooserEntrega.setMinSelectableDate(fechaMinima);
         jDateChooserPago.setMinSelectableDate(fechaMinima);
     }
@@ -2523,6 +3212,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             return false;
         }
 
+        if (!generarPDFYFirmar("ELABORÓ")) {
+            JOptionPane.showMessageDialog(this,
+                    "La orden no se registró porque el PDF no fue firmado como ELABORÓ.",
+                    "Firma requerida", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
         Workbook wb;
         Sheet sheet;
         try {
@@ -2625,7 +3321,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this,
                     "Orden de compra No. " + jTextField6.getText().trim() + " guardada correctamente.",
                     "Guardado exitoso", JOptionPane.INFORMATION_MESSAGE);
-            generarPDF();
             salirDeOrden();
             return true;
 
@@ -2842,6 +3537,67 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         buscarOrden();
     }
 
+    private void navegarOrden(int direccion) {
+        java.util.List<Integer> ordenes = obtenerNumerosOrdenes();
+        if (ordenes.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay órdenes registradas para navegar.",
+                    "Navegación", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        int actual;
+        try {
+            actual = Integer.parseInt(jTextField6.getText().trim());
+        } catch (NumberFormatException ex) {
+            actual = direccion > 0 ? ordenes.get(0) : ordenes.get(ordenes.size() - 1);
+        }
+        int indice = ordenes.indexOf(actual);
+        if (indice < 0) {
+            indice = direccion > 0 ? 0 : ordenes.size() - 1;
+        } else {
+            indice += direccion;
+            if (indice < 0 || indice >= ordenes.size()) {
+                return;
+            }
+        }
+        cargarOrdenPorNumero(ordenes.get(indice));
+    }
+
+    private void irPrimeraOrden() {
+        java.util.List<Integer> ordenes = obtenerNumerosOrdenes();
+        if (!ordenes.isEmpty()) cargarOrdenPorNumero(ordenes.get(0));
+    }
+
+    private void irUltimaOrden() {
+        java.util.List<Integer> ordenes = obtenerNumerosOrdenes();
+        if (!ordenes.isEmpty()) cargarOrdenPorNumero(ordenes.get(ordenes.size() - 1));
+    }
+
+    private java.util.List<Integer> obtenerNumerosOrdenes() {
+        java.util.List<Integer> ordenes = new java.util.ArrayList<>();
+        java.io.File archivo = new java.io.File(RUTA_REGISTROC);
+        if (!archivo.isFile()) return ordenes;
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (Row fila : hoja) {
+                if (fila.getRowNum() == 0 || fila.getCell(0) == null) continue;
+                try {
+                    ordenes.add(Integer.parseInt(dataFormatter.formatCellValue(fila.getCell(0)).trim()));
+                } catch (NumberFormatException ex) {
+                    logger.log(java.util.logging.Level.FINE, "Se ignoró un número de orden inválido.", ex);
+                }
+            }
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudieron leer las órdenes para navegar.", ex);
+        }
+        java.util.Collections.sort(ordenes);
+        return ordenes;
+    }
+
+    private void cargarOrdenPorNumero(int numero) {
+        jTextField6.setText(String.valueOf(numero));
+        buscarOrden();
+    }
+
     private void actualizarBotonBuscar(boolean ordenCargada) {
         jButton2.setText(ordenCargada ? "SALIR" : "BUSCAR");
         jButton2.setBackground(ordenCargada
@@ -2850,10 +3606,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private void prepararDuplicado() {
-        // Se conservan todos los datos cargados y solo se reemplaza el número
-        // por el siguiente consecutivo disponible.
+        // Se conservan los datos cargados, pero el duplicado inicia con
+        // el siguiente consecutivo y la fecha actual.
         estadoOrdenCargada = null;
+        ultimoPdfGenerado = null;
         generarNumeroOrden();
+        jDateChooser2.setDate(new java.util.Date());
+        jDateChooserEntrega.setDate(null);
+        jDateChooserPago.setDate(null);
         setModoSoloLectura(false);
         jButton3.setText("CREAR");
         actualizarBotonBuscar(false);
@@ -2865,6 +3625,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (jButton1 != null) {
             jButton1.setEnabled(estadoOrdenCargada != null);
         }
+        actualizarEstadoBotonFirma();
     }
 
     private void buscarOrden() {

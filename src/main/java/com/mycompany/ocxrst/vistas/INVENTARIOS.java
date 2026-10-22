@@ -450,12 +450,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         barra.setOpaque(false);
         barra.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 0, 0, 0));
 
-        prepararBoton(jButton6, "ATR\u00c1S", iconoChevronIzquierda(COLOR_AZUL_OSCURO), java.awt.Color.WHITE, COLOR_AZUL_OSCURO, COLOR_BORDE_CAMPO);
-        javax.swing.JPanel panelIzquierda = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        panelIzquierda.setOpaque(false);
-        panelIzquierda.add(jButton6);
-        barra.add(panelIzquierda, java.awt.BorderLayout.WEST);
-
         prepararBoton(botonLimpiar, "LIMPIAR", iconoLimpiar(COLOR_AZUL_OSCURO), java.awt.Color.WHITE, COLOR_AZUL_OSCURO, COLOR_BORDE_CAMPO);
         prepararBoton(botonGuardar, "GUARDAR", iconoGuardar(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
         actualizarBotonEstadoProducto();
@@ -480,10 +474,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         panel.add(etiqueta, java.awt.BorderLayout.CENTER);
         return panel;
     }//crearTituloTarjeta
-
-    private javax.swing.JPanel crearCampoVertical(String etiqueta, javax.swing.JComponent campo) {
-        return crearCampoVertical(etiqueta, campo, iconoCampo(COLOR_AZUL_OSCURO));
-    }
 
     private javax.swing.JPanel crearCampoVertical(String etiqueta, javax.swing.JComponent campo, javax.swing.Icon icono) {
         javax.swing.JPanel contenedor = new javax.swing.JPanel(new java.awt.BorderLayout(0, 4));

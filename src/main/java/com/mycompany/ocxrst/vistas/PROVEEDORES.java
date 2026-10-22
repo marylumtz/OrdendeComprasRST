@@ -86,6 +86,14 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private final java.util.List<String[]> cacheProveedores = new java.util.ArrayList<>();
     private final javax.swing.JPopupMenu popupProveedores = new javax.swing.JPopupMenu();
     private boolean seleccionandoProveedor = false;
+    private final java.awt.CardLayout vistasLayout = new java.awt.CardLayout();
+    private final javax.swing.JPanel vistasProveedores = new javax.swing.JPanel(vistasLayout);
+    private javax.swing.table.DefaultTableModel modeloDirectorio;
+    private javax.swing.JTextField buscarDirectorio;
+    private javax.swing.JLabel totalDirectorio;
+    private javax.swing.JLabel totalProveedoresDirectorio;
+    private javax.swing.JLabel activosDirectorio;
+    private javax.swing.JLabel inactivosDirectorio;
 
     // =====================================================================
     // Alertas y metricas mostradas en el modulo principal
@@ -317,10 +325,231 @@ public class PROVEEDORES extends javax.swing.JFrame {
         setResizable(false);
         setLocationRelativeTo(null);
         asegurarArchivoProveedores();
+        configurarVistasProveedores();
         cargarSolicitantes();
         cargarCacheProveedores();
         configurarAutocompleteNombre();
         configurarEventos();
+    }
+
+    private void configurarVistasProveedores() {
+        vistasProveedores.setBackground(COLOR_FONDO);
+        vistasProveedores.add(crearDirectorioProveedores(), "DIRECTORIO");
+        vistasProveedores.add(jPanel1, "FORMULARIO");
+        setContentPane(vistasProveedores);
+        mostrarDirectorioProveedores();
+    }
+
+    private javax.swing.JPanel crearDirectorioProveedores() {
+        javax.swing.JPanel fondo = new javax.swing.JPanel(new java.awt.BorderLayout(0, 14));
+        fondo.setBackground(COLOR_FONDO);
+        fondo.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 20, 18, 20));
+
+        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        encabezado.setOpaque(false);
+        javax.swing.JLabel titulo = new javax.swing.JLabel("DIRECTORIO DE PROVEEDORES",
+                iconoEdificio(COLOR_AZUL_OSCURO, 24), javax.swing.SwingConstants.LEFT);
+        titulo.setIconTextGap(10);
+        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 22));
+        titulo.setForeground(COLOR_AZUL_OSCURO);
+        encabezado.add(titulo, java.awt.BorderLayout.WEST);
+
+        javax.swing.JButton nuevo = new javax.swing.JButton("+  Nuevo proveedor");
+        prepararBoton(nuevo, "NUEVO PROVEEDOR", iconoMas(java.awt.Color.WHITE),
+                COLOR_AZUL, java.awt.Color.WHITE, null);
+        nuevo.addActionListener(e -> mostrarFormularioNuevo());
+        encabezado.add(nuevo, java.awt.BorderLayout.EAST);
+        fondo.add(encabezado, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(0, 14));
+        contenido.setOpaque(false);
+
+        javax.swing.JPanel busqueda = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
+        busqueda.setOpaque(false);
+        buscarDirectorio = new javax.swing.JTextField();
+        buscarDirectorio.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
+        buscarDirectorio.setToolTipText("Buscar por ID, nombre, RFC, teléfono o correo");
+        buscarDirectorio.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                new BordeRedondeado(8, COLOR_BORDE_CAMPO, 1.2f),
+                javax.swing.BorderFactory.createEmptyBorder(8, 12, 8, 12)));
+        buscarDirectorio.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void actualizar() { cargarDirectorioProveedores(); }
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+        });
+        javax.swing.JButton buscar = botonDirectorio("BUSCAR", iconoBuscar(java.awt.Color.WHITE), COLOR_AZUL,
+                java.awt.Color.WHITE);
+        buscar.addActionListener(e -> cargarDirectorioProveedores());
+        javax.swing.JButton limpiar = botonDirectorio("LIMPIAR", iconoHistorial(COLOR_AZUL),
+                java.awt.Color.WHITE, COLOR_AZUL);
+        limpiar.addActionListener(e -> buscarDirectorio.setText(""));
+        busqueda.add(buscarDirectorio, java.awt.BorderLayout.CENTER);
+        javax.swing.JPanel accionesBusqueda = new javax.swing.JPanel(new java.awt.FlowLayout(
+                java.awt.FlowLayout.RIGHT, 8, 0));
+        accionesBusqueda.setOpaque(false);
+        accionesBusqueda.add(buscar);
+        accionesBusqueda.add(limpiar);
+        busqueda.add(accionesBusqueda, java.awt.BorderLayout.EAST);
+        contenido.add(busqueda, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel resumen = new javax.swing.JPanel(new java.awt.GridLayout(1, 3, 12, 0));
+        resumen.setOpaque(false);
+        totalProveedoresDirectorio = new javax.swing.JLabel("0");
+        activosDirectorio = new javax.swing.JLabel("0");
+        inactivosDirectorio = new javax.swing.JLabel("0");
+        resumen.add(crearResumenDirectorio("TOTAL DE PROVEEDORES", totalProveedoresDirectorio,
+                COLOR_AZUL_CLARO, COLOR_AZUL_OSCURO));
+        resumen.add(crearResumenDirectorio("ACTIVOS", activosDirectorio,
+                COLOR_VERDE_CLARO, COLOR_VERDE));
+        resumen.add(crearResumenDirectorio("INACTIVOS", inactivosDirectorio,
+                COLOR_ROJO_CLARO, COLOR_ROJO));
+        modeloDirectorio = new javax.swing.table.DefaultTableModel(
+                new String[]{"ID", "PROVEEDOR / RAZÓN SOCIAL", "RFC", "TIPO", "CONTACTO",
+                    "ESTADO", "FECHA DE ALTA", "ACCIONES"}, 0) {
+            @Override public boolean isCellEditable(int fila, int columna) { return false; }
+        };
+        javax.swing.JTable tabla = new javax.swing.JTable(modeloDirectorio);
+        tabla.setRowHeight(42);
+        tabla.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        tabla.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        tabla.getTableHeader().setBackground(COLOR_AZUL_PALIDO);
+        tabla.getTableHeader().setForeground(COLOR_AZUL_OSCURO);
+        tabla.setGridColor(new java.awt.Color(225, 232, 241));
+        tabla.setSelectionBackground(COLOR_AZUL_CLARO);
+        tabla.setSelectionForeground(COLOR_AZUL_OSCURO);
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(65);
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(245);
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(120);
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(115);
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(210);
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(100);
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(115);
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(90);
+        tabla.getColumnModel().getColumn(7).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable tabla, Object valor,
+                    boolean seleccionado, boolean foco, int fila, int columna) {
+                javax.swing.JLabel etiqueta = new javax.swing.JLabel("VER  |  EDITAR");
+                etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                etiqueta.setForeground(COLOR_AZUL);
+                etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
+                etiqueta.setOpaque(true);
+                etiqueta.setBackground(seleccionado ? tabla.getSelectionBackground() : java.awt.Color.WHITE);
+                return etiqueta;
+            }
+        });
+        tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                int fila = tabla.rowAtPoint(e.getPoint());
+                if (fila >= 0) {
+                    abrirProveedorDesdeDirectorio(fila);
+                }
+            }
+        });
+        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tabla);
+        scroll.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO));
+        javax.swing.JPanel cuerpoDirectorio = new javax.swing.JPanel(new java.awt.BorderLayout(0, 14));
+        cuerpoDirectorio.setOpaque(false);
+        cuerpoDirectorio.add(resumen, java.awt.BorderLayout.NORTH);
+        cuerpoDirectorio.add(scroll, java.awt.BorderLayout.CENTER);
+        contenido.add(cuerpoDirectorio, java.awt.BorderLayout.CENTER);
+
+        totalDirectorio = new javax.swing.JLabel("Mostrando 0 proveedores");
+        totalDirectorio.setForeground(COLOR_TEXTO_GRIS);
+        totalDirectorio.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 0, 0, 0));
+        fondo.add(contenido, java.awt.BorderLayout.CENTER);
+        fondo.add(totalDirectorio, java.awt.BorderLayout.SOUTH);
+        return fondo;
+    }
+
+    private javax.swing.JPanel crearResumenDirectorio(String titulo, javax.swing.JLabel valor,
+            java.awt.Color fondo, java.awt.Color color) {
+        javax.swing.JPanel tarjeta = new javax.swing.JPanel(new java.awt.BorderLayout());
+        tarjeta.setBackground(fondo);
+        tarjeta.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                javax.swing.BorderFactory.createEmptyBorder(10, 14, 10, 14)));
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel(titulo);
+        etiqueta.setForeground(color);
+        etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        valor.setForeground(COLOR_AZUL_OSCURO);
+        valor.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 24));
+        tarjeta.add(etiqueta, java.awt.BorderLayout.NORTH);
+        tarjeta.add(valor, java.awt.BorderLayout.CENTER);
+        return tarjeta;
+    }
+
+    private javax.swing.JButton botonDirectorio(String texto, javax.swing.Icon icono,
+            java.awt.Color fondo, java.awt.Color textoColor) {
+        javax.swing.JButton boton = new javax.swing.JButton(texto, icono);
+        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        boton.setForeground(textoColor);
+        boton.setBackground(fondo);
+        boton.setFocusPainted(false);
+        boton.setPreferredSize(new java.awt.Dimension(130, 38));
+        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_AZUL),
+                javax.swing.BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+        boton.setIconTextGap(7);
+        return boton;
+    }
+
+    private void cargarDirectorioProveedores() {
+        if (modeloDirectorio == null) return;
+        modeloDirectorio.setRowCount(0);
+        String filtro = buscarDirectorio == null ? "" : buscarDirectorio.getText().trim().toLowerCase(
+                java.util.Locale.ROOT);
+        int activos = 0;
+        int inactivos = 0;
+        try (Workbook libro = proveedorRepository.cargarLibro(proveedorRepository.obtenerArchivoProveedores())) {
+            Sheet hoja = proveedorRepository.obtenerHojaProveedores(libro);
+            for (int numeroFila = 1; numeroFila <= hoja.getLastRowNum(); numeroFila++) {
+                Row fila = hoja.getRow(numeroFila);
+                String id = proveedorRepository.leerCelda(fila, 0);
+                if (id.isBlank()) continue;
+                String nombre = proveedorRepository.leerCelda(fila, 1);
+                String rfc = proveedorRepository.leerCelda(fila, 2);
+                String telefono = proveedorRepository.leerCelda(fila, 3);
+                String correo = proveedorRepository.leerCelda(fila, 4);
+                String tipo = proveedorRepository.leerCelda(fila, COLUMNA_TIPO_PROVEEDOR);
+                String fechaAlta = proveedorRepository.leerCelda(fila, COLUMNA_FECHA_ALTA);
+                boolean activo = "1".equals(normalizarEstado(proveedorRepository.leerCelda(fila, 11)));
+                if (activo) activos++; else inactivos++;
+                String datos = (id + " " + nombre + " " + rfc + " " + telefono + " " + correo)
+                        .toLowerCase(java.util.Locale.ROOT);
+                if (!filtro.isEmpty() && !datos.contains(filtro)) continue;
+                modeloDirectorio.addRow(new Object[]{id, nombre, rfc, tipo,
+                    correo.isBlank() ? telefono : correo, activo ? "Activo" : "Inactivo", fechaAlta,
+                    "VER  |  EDITAR"});
+            }
+        } catch (IOException ex) {
+            mostrarError("No se pudo cargar el directorio de proveedores.", ex);
+            return;
+        }
+        totalProveedoresDirectorio.setText(String.valueOf(activos + inactivos));
+        activosDirectorio.setText(String.valueOf(activos));
+        inactivosDirectorio.setText(String.valueOf(inactivos));
+        totalDirectorio.setText("Mostrando " + modeloDirectorio.getRowCount() + " proveedores");
+    }
+
+    private void mostrarDirectorioProveedores() {
+        vistasLayout.show(vistasProveedores, "DIRECTORIO");
+        cargarDirectorioProveedores();
+    }
+
+    private void mostrarFormularioNuevo() {
+        limpiarFormulario(false);
+        vistasLayout.show(vistasProveedores, "FORMULARIO");
+    }
+
+    private void abrirProveedorDesdeDirectorio(int fila) {
+        String nombre = String.valueOf(modeloDirectorio.getValueAt(fila, 1));
+        String rfc = String.valueOf(modeloDirectorio.getValueAt(fila, 2));
+        jTextField1.setText(nombre);
+        jTextField2.setText(rfc);
+        vistasLayout.show(vistasProveedores, "FORMULARIO");
+        buscarProveedor();
     }
 
     // Paleta compartida por el formulario, dialogos, tablas e iconos.
@@ -1290,10 +1519,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        PRINCIPAL ventana = new PRINCIPAL();
-        ventana.setVisible(true); // 👉 abre la nueva ventana
-        
-        this.dispose(); // 👉 cierra el login
+        mostrarDirectorioProveedores();
     }//GEN-LAST:event_jButton6ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
@@ -2210,6 +2436,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
                         : "Historial de \u00d3rdenes de Compra - " + idProveedor,
                 true);
         dialogoRef[0] = dialogo;
+        dialogo.setUndecorated(true);
+        dialogo.getRootPane().setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO));
         dialogo.getContentPane().add(contenedorPrincipal);
         dialogo.setResizable(true);
         dialogo.pack();
@@ -4279,6 +4507,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
         try (java.nio.channels.SeekableByteChannel canal = java.nio.file.Files.newByteChannel(
                 archivoRegistro.toPath(), java.nio.file.StandardOpenOption.WRITE)) {
             // Abrir el canal sin modificarlo confirma que Excel no mantiene bloqueado el archivo.
+            if (!canal.isOpen()) {
+                throw new IOException("No se pudo abrir REGISTRORECIBIR.xlsx.");
+            }
         } catch (IOException ex) {
             throw new IOException("Cierra REGISTRORECIBIR.xlsx antes de registrar la recepción.", ex);
         }

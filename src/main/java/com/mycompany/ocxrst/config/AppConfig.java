@@ -12,6 +12,7 @@ public final class AppConfig {
     private static final Path DATA_DIR = PROJECT_ROOT.resolve("data");
     private static final Path BASES_DIR = DATA_DIR.resolve("BASES");
     private static final Path RECURSOS_DIR = DATA_DIR.resolve("RECURSOS");
+    private static final Path ICONOS_DIR = DATA_DIR.resolve("ICONOS");
 
     private AppConfig() {
     }
@@ -117,6 +118,10 @@ public final class AppConfig {
 
     public static File getBasesDir() {
         return BASES_DIR.toFile();
+    }
+
+    public static File iconoFile(String fileName) {
+        return ICONOS_DIR.resolve(fileName).toFile();
     }
 
     public static File resolveBaseFile(String fileName) {

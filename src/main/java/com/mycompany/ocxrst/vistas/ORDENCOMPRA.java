@@ -683,7 +683,26 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         acciones.add(nueva);
         acciones.add(actualizar);
         encabezado.add(acciones, java.awt.BorderLayout.EAST);
-        fondo.add(encabezado, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel resumen = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 10, 0));
+        resumen.setOpaque(false);
+        javax.swing.JLabel totalOrdenesResumen = new javax.swing.JLabel("0");
+        javax.swing.JLabel pendientesResumen = new javax.swing.JLabel("0");
+        javax.swing.JLabel procesoResumen = new javax.swing.JLabel("0");
+        javax.swing.JLabel importeResumen = new javax.swing.JLabel("$ 0.00");
+        resumen.add(crearTarjetaResumen("Total de órdenes", totalOrdenesResumen,
+                new java.awt.Color(225, 239, 255), "documento"));
+        resumen.add(crearTarjetaResumen("Pendientes de autorización", pendientesResumen,
+                new java.awt.Color(255, 242, 211), "reloj"));
+        resumen.add(crearTarjetaResumen("En proceso", procesoResumen,
+                new java.awt.Color(225, 239, 255), "configuracion"));
+        resumen.add(crearTarjetaResumen("Importe del mes", importeResumen,
+                new java.awt.Color(224, 246, 231), "dinero"));
+        javax.swing.JPanel zonaSuperior = new javax.swing.JPanel(new java.awt.BorderLayout(0, 16));
+        zonaSuperior.setOpaque(false);
+        zonaSuperior.add(encabezado, java.awt.BorderLayout.NORTH);
+        zonaSuperior.add(resumen, java.awt.BorderLayout.CENTER);
+        fondo.add(zonaSuperior, java.awt.BorderLayout.NORTH);
 
         javax.swing.JPanel tarjeta = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
         tarjeta.setBackground(java.awt.Color.WHITE);
@@ -694,27 +713,30 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         javax.swing.JPanel filtros = new javax.swing.JPanel(new java.awt.GridBagLayout());
         filtros.setOpaque(false);
         javax.swing.JTextField buscar = new javax.swing.JTextField();
-        javax.swing.JTextField fechaInicio = new javax.swing.JTextField();
-        javax.swing.JTextField fechaFin = new javax.swing.JTextField();
+        com.toedter.calendar.JDateChooser fechaInicio = crearSelectorFechaBusqueda();
+        com.toedter.calendar.JDateChooser fechaFin = crearSelectorFechaBusqueda();
+        javax.swing.JComboBox<String> estado = new javax.swing.JComboBox<>(
+                new String[]{"Todos", "Pendiente", "En proceso", "Autorizada", "Borrador"});
         buscar.setName("buscarOrden");
         fechaInicio.setName("fechaInicioOrden");
         fechaFin.setName("fechaFinOrden");
-        prepararCampoBusqueda(fechaInicio);
-        prepararCampoBusqueda(fechaFin);
-        agregarFiltroBusqueda(filtros, "Buscar", buscar, 0, 1.8);
-        agregarFiltroBusqueda(filtros, "Fecha inicio", fechaInicio, 1, 0.8);
-        agregarFiltroBusqueda(filtros, "Fecha fin", fechaFin, 2, 0.8);
+        prepararCampoBusqueda(buscar);
+        agregarFiltroBusqueda(filtros, "Buscar por folio, proveedor o proyecto", buscar, 0, 1.25);
+        agregarFiltroBusqueda(filtros, "Fecha inicio", fechaInicio, 1, 0.65);
+        agregarFiltroBusqueda(filtros, "Fecha fin", fechaFin, 2, 0.65);
+        agregarFiltroBusqueda(filtros, "Estado", estado, 3, 0.75);
         javax.swing.JButton limpiar = botonBusqueda("Limpiar filtros", false);
         limpiar.addActionListener(e -> {
             buscar.setText("");
-            fechaInicio.setText("");
-            fechaFin.setText("");
+            fechaInicio.setDate(null);
+            fechaFin.setDate(null);
+            estado.setSelectedIndex(0);
         });
-        agregarFiltroBusqueda(filtros, "", limpiar, 3, 0.7);
+        agregarFiltroBusqueda(filtros, "", limpiar, 4, 0.9);
         tarjeta.add(filtros, java.awt.BorderLayout.NORTH);
 
         javax.swing.table.DefaultTableModel modeloBusqueda = new javax.swing.table.DefaultTableModel(
-                new String[]{"NO.", "FECHA", "PROVEEDOR", "SOLICITANTE", "PROYECTO", "TOTAL", "ACCIONES"}, 0) {
+                new String[]{"FOLIO", "FECHA", "PROVEEDOR", "SOLICITANTE", "PROYECTO", "TOTAL", "ESTADO", "ACCIONES"}, 0) {
             @Override public boolean isCellEditable(int fila, int columna) { return false; }
         };
         javax.swing.JTable tabla = new javax.swing.JTable(modeloBusqueda);
@@ -732,11 +754,22 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         tabla.getColumnModel().getColumn(1).setPreferredWidth(100);
         tabla.getColumnModel().getColumn(2).setPreferredWidth(220);
         tabla.getColumnModel().getColumn(5).setPreferredWidth(110);
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(80);
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(105);
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(80);
         final int[] celdaAccionHover = {-1, -1};
         tabla.getColumnModel().getColumn(6).setCellRenderer((tablaActual, valor, seleccionado, tieneFoco, fila, columna) -> {
+            javax.swing.JLabel estadoCelda = new javax.swing.JLabel(String.valueOf(valor));
+            estadoCelda.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            estadoCelda.setOpaque(true);
+            estadoCelda.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
+            estadoCelda.setForeground(new java.awt.Color(28, 82, 132));
+            estadoCelda.setBackground(new java.awt.Color(225, 239, 255));
+            estadoCelda.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 8, 5, 8));
+            return estadoCelda;
+        });
+        tabla.getColumnModel().getColumn(7).setCellRenderer((tablaActual, valor, seleccionado, tieneFoco, fila, columna) -> {
             javax.swing.JLabel enlace = new javax.swing.JLabel();
-            boolean hover = fila == celdaAccionHover[0] && columna == celdaAccionHover[1];
+            boolean hover = fila == celdaAccionHover[0] && columna == 7;
             java.awt.Component celdaBase = tablaActual.getDefaultRenderer(Object.class)
                     .getTableCellRendererComponent(tablaActual,
                             tablaActual.getValueAt(fila, 0), seleccionado, tieneFoco, fila, 0);
@@ -754,7 +787,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
                 int fila = tabla.rowAtPoint(e.getPoint());
                 int columna = tabla.columnAtPoint(e.getPoint());
-                if (fila < 0 || columna != 6) return;
+                if (fila < 0 || columna != 7) return;
                 String numero = String.valueOf(modeloBusqueda.getValueAt(fila, 0));
                 abrirOrdenDesdeBusqueda(numero, false);
             }
@@ -772,7 +805,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 int columna = tabla.columnAtPoint(e.getPoint());
                 int filaAnterior = celdaAccionHover[0];
                 int columnaAnterior = celdaAccionHover[1];
-                if (fila >= 0 && columna == 6) {
+                if (fila >= 0 && columna == 7) {
                     celdaAccionHover[0] = fila;
                     celdaAccionHover[1] = columna;
                     tabla.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
@@ -798,12 +831,85 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         fondo.add(tarjeta, java.awt.BorderLayout.CENTER);
 
         java.beans.PropertyChangeListener actualizarTabla = e -> cargarOrdenesEnTabla(
-                buscar, fechaInicio, fechaFin, modeloBusqueda, total);
+                buscar, fechaInicio, fechaFin, estado, modeloBusqueda, total,
+                totalOrdenesResumen, pendientesResumen, procesoResumen, importeResumen);
         buscar.getDocument().addDocumentListener(documentListenerBusqueda(actualizarTabla));
-        fechaInicio.getDocument().addDocumentListener(documentListenerBusqueda(actualizarTabla));
-        fechaFin.getDocument().addDocumentListener(documentListenerBusqueda(actualizarTabla));
-        fondo.putClientProperty("controlesBusqueda", new Object[]{buscar, fechaInicio, fechaFin, modeloBusqueda, total});
+        fechaInicio.addPropertyChangeListener("date", actualizarTabla);
+        fechaFin.addPropertyChangeListener("date", actualizarTabla);
+        estado.addActionListener(e -> actualizarTabla.propertyChange(null));
+        fondo.putClientProperty("controlesBusqueda", new Object[]{buscar, fechaInicio, fechaFin, estado,
+            modeloBusqueda, total, totalOrdenesResumen, pendientesResumen, procesoResumen, importeResumen});
         return fondo;
+    }
+
+    private javax.swing.JPanel crearTarjetaResumen(String etiqueta, javax.swing.JLabel valor,
+            java.awt.Color fondoTarjeta, String tipoIcono) {
+        javax.swing.JPanel tarjeta = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
+        tarjeta.setBackground(java.awt.Color.WHITE);
+        tarjeta.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(224, 232, 242)),
+                javax.swing.BorderFactory.createEmptyBorder(12, 14, 12, 14)));
+        javax.swing.JPanel icono = new javax.swing.JPanel(new java.awt.BorderLayout());
+        icono.setPreferredSize(new java.awt.Dimension(42, 42));
+        icono.setBackground(fondoTarjeta);
+        icono.add(new javax.swing.JLabel(crearIconoResumen(tipoIcono,
+                new java.awt.Color(31, 112, 184))), java.awt.BorderLayout.CENTER);
+        tarjeta.add(icono, java.awt.BorderLayout.WEST);
+        javax.swing.JPanel textos = new javax.swing.JPanel();
+        textos.setOpaque(false);
+        textos.setLayout(new javax.swing.BoxLayout(textos, javax.swing.BoxLayout.Y_AXIS));
+        javax.swing.JLabel titulo = new javax.swing.JLabel(etiqueta);
+        titulo.setForeground(new java.awt.Color(93, 119, 153));
+        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        valor.setForeground(new java.awt.Color(22, 48, 88));
+        valor.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
+        textos.add(titulo);
+        textos.add(javax.swing.Box.createVerticalStrut(3));
+        textos.add(valor);
+        tarjeta.add(textos, java.awt.BorderLayout.CENTER);
+        return tarjeta;
+    }
+
+    private javax.swing.Icon crearIconoResumen(String tipo, java.awt.Color color) {
+        return new javax.swing.Icon() {
+            @Override public int getIconWidth() { return 23; }
+            @Override public int getIconHeight() { return 23; }
+
+            @Override
+            public void paintIcon(java.awt.Component componente, java.awt.Graphics graphics, int x, int y) {
+                java.awt.Graphics2D g = (java.awt.Graphics2D) graphics.create();
+                g.translate(x, y);
+                g.setColor(color);
+                g.setStroke(new java.awt.BasicStroke(1.8f,
+                        java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                if ("documento".equals(tipo)) {
+                    g.drawRoundRect(4, 2, 14, 19, 2, 2);
+                    g.drawLine(7, 7, 15, 7);
+                    g.drawLine(7, 11, 15, 11);
+                    g.drawLine(7, 15, 12, 15);
+                } else if ("reloj".equals(tipo)) {
+                    g.drawOval(2, 2, 19, 19);
+                    g.drawLine(11, 6, 11, 12);
+                    g.drawLine(11, 12, 15, 15);
+                } else if ("configuracion".equals(tipo)) {
+                    g.drawOval(5, 5, 12, 12);
+                    for (int i = 0; i < 8; i++) {
+                        double angulo = i * Math.PI / 4;
+                        int x1 = 11 + (int) (8 * Math.cos(angulo));
+                        int y1 = 11 + (int) (8 * Math.sin(angulo));
+                        int x2 = 11 + (int) (10 * Math.cos(angulo));
+                        int y2 = 11 + (int) (10 * Math.sin(angulo));
+                        g.drawLine(x1, y1, x2, y2);
+                    }
+                } else {
+                    g.drawOval(3, 2, 17, 19);
+                    g.drawString("$", 8, 17);
+                }
+                g.dispose();
+            }
+        };
     }
 
     private javax.swing.JButton botonBusqueda(String texto, boolean principal) {
@@ -817,8 +923,23 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         return boton;
     }
 
-    private void prepararCampoBusqueda(javax.swing.JTextField campo) {
-        campo.setToolTipText("Formato: dd/MM/yyyy");
+    private void prepararCampoBusqueda(javax.swing.JComponent campo) {
+        if (campo instanceof javax.swing.JTextField) {
+            campo.setToolTipText("Buscar por folio, proveedor o proyecto");
+            campo.setBackground(java.awt.Color.WHITE);
+            campo.setOpaque(true);
+            javax.swing.border.Border bordeNativo = new javax.swing.border.BevelBorder(
+                    javax.swing.border.BevelBorder.LOWERED,
+                    new java.awt.Color(250, 250, 250),
+                    new java.awt.Color(225, 225, 225),
+                    new java.awt.Color(135, 135, 135),
+                    new java.awt.Color(170, 170, 170));
+            campo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                    bordeNativo,
+                    javax.swing.BorderFactory.createEmptyBorder(4, 9, 4, 9)));
+            campo.setPreferredSize(new java.awt.Dimension(0, 28));
+            return;
+        }
         campo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
                 javax.swing.BorderFactory.createLineBorder(new java.awt.Color(198, 210, 225)),
                 javax.swing.BorderFactory.createEmptyBorder(7, 9, 7, 9)));
@@ -835,7 +956,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         envoltura.add(campo, java.awt.BorderLayout.CENTER);
         java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
         gbc.gridx = columna; gbc.gridy = 0; gbc.weightx = peso; gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gbc.insets = new java.awt.Insets(0, 0, 0, 10);
+        gbc.insets = new java.awt.Insets(0, 0, 0, columna == 4 ? 0 : 10);
         panel.add(envoltura, gbc);
     }
 
@@ -848,20 +969,42 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         };
     }
 
+    private com.toedter.calendar.JDateChooser crearSelectorFechaBusqueda() {
+        com.toedter.calendar.JDateChooser selector = new com.toedter.calendar.JDateChooser();
+        selector.setLocale(java.util.Locale.forLanguageTag("es-MX"));
+        selector.setDateFormatString("d MMM yyyy");
+        selector.setPreferredSize(new java.awt.Dimension(155, 28));
+        selector.setMinimumSize(new java.awt.Dimension(155, 28));
+        selector.setToolTipText("Selecciona una fecha");
+        return selector;
+    }
+
     private void cargarOrdenesEnBusqueda() {
         if (panelBusquedaOrdenes == null) return;
         Object[] controles = (Object[]) panelBusquedaOrdenes.getClientProperty("controlesBusqueda");
-        cargarOrdenesEnTabla((javax.swing.JTextField) controles[0], (javax.swing.JTextField) controles[1],
-                (javax.swing.JTextField) controles[2], (javax.swing.table.DefaultTableModel) controles[3],
-                (javax.swing.JLabel) controles[4]);
+        cargarOrdenesEnTabla((javax.swing.JTextField) controles[0],
+                (com.toedter.calendar.JDateChooser) controles[1],
+                (com.toedter.calendar.JDateChooser) controles[2],
+                (javax.swing.JComboBox<?>) controles[3],
+                (javax.swing.table.DefaultTableModel) controles[4], (javax.swing.JLabel) controles[5],
+                (javax.swing.JLabel) controles[6], (javax.swing.JLabel) controles[7],
+                (javax.swing.JLabel) controles[8], (javax.swing.JLabel) controles[9]);
     }
 
-    private void cargarOrdenesEnTabla(javax.swing.JTextField buscar, javax.swing.JTextField fechaInicio,
-            javax.swing.JTextField fechaFin, javax.swing.table.DefaultTableModel modelo, javax.swing.JLabel total) {
+    private void cargarOrdenesEnTabla(javax.swing.JTextField buscar,
+            com.toedter.calendar.JDateChooser fechaInicio,
+            com.toedter.calendar.JDateChooser fechaFin, javax.swing.JComboBox<?> estadoFiltro,
+            javax.swing.table.DefaultTableModel modelo, javax.swing.JLabel total,
+            javax.swing.JLabel totalResumen, javax.swing.JLabel pendientesResumen,
+            javax.swing.JLabel procesoResumen, javax.swing.JLabel importeResumen) {
         modelo.setRowCount(0);
         String texto = buscar.getText().trim().toLowerCase(java.util.Locale.ROOT);
-        java.util.Date inicio = parsearFechaBusqueda(fechaInicio.getText());
-        java.util.Date fin = parsearFechaBusqueda(fechaFin.getText());
+        java.util.Date inicio = fechaInicio.getDate();
+        java.util.Date fin = fechaFin.getDate();
+        String estadoSeleccionado = String.valueOf(estadoFiltro.getSelectedItem());
+        int pendientes = 0;
+        int enProceso = 0;
+        double importeMes = 0;
         java.io.File archivo = new java.io.File(RUTA_REGISTROC);
         if (archivo.isFile()) {
             try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
@@ -873,12 +1016,23 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     String solicitante = dataFormatter.formatCellValue(fila.getCell(6)).trim();
                     String proyecto = dataFormatter.formatCellValue(fila.getCell(7)).trim();
                     String totalOrden = dataFormatter.formatCellValue(fila.getCell(21)).trim();
+                    String estado = dataFormatter.formatCellValue(fila.getCell(23)).trim();
                     java.util.Date fechaOrden = leerFechaCelda(fila.getCell(1));
                     String datos = (numero + " " + proveedor + " " + solicitante + " " + proyecto).toLowerCase(java.util.Locale.ROOT);
                     if (!texto.isEmpty() && !datos.contains(texto)) continue;
                     if (inicio != null && (fechaOrden == null || fechaOrden.before(inicio))) continue;
                     if (fin != null && (fechaOrden == null || fechaOrden.after(fin))) continue;
-                    modelo.addRow(new Object[]{numero, fecha, proveedor, solicitante, proyecto, totalOrden, "VER"});
+                    if (!"Todos".equals(estadoSeleccionado)
+                            && !estado.equalsIgnoreCase(estadoSeleccionado)) continue;
+                    modelo.addRow(new Object[]{numero, fecha, proveedor, solicitante, proyecto,
+                        totalOrden, estado.isEmpty() ? "Borrador" : estado, "VER"});
+                    if ("PENDIENTE".equalsIgnoreCase(estado)) pendientes++;
+                    if ("EN PROCESO".equalsIgnoreCase(estado)) enProceso++;
+                    try {
+                        importeMes += Double.parseDouble(totalOrden.replace("$", "").replace(",", "").trim());
+                    } catch (NumberFormatException ignored) {
+                        logger.fine("El total de la orden no es numérico: " + totalOrden);
+                    }
                 }
             } catch (IOException ex) {
                 logger.log(java.util.logging.Level.WARNING, "No se pudieron cargar las órdenes para búsqueda.", ex);
@@ -887,6 +1041,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
         }
         total.setText("Total: " + modelo.getRowCount() + " registros");
+        totalResumen.setText(String.valueOf(modelo.getRowCount()));
+        pendientesResumen.setText(String.valueOf(pendientes));
+        procesoResumen.setText(String.valueOf(enProceso));
+        importeResumen.setText(String.format(java.util.Locale.US, "$ %,.2f", importeMes));
     }
 
     private String nombreProveedor(String id) {
@@ -894,17 +1052,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             if (proveedor[0].equalsIgnoreCase(id)) return proveedor[1];
         }
         return id;
-    }
-
-    private java.util.Date parsearFechaBusqueda(String texto) {
-        if (texto == null || texto.trim().isEmpty()) return null;
-        try {
-            SimpleDateFormat formato = new SimpleDateFormat("dd/MM/yyyy");
-            formato.setLenient(false);
-            return formato.parse(texto.trim());
-        } catch (java.text.ParseException ex) {
-            return null;
-        }
     }
 
     private void abrirNuevaOrden() {
@@ -1198,7 +1345,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jLabel27.setForeground(new java.awt.Color(0, 95, 131));
         jLabel27.setText("FECHA DE PAGO:");
 
-        java.util.Locale localeFechas = new java.util.Locale("es", "MX");
+        java.util.Locale localeFechas = java.util.Locale.forLanguageTag("es-MX");
         jDateChooser2.setLocale(localeFechas);
         jDateChooserEntrega.setLocale(localeFechas);
         jDateChooserPago.setLocale(localeFechas);
@@ -3522,7 +3669,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private String formatearFecha(java.util.Date fecha) {
-        return fecha == null ? "" : new SimpleDateFormat("d MMM yyyy", new Locale("es", "MX")).format(fecha);
+        return fecha == null ? "" : new SimpleDateFormat("d MMM yyyy", Locale.forLanguageTag("es-MX")).format(fecha);
     }
 
     // =====================================================================

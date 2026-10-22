@@ -78,8 +78,6 @@ public class USUARIOS extends javax.swing.JFrame {
 
         javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout());
         barra.setOpaque(false);
-        prepararBotonAtras(jButton6);
-        barra.add(jButton6, java.awt.BorderLayout.WEST);
         javax.swing.JLabel registro = new javax.swing.JLabel("REGISTRO DE USUARIO");
         registro.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
         registro.setForeground(COLOR_AZUL_OSCURO);

@@ -3,11 +3,13 @@ package com.mycompany.ocxrst.vistas;
 import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.model.Tarea;
 import com.mycompany.ocxrst.repository.TareaRepository;
+import com.toedter.calendar.JDateChooser;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.*;
@@ -28,8 +30,8 @@ public class MESATRABAJO extends javax.swing.JFrame {
     private final JComboBox<String> estado = new JComboBox<>(new String[]{"Todos", "Pendiente", "En proceso", "Completada", "Cancelada"});
     private final JComboBox<String> prioridad = new JComboBox<>(new String[]{"Todas", "Alta", "Media", "Baja"});
     private final JComboBox<String> responsable = new JComboBox<>(new String[]{"Todos"});
-    private final JTextField fechaInicio = new JTextField();
-    private final JTextField fechaFin = new JTextField();
+    private final JDateChooser fechaInicio = crearSelectorFecha();
+    private final JDateChooser fechaFin = crearSelectorFecha();
     private final JLabel totalRegistros = new JLabel();
     private List<Tarea> tareas = List.of();
     private JPanel contenedorVista;
@@ -75,8 +77,6 @@ public class MESATRABAJO extends javax.swing.JFrame {
         agregarFiltro(filtros, campoFiltro("Estado", estado), gbc, 1, 0.65);
         agregarFiltro(filtros, campoFiltro("Prioridad", prioridad), gbc, 2, 0.65);
         agregarFiltro(filtros, campoFiltro("Responsable", responsable), gbc, 3, 0.75);
-        prepararFecha(fechaInicio, "dd/mm/aaaa");
-        prepararFecha(fechaFin, "dd/mm/aaaa");
         agregarFiltro(filtros, campoFiltro("Fecha inicio", fechaInicio), gbc, 4, 0.7);
         agregarFiltro(filtros, campoFiltro("Fecha fin", fechaFin), gbc, 5, 0.7);
         buscar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
@@ -87,8 +87,8 @@ public class MESATRABAJO extends javax.swing.JFrame {
         estado.addActionListener(e -> refrescarTabla());
         prioridad.addActionListener(e -> refrescarTabla());
         responsable.addActionListener(e -> refrescarTabla());
-        fechaInicio.getDocument().addDocumentListener(documentListener());
-        fechaFin.getDocument().addDocumentListener(documentListener());
+        fechaInicio.addPropertyChangeListener("date", e -> refrescarTabla());
+        fechaFin.addPropertyChangeListener("date", e -> refrescarTabla());
         tarjeta.add(filtros, BorderLayout.NORTH);
         configurarTabla();
         tarjeta.add(new JScrollPane(tabla), BorderLayout.CENTER);
@@ -111,21 +111,13 @@ public class MESATRABAJO extends javax.swing.JFrame {
         panel.add(componente, gbc);
     }
 
-    private void prepararFecha(JTextField campo, String textoInicial) {
-        campo.setToolTipText("Formato: dd/MM/yyyy");
-        campo.setText("");
-        campo.putClientProperty("textoInicial", textoInicial);
-        campo.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(198, 210, 225)),
-                BorderFactory.createEmptyBorder(7, 9, 7, 9)));
-    }
-
-    private javax.swing.event.DocumentListener documentListener() {
-        return new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { refrescarTabla(); }
-        };
+    private JDateChooser crearSelectorFecha() {
+        JDateChooser selector = new JDateChooser();
+        selector.setLocale(Locale.forLanguageTag("es-MX"));
+        selector.setDateFormatString("d MMM yyyy");
+        selector.setPreferredSize(new Dimension(0, 28));
+        selector.setToolTipText("Selecciona una fecha");
+        return selector;
     }
 
     private JPanel campoFiltro(String texto, JComponent campo) {
@@ -196,14 +188,9 @@ public class MESATRABAJO extends javax.swing.JFrame {
         totalRegistros.setText("Total: " + modelo.getRowCount() + " registros");
     }
 
-    private LocalDate leerFecha(JTextField campo) {
-        String valor = campo.getText().trim();
-        if (valor.isEmpty()) return null;
-        try {
-            return LocalDate.parse(valor, FECHA);
-        } catch (java.time.format.DateTimeParseException ex) {
-            return null;
-        }
+    private LocalDate leerFecha(JDateChooser campo) {
+        if (campo.getDate() == null) return null;
+        return campo.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
     private void nuevaTarea(Tarea tarea) {

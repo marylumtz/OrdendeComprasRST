@@ -15,11 +15,9 @@ import java.awt.Font;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.Insets;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +35,6 @@ import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -46,7 +43,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
     private static boolean alertaEntregasMostradaEnSesion;
     private static final DataFormatter FORMATEADOR = new DataFormatter();
     private static final Color AZUL = new Color(30, 57, 130);
-    private static final Color AZUL_MENU = new Color(0x01, 0x45, 0xAB);
     private static final Color TEXTO = new Color(38, 52, 88);
     private final ProveedorRepository proveedorRepository = new ProveedorRepository();
     private final ActividadRepository actividadRepository = new ActividadRepository();
@@ -908,7 +904,8 @@ public class PRINCIPAL extends javax.swing.JFrame {
 
     private void actualizarFechaHora() {
         etiquetaFechaHora.setText(java.time.LocalDateTime.now().format(
-                DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM 'de' uuuu | HH:mm", new Locale("es", "MX"))));
+                DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM 'de' uuuu | HH:mm",
+                        Locale.forLanguageTag("es-MX"))));
     }
 
     private JPanel crearPanelConFondo() {
@@ -1081,10 +1078,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
                 }
             }
         });
-    }
-
-    private void mostrarMensaje(String mensaje, int tipo) {
-        javax.swing.JOptionPane.showMessageDialog(this, mensaje, "RST", tipo);
     }
 
     public static void main(String[] args) {

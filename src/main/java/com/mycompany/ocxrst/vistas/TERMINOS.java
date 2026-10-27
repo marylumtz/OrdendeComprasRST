@@ -31,6 +31,7 @@ public class TERMINOS extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         cargarTerminos();
         jButton2.addActionListener(this::jButton2ActionPerformed);
+        EstiloAplicacion.aplicarEstiloBotones(getContentPane());
     }
 
     /** Lee el contenido y lo muestra en el panel de texto. */

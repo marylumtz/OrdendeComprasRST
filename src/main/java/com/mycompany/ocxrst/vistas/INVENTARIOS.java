@@ -37,6 +37,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private int filaInventarioActual = -1;
     private String rutaImagenActual = "";
     private final java.util.List<String[]> filasProveedorProducto = new java.util.ArrayList<>();
+    private static final File CARPETA_FOTOS_PRODUCTO = new File("C:\\OCXRST\\FOTOSPRODUCT");
+    private String rutaImagenAutomaticaActual = "";
 
     // Caché de productos existentes (código | descripción) para el autocompletado del campo CÓDIGO.
     private final java.util.List<String[]> cacheProductos = new java.util.ArrayList<>();
@@ -323,14 +325,15 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private javax.swing.JPanel crearRecuadroImagen() {
         etiquetaImagen.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         etiquetaImagen.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
-        etiquetaImagen.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        etiquetaImagen.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
         etiquetaImagen.setForeground(COLOR_AZUL);
         etiquetaImagen.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         etiquetaImagen.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         etiquetaImagen.setOpaque(true);
         etiquetaImagen.setBackground(COLOR_AZUL_PALIDO);
         etiquetaImagen.setBorder(new BordeRedondeado(10, COLOR_BORDE_CAMPO, 1.2f));
-        etiquetaImagen.setPreferredSize(new java.awt.Dimension(120, 88));
+        etiquetaImagen.setPreferredSize(new java.awt.Dimension(160, 100));
+        etiquetaImagen.setMinimumSize(new java.awt.Dimension(160, 100));
         etiquetaImagen.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
         etiquetaImagen.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -502,16 +505,59 @@ public class INVENTARIOS extends javax.swing.JFrame {
 
     // ===================== Imagen del producto =====================
     private void seleccionarImagen() {
-        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
-        selector.setDialogTitle("Selecciona una imagen del producto");
-        selector.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-                "Im\u00e1genes (PNG, JPG)", "png", "jpg", "jpeg"));
-        int resultado = selector.showOpenDialog(this);
-        if (resultado == javax.swing.JFileChooser.APPROVE_OPTION) {
-            rutaImagenActual = selector.getSelectedFile().getAbsolutePath();
+        java.awt.FileDialog selector = new java.awt.FileDialog(
+                this, "Abrir imagen del producto", java.awt.FileDialog.LOAD);
+        selector.setFilenameFilter((directorio, nombre) -> {
+            String nombreMinusculas = nombre.toLowerCase(java.util.Locale.ROOT);
+            return nombreMinusculas.endsWith(".png")
+                    || nombreMinusculas.endsWith(".jpg")
+                    || nombreMinusculas.endsWith(".jpeg");
+        });
+        selector.setVisible(true);
+        if (selector.getFile() != null && selector.getDirectory() != null) {
+            rutaImagenActual = new File(selector.getDirectory(), selector.getFile()).getAbsolutePath();
+            rutaImagenAutomaticaActual = "";
             actualizarPreviewImagen();
         }
     }//seleccionarImagen
+
+    private void actualizarImagenPorCodigo() {
+        String codigo = jTextField1.getText().trim();
+        File imagenEncontrada = buscarImagenPorCodigo(codigo);
+        if (imagenEncontrada != null) {
+            rutaImagenActual = imagenEncontrada.getAbsolutePath();
+            rutaImagenAutomaticaActual = rutaImagenActual;
+            actualizarPreviewImagen();
+        } else if (rutaImagenActual.equals(rutaImagenAutomaticaActual)) {
+            rutaImagenActual = "";
+            rutaImagenAutomaticaActual = "";
+            actualizarPreviewImagen();
+        }
+    }//actualizarImagenPorCodigo
+
+    private File buscarImagenPorCodigo(String codigo) {
+        if (codigo.isEmpty() || !CARPETA_FOTOS_PRODUCTO.isDirectory()) {
+            return null;
+        }
+        File[] archivos = CARPETA_FOTOS_PRODUCTO.listFiles((directorio, nombre) -> {
+            String nombreMinusculas = nombre.toLowerCase(java.util.Locale.ROOT);
+            return nombreMinusculas.endsWith(".png")
+                    || nombreMinusculas.endsWith(".jpg")
+                    || nombreMinusculas.endsWith(".jpeg");
+        });
+        if (archivos == null) {
+            return null;
+        }
+        for (File archivo : archivos) {
+            String nombre = archivo.getName();
+            int punto = nombre.lastIndexOf('.');
+            String nombreSinExtension = punto > 0 ? nombre.substring(0, punto) : nombre;
+            if (nombreSinExtension.equalsIgnoreCase(codigo)) {
+                return archivo;
+            }
+        }
+        return null;
+    }//buscarImagenPorCodigo
 
     private void actualizarPreviewImagen() {
         if (rutaImagenActual == null || rutaImagenActual.isBlank()) {
@@ -849,16 +895,19 @@ public class INVENTARIOS extends javax.swing.JFrame {
             @Override
             public void insertUpdate(javax.swing.event.DocumentEvent e) {
                 filtrarProductos();
+                actualizarImagenPorCodigo();
             }
 
             @Override
             public void removeUpdate(javax.swing.event.DocumentEvent e) {
                 filtrarProductos();
+                actualizarImagenPorCodigo();
             }
 
             @Override
             public void changedUpdate(javax.swing.event.DocumentEvent e) {
                 filtrarProductos();
+                actualizarImagenPorCodigo();
             }
         });
 
@@ -931,11 +980,11 @@ public class INVENTARIOS extends javax.swing.JFrame {
         seleccionandoProducto = true;
         try {
             jTextField1.setText(codigo);
+            cargarProductoPorCodigo(codigo);
         } finally {
-            seleccionandoProducto = false;
             ocultarListaProductos();
+            seleccionandoProducto = false;
         }
-        cargarProductoPorCodigo(codigo);
         javax.swing.SwingUtilities.invokeLater(this::ocultarListaProductos);
     }//seleccionarProductoDesdeLista
 
@@ -958,6 +1007,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
                     return;
                 }
                 cargarFilaEnFormulario(fila);
+                actualizarImagenPorCodigo();
                 filaInventarioActual = filaIndex;
                 etiquetaId.setText("ID: " + codigo);
                 refrescarTablaProveedoresProducto(codigo);
@@ -1012,6 +1062,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
         campoStockMinimo.setText(leerCelda(fila, 8));
         areaObservaciones.setText(leerCelda(fila, 9));
         rutaImagenActual = leerCelda(fila, 10);
+        rutaImagenAutomaticaActual = "";
         actualizarPreviewImagen();
     }//cargarFilaEnFormulario
 
@@ -1043,6 +1094,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
         campoStockMinimo.setText("");
         areaObservaciones.setText("");
         rutaImagenActual = "";
+        rutaImagenAutomaticaActual = "";
         actualizarPreviewImagen();
         comboEstado.setSelectedIndex(0);
         filaInventarioActual = -1;
@@ -1149,6 +1201,9 @@ public class INVENTARIOS extends javax.swing.JFrame {
         boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
                 new BordeRedondeado(9, colorBorde, 1.4f),
                 javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
+        int ancho = texto != null && texto.contains("Agregar") ? 150 : 140;
+        boton.setPreferredSize(new java.awt.Dimension(ancho, 38));
+        boton.setMinimumSize(new java.awt.Dimension(ancho, 38));
         boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
     }//prepararBoton
 
@@ -1376,13 +1431,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
             g2.draw(lapiz);
         });
     }//iconoEditar
-
-    private static javax.swing.Icon iconoChevronIzquierda(java.awt.Color color) {
-        return new VectorIcon(10, color, (g2, t) -> {
-            g2.drawLine(t - 3, 1, 2, t / 2);
-            g2.drawLine(2, t / 2, t - 3, t - 1);
-        });
-    }//iconoChevronIzquierda
 
     private static javax.swing.Icon iconoCampo(java.awt.Color color) {
         return new VectorIcon(15, color, (g2, t) -> {

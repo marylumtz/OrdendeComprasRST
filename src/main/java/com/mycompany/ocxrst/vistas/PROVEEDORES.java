@@ -330,6 +330,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         cargarCacheProveedores();
         configurarAutocompleteNombre();
         configurarEventos();
+        EstiloAplicacion.aplicarEstiloBotones(jPanel1);
     }
 
     private void configurarVistasProveedores() {
@@ -378,9 +379,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
             @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
             @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
         });
-        javax.swing.JButton buscar = botonDirectorio("BUSCAR", iconoBuscar(java.awt.Color.WHITE), COLOR_AZUL,
-                java.awt.Color.WHITE);
-        buscar.addActionListener(e -> cargarDirectorioProveedores());
         javax.swing.JButton limpiar = botonDirectorio("LIMPIAR", iconoHistorial(COLOR_AZUL),
                 java.awt.Color.WHITE, COLOR_AZUL);
         limpiar.addActionListener(e -> buscarDirectorio.setText(""));
@@ -388,7 +386,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         javax.swing.JPanel accionesBusqueda = new javax.swing.JPanel(new java.awt.FlowLayout(
                 java.awt.FlowLayout.RIGHT, 8, 0));
         accionesBusqueda.setOpaque(false);
-        accionesBusqueda.add(buscar);
         accionesBusqueda.add(limpiar);
         busqueda.add(accionesBusqueda, java.awt.BorderLayout.EAST);
         contenido.add(busqueda, java.awt.BorderLayout.NORTH);
@@ -544,10 +541,17 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }
 
     private void abrirProveedorDesdeDirectorio(int fila) {
+        String id = String.valueOf(modeloDirectorio.getValueAt(fila, 0));
         String nombre = String.valueOf(modeloDirectorio.getValueAt(fila, 1));
         String rfc = String.valueOf(modeloDirectorio.getValueAt(fila, 2));
-        jTextField1.setText(nombre);
-        jTextField2.setText(rfc);
+        seleccionandoProveedor = true;
+        try {
+            jTextFieldId.setText(id);
+            jTextField1.setText(nombre);
+            jTextField2.setText(rfc);
+        } finally {
+            seleccionandoProveedor = false;
+        }
         vistasLayout.show(vistasProveedores, "FORMULARIO");
         buscarProveedor();
     }
@@ -581,18 +585,37 @@ public class PROVEEDORES extends javax.swing.JFrame {
         tarjeta.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 22, 16, 22));
         tarjeta.setLayout(new java.awt.BorderLayout(0, 14));
 
-        javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout());
-        barra.setOpaque(false);
+        javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        barra.setBackground(COLOR_AZUL_OSCURO);
+        barra.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 16, 10, 12));
 
-        javax.swing.JLabel registro = new javax.swing.JLabel("REGISTRO DE PROVEEDOR",
-                iconoEdificio(COLOR_AZUL_OSCURO, 20), javax.swing.SwingConstants.LEFT);
-        registro.setIconTextGap(8);
-        registro.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
-        registro.setForeground(COLOR_AZUL_OSCURO);
-        javax.swing.JPanel contenedorRegistro = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
-        contenedorRegistro.setOpaque(false);
-        contenedorRegistro.add(registro);
-        barra.add(contenedorRegistro, java.awt.BorderLayout.WEST);
+        javax.swing.JLabel icono = new javax.swing.JLabel(iconoEdificio(java.awt.Color.WHITE, 24));
+        javax.swing.JLabel titulo = new javax.swing.JLabel("Proveedor");
+        titulo.setForeground(java.awt.Color.WHITE);
+        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+        javax.swing.JLabel descripcion = new javax.swing.JLabel(
+                "Consulta y actualiza la información del proveedor.");
+        descripcion.setForeground(new java.awt.Color(225, 237, 255));
+        descripcion.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        javax.swing.JPanel textos = new javax.swing.JPanel();
+        textos.setOpaque(false);
+        textos.setLayout(new javax.swing.BoxLayout(textos, javax.swing.BoxLayout.Y_AXIS));
+        textos.add(titulo);
+        textos.add(descripcion);
+        barra.add(icono, java.awt.BorderLayout.WEST);
+        barra.add(textos, java.awt.BorderLayout.CENTER);
+
+        jButton6.setText("<html><u>ATRÁS</u></html>");
+        jButton6.setIcon(iconoChevronIzquierda(java.awt.Color.WHITE));
+        jButton6.setIconTextGap(6);
+        jButton6.setBorderPainted(false);
+        jButton6.setContentAreaFilled(false);
+        jButton6.setFocusPainted(false);
+        jButton6.setForeground(java.awt.Color.WHITE);
+        jButton6.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        jButton6.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        jButton6.setToolTipText("Volver al directorio de proveedores");
+        barra.add(jButton6, java.awt.BorderLayout.EAST);
         tarjeta.add(barra, java.awt.BorderLayout.NORTH);
 
         javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
@@ -1812,7 +1835,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 asegurarEncabezados(hoja);
 
                 int filaIndex = -1;
-                if (!nombre.isEmpty()) {
+                String id = jTextFieldId.getText().trim();
+                if (!id.isEmpty()) {
+                    filaIndex = buscarFilaProveedorPorId(hoja, id);
+                }
+                if (filaIndex < 0 && !nombre.isEmpty()) {
                     filaIndex = buscarFilaProveedorPorNombre(hoja, nombre);
                 }
                 if (filaIndex < 0 && !rfc.isEmpty()) {
@@ -1834,11 +1861,16 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     return;
                 }
 
-                cargarFilaEnFormulario(fila);
-                cargarCuentasBancariasFormulario(libro, leerCelda(fila, 0));
-                carpetaPdfProveedorActual = leerCelda(fila, COLUMNA_CARPETA_PDF);
-                archivosPdfPendientes.clear();
-                refrescarListaPdf(carpetaPdfProveedorActual);
+                seleccionandoProveedor = true;
+                try {
+                    cargarFilaEnFormulario(fila);
+                    cargarCuentasBancariasFormulario(libro, leerCelda(fila, 0));
+                    carpetaPdfProveedorActual = leerCelda(fila, COLUMNA_CARPETA_PDF);
+                    archivosPdfPendientes.clear();
+                    refrescarListaPdf(carpetaPdfProveedorActual);
+                } finally {
+                    seleccionandoProveedor = false;
+                }
                 filaProveedorActual = filaIndex;
 
                 String estado = normalizarEstado(leerCelda(fila, 11));
@@ -5277,7 +5309,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
             }
         }
 
-        if (count > 0) {
+        if (count > 0 && jTextField1.isShowing()) {
             popupProveedores.show(jTextField1, 0, jTextField1.getHeight());
             jTextField1.requestFocusInWindow();
         }

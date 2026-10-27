@@ -234,11 +234,20 @@ public class USUARIOS extends javax.swing.JFrame {
         boton.setBackground(fondo);
         boton.setForeground(textoColor);
         boton.setFocusPainted(false);
+        boton.setUI(new BotonPlanoUI());
+        boton.setContentAreaFilled(false);
+        boton.setOpaque(false);
+        boton.setRolloverEnabled(true);
+        boton.setBorderPainted(false);
         boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(fondo.equals(java.awt.Color.WHITE) ? COLOR_BORDE : fondo),
-                javax.swing.BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+                new BordeRedondeado(9, fondo.equals(java.awt.Color.WHITE) ? COLOR_BORDE : fondo, 1.4f),
+                javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
+        boton.setPreferredSize(new java.awt.Dimension(110, 38));
+        boton.setMinimumSize(new java.awt.Dimension(110, 38));
+        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
     }
 
+    @SuppressWarnings("unused")
     private void prepararBotonAtras(javax.swing.JButton boton) {
         boton.setUI(new BotonPlanoUI());
         boton.setText("ATRÁS");

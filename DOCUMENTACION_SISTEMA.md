@@ -28,7 +28,7 @@
 - ✅ Términos y condiciones de la empresa
 
 **Tecnologías utilizadas:**
-- **Lenguaje:** Java 25+
+- **Lenguaje:** Java 17
 - **Interfaz:** Swing (GUI de escritorio)
 - **Base de datos:** Archivos Excel (.xlsx)
 - **Generación de PDFs:** iText 7
@@ -306,7 +306,7 @@ OrdendeComprasRST/
   - `INVENTARIOS.xlsx` - Catálogo de productos
 
 ### Características de desarrollador:
-- **Java Version:** 25+
+- **Java Version:** 17
 - **Build Tool:** Maven
 - **IDE:** NetBeans
 - **Look and Feel:** Nimbus

@@ -1,9 +1,17 @@
 package com.mycompany.ocxrst;
 
 import java.awt.Font;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
 import java.util.Locale;
+import javax.swing.AbstractButton;
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.UIManager;
+import javax.swing.border.AbstractBorder;
+import javax.swing.plaf.basic.BasicButtonUI;
 
 public final class EstiloAplicacion {
 
@@ -52,5 +60,70 @@ public final class EstiloAplicacion {
         selector.setLocale(LOCALE_ES);
         selector.updateUI();
         return selector;
+    }
+
+    /**
+     * Applies the shared button language used throughout the application.
+     * Existing non-white backgrounds identify primary actions; all other
+     * buttons use the outlined secondary variant.
+     */
+    public static void aplicarEstiloBotones(Container raiz) {
+        for (Component componente : raiz.getComponents()) {
+            if (componente instanceof JButton boton) {
+                estilizarBoton(boton);
+            }
+            if (componente instanceof Container contenedor) {
+                aplicarEstiloBotones(contenedor);
+            }
+        }
+    }
+
+    private static void estilizarBoton(AbstractButton boton) {
+        Color fondoOriginal = boton.getBackground();
+        boolean primario = fondoOriginal != null
+                && fondoOriginal.getAlpha() > 0
+                && !esClaro(fondoOriginal);
+        Color azul = new Color(31, 112, 184);
+
+        boton.setUI(new BasicButtonUI());
+        boton.setOpaque(true);
+        boton.setContentAreaFilled(true);
+        boton.setFocusPainted(false);
+        boton.setRolloverEnabled(true);
+        boton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        boton.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        boton.setForeground(primario ? Color.WHITE : azul);
+        boton.setBackground(primario ? azul : Color.WHITE);
+        boton.setBorder(new BordeBoton(8, primario ? azul : azul, 1.4f));
+        boton.setMargin(new java.awt.Insets(9, 16, 9, 16));
+    }
+
+    private static boolean esClaro(Color color) {
+        return color.getRed() > 220 && color.getGreen() > 220 && color.getBlue() > 220;
+    }
+
+    private static final class BordeBoton extends AbstractBorder {
+        private final int radio;
+        private final Color color;
+        private final float grosor;
+
+        private BordeBoton(int radio, Color color, float grosor) {
+            this.radio = radio;
+            this.color = color;
+            this.grosor = grosor;
+        }
+
+        @Override
+        public void paintBorder(Component componente, java.awt.Graphics graphics,
+                int x, int y, int width, int height) {
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
+            try {
+                g2.setColor(color);
+                g2.setStroke(new java.awt.BasicStroke(grosor));
+                g2.drawRoundRect(x + 1, y + 1, width - 3, height - 3, radio, radio);
+            } finally {
+                g2.dispose();
+            }
+        }
     }
 }

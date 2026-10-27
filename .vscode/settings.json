@@ -1,22 +1,18 @@
 {
-    "java.debug.settings.onBuildFailureProceed": true,
+    "java.debug.settings.onBuildFailureProceed": false,
     "java.configuration.updateBuildConfiguration": "interactive",
     "java.configuration.runtimes": [
         {
-            "name": "JavaSE-25",
-            "path": "C:\\Users\\Maria_luisa\\.jdk\\jdk-25",
-            "default": true
-        },
-        {
             "name": "JavaSE-17",
-            "path": "C:\\Program Files\\Java\\jdk-17"
+            "path": "C:\\Program Files\\Java\\jdk-17",
+            "default": true
         }
     ],
-    "java.jdt.ls.java.home": "C:\\Users\\Maria_luisa\\.jdk\\jdk-25",
+    "java.jdt.ls.java.home": "C:\\Program Files\\Java\\jdk-17",
     "maven.terminal.customEnv": [
         {
             "environmentVariable": "JAVA_HOME",
-            "value": "C:\\Users\\Maria_luisa\\.jdk\\jdk-25"
+            "value": "C:\\Program Files\\Java\\jdk-17"
         }
     ]
 }

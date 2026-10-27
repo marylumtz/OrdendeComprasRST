@@ -58,11 +58,9 @@ public class MESATRABAJO extends javax.swing.JFrame {
         JPanel encabezado = new JPanel(new BorderLayout(12, 0));
         encabezado.setOpaque(false);
         JButton nueva = boton("Nueva tarea", "crear", true, e -> nuevaTarea(null));
-        JButton filtrosBoton = boton("Filtros", "filtros", false, e -> buscar.requestFocusInWindow());
-        JButton exportar = boton("Exportar", "exportar", false, e -> exportar());
-        JButton actualizar = boton("Actualizar", "actualizar", false, e -> cargar());
+        JButton actualizar = boton("ACTUALIZAR", "actualizar", false, e -> cargar());
         JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
-        acciones.setOpaque(false); acciones.add(nueva); acciones.add(filtrosBoton); acciones.add(exportar); acciones.add(actualizar);
+        acciones.setOpaque(false); acciones.add(nueva); acciones.add(actualizar);
         encabezado.add(acciones, BorderLayout.EAST); fondo.add(encabezado, BorderLayout.NORTH);
 
         JPanel tarjeta = new JPanel(new BorderLayout(0, 12));
@@ -245,13 +243,6 @@ public class MESATRABAJO extends javax.swing.JFrame {
         String usuario = INICIARSESION.usuarioActual == null ? "" : INICIARSESION.usuarioActual.trim();
         return usuario.isEmpty() ? "Usuario no identificado" : usuario;
     }
-    private void exportar() {
-        JFileChooser chooser = EstiloAplicacion.crearSelectorArchivos();
-        chooser.setDialogTitle("Guardar");
-        chooser.setSelectedFile(new java.io.File("TAREAS_EXPORTADAS.xlsx"));
-        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) try { repository.exportar(tareas, chooser.getSelectedFile().toPath()); }
-        catch (IOException ex) { error("No se pudo exportar.", ex); }
-    }
     private void error(String mensaje, Exception ex) { mostrarMensaje(mensaje + "\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); }
 
     private void mostrarMensaje(String mensaje, String titulo, int tipo) {
@@ -292,11 +283,11 @@ public class MESATRABAJO extends javax.swing.JFrame {
         }
     }
     private JButton boton(String texto, String tipoIcono, boolean principal, ActionListener accion) {
-        JButton b = new JButton(texto);
+        JButton b = new JButton(principal ? texto.toUpperCase(Locale.ROOT) : texto);
         b.setIcon(new IconoBoton(tipoIcono));
-        b.setIconTextGap(8);
+        b.setIconTextGap(principal ? 8 : 7);
         b.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        b.setPreferredSize(new Dimension(principal ? 128 : 140, 46));
+        b.setPreferredSize(new Dimension(principal ? 145 : 130, 38));
         b.setFocusPainted(false);
         b.setUI(new BotonPlanoUI());
         b.setContentAreaFilled(false);
@@ -311,7 +302,7 @@ public class MESATRABAJO extends javax.swing.JFrame {
                     BorderFactory.createEmptyBorder(9, 16, 9, 16)));
         } else {
             b.setBackground(Color.WHITE);
-            b.setForeground(AZUL);
+            b.setForeground(AZUL_CLARO);
             b.setBorder(BorderFactory.createCompoundBorder(
                     new BordeRedondeado(9, AZUL_CLARO, 1.4f),
                     BorderFactory.createEmptyBorder(9, 16, 9, 16)));

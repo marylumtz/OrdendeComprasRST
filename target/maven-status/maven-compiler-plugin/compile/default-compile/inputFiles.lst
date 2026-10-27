@@ -1,5 +1,6 @@
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\config\AppConfig.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\EstiloAplicacion.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\EstiloBotones.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\IconoVentanaUtil.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\model\Tarea.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\repository\ActividadRepository.java
@@ -17,6 +18,7 @@ C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\vistas\INVENTARIO
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\vistas\MESATRABAJO.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\vistas\NUEVATAREA.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\vistas\ORDENCOMPRA.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\vistas\PDFORDENCOMPRA.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\vistas\PRINCIPAL.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\vistas\PROVEEDORES.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\vistas\TERMINOS.java

@@ -395,14 +395,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     jPanel1.add(jButtonEditar);
     jPanel1.setComponentZOrder(jButtonEditar, 0);
     prepararBotonCabecera(jButtonEditar, "EDITAR", new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
-    jButtonFirmar = new javax.swing.JButton("FIRMAR PDF");
-    jButtonFirmar.addActionListener(e -> firmarPdf());
-    jPanel1.add(jButtonFirmar);
-    jPanel1.setComponentZOrder(jButtonFirmar, 0);
-    prepararBotonCabecera(jButtonFirmar, "FIRMAR PDF", new java.awt.Color(0, 128, 96), java.awt.Color.WHITE);
     posicionarBotonesCabecera(jPanel1.getPreferredSize().width);
-    jButtonFirmar.setBounds(732, 38, 92, 30);
-    actualizarEstadoBotonFirma();
     actualizarBotonesEdicion(false, false);
 
     jPanel1.addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -413,6 +406,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
         }
     });
+    EstiloAplicacion.aplicarEstiloBotones(getContentPane());
     }
 
     private void posicionarBotonesCabecera(int anchoPanel) {
@@ -674,7 +668,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
         encabezado.setOpaque(false);
 
-        javax.swing.JButton nueva = botonBusqueda("+  Nueva orden de compra", true);
+        javax.swing.JButton nueva = botonBusqueda("Nueva orden de compra", true);
         nueva.addActionListener(e -> abrirNuevaOrden());
         javax.swing.JButton actualizar = botonBusqueda("Actualizar", false);
         actualizar.addActionListener(e -> cargarOrdenesEnBusqueda());
@@ -913,14 +907,151 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private javax.swing.JButton botonBusqueda(String texto, boolean principal) {
-        javax.swing.JButton boton = new javax.swing.JButton(texto);
+        final java.awt.Color colorFondo = principal
+                ? new java.awt.Color(31, 112, 184) : java.awt.Color.WHITE;
+        javax.swing.JButton boton = new javax.swing.JButton(
+                texto.toUpperCase(java.util.Locale.ROOT));
         boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        boton.setIcon(principal
+                ? crearIconoMas(java.awt.Color.WHITE)
+                : crearIconoActualizar(new java.awt.Color(31, 112, 184)));
+        boton.setIconTextGap(principal ? 8 : 7);
         boton.setFocusPainted(false);
-        boton.setPreferredSize(new java.awt.Dimension(principal ? 190 : 135, 44));
-        boton.setBackground(principal ? new java.awt.Color(31, 112, 184) : java.awt.Color.WHITE);
+        boton.setUI(new BotonPlanoUIOrden());
+        boton.setPreferredSize(new java.awt.Dimension(principal ? 190 : 135, 38));
+        boton.setBackground(colorFondo);
         boton.setForeground(principal ? java.awt.Color.WHITE : new java.awt.Color(28, 82, 132));
-        boton.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(31, 112, 184), 1));
+        boton.setOpaque(false);
+        boton.setContentAreaFilled(false);
+        boton.setRolloverEnabled(true);
+        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        if (principal) {
+            boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                    new BordeBotonOrden(null, 1.4f, 9),
+                    javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
+        } else {
+            boton.setBorder(new BordeBotonOrden(
+                    new java.awt.Color(31, 112, 184), 1.4f, 9));
+        }
         return boton;
+    }
+
+    private static final class BotonPlanoUIOrden extends javax.swing.plaf.basic.BasicButtonUI {
+        @Override
+        public void paint(java.awt.Graphics graphics, javax.swing.JComponent componente) {
+            javax.swing.AbstractButton boton = (javax.swing.AbstractButton) componente;
+            javax.swing.ButtonModel modelo = boton.getModel();
+            java.awt.Color fondo = boton.getBackground();
+            if (modelo.isPressed()) {
+                fondo = mezclarColorBoton(fondo, java.awt.Color.BLACK, 0.16f);
+            } else if (modelo.isRollover()) {
+                fondo = mezclarColorBoton(fondo, java.awt.Color.BLACK, 0.07f);
+            }
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
+            try {
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(fondo);
+                g2.fillRoundRect(0, 0, componente.getWidth() - 1,
+                        componente.getHeight() - 1, 9, 9);
+            } finally {
+                g2.dispose();
+            }
+            super.paint(graphics, componente);
+        }
+    }
+
+    private static java.awt.Color mezclarColorBoton(java.awt.Color base,
+            java.awt.Color destino, float proporcion) {
+        return new java.awt.Color(
+                base.getRed() + Math.round((destino.getRed() - base.getRed()) * proporcion),
+                base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion),
+                base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion));
+    }
+
+    private javax.swing.Icon crearIconoMas(java.awt.Color color) {
+        return new javax.swing.Icon() {
+            @Override
+            public int getIconWidth() {
+                return 16;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 16;
+            }
+
+            @Override
+            public void paintIcon(java.awt.Component componente, java.awt.Graphics graphics, int x, int y) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
+                try {
+                    g2.setColor(color);
+                    g2.setStroke(new java.awt.BasicStroke(1.8f,
+                            java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+                    g2.drawLine(x + 8, y + 3, x + 8, y + 13);
+                    g2.drawLine(x + 3, y + 8, x + 13, y + 8);
+                } finally {
+                    g2.dispose();
+                }
+            }
+        };
+    }
+
+    private javax.swing.Icon crearIconoActualizar(java.awt.Color color) {
+        return new javax.swing.Icon() {
+            @Override
+            public int getIconWidth() {
+                return 16;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 16;
+            }
+
+            @Override
+            public void paintIcon(java.awt.Component componente, java.awt.Graphics graphics, int x, int y) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
+                try {
+                    g2.setColor(color);
+                    g2.setStroke(new java.awt.BasicStroke(1.8f,
+                            java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+                    g2.drawArc(x + 2, y + 2, 12, 12, 42, 285);
+                    g2.drawLine(x + 13, y + 2, x + 13, y + 6);
+                    g2.drawLine(x + 13, y + 2, x + 9, y + 2);
+                } finally {
+                    g2.dispose();
+                }
+            }
+        };
+    }
+
+    private static final class BordeBotonOrden extends javax.swing.border.AbstractBorder {
+        private final java.awt.Color color;
+        private final float grosor;
+        private final int radio;
+
+        private BordeBotonOrden(java.awt.Color color, float grosor, int radio) {
+            this.color = color;
+            this.grosor = grosor;
+            this.radio = radio;
+        }
+
+        @Override
+        public void paintBorder(java.awt.Component componente, java.awt.Graphics graphics,
+                int x, int y, int width, int height) {
+            if (color == null) {
+                return;
+            }
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
+            try {
+                g2.setColor(color);
+                g2.setStroke(new java.awt.BasicStroke(grosor));
+                g2.drawRoundRect(x + 1, y + 1, width - 3, height - 3, radio, radio);
+            } finally {
+                g2.dispose();
+            }
+        }
     }
 
     private void prepararCampoBusqueda(javax.swing.JComponent campo) {
@@ -2368,7 +2499,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }//GEN-LAST:event_jTextField3ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        generarPDFYFirmar(null);
+        generarPDFExtraido();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -2378,6 +2509,143 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     // Validacion y generacion de documentos PDF
     // =====================================================================
 
+    private boolean generarPDFExtraido() {
+        String errorValidacion = validarCampos(false);
+        if (errorValidacion != null) {
+            JOptionPane.showMessageDialog(this, errorValidacion,
+                    "Campos incompletos", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        String noOrden = jTextField6.getText().trim();
+        String cotizacion = jTextField4.getText().trim();
+        String nombreArchivo = "OrdenCompra#" + noOrden + "_" + cotizacion + ".pdf";
+        javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+        fc.setDialogTitle("Guardar Orden de Compra");
+        fc.setSelectedFile(new File(System.getProperty("user.home")
+                + "\\Desktop\\" + nombreArchivo));
+        fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "PDF (*.pdf)", "pdf"));
+        if (fc.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
+            return false;
+        }
+
+        String ruta = fc.getSelectedFile().getAbsolutePath();
+        if (!ruta.toLowerCase(java.util.Locale.ROOT).endsWith(".pdf")) {
+            ruta += ".pdf";
+        }
+        File archivoPDF = new File(ruta);
+        if (archivoPDF.exists()
+                && JOptionPane.showConfirmDialog(this,
+                        "El PDF '" + archivoPDF.getName()
+                        + "' ya existe.\n¿Deseas reemplazarlo?",
+                        "Confirmar reemplazo", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE) != JOptionPane.YES_OPTION) {
+            return false;
+        }
+
+        try {
+            PDFORDENCOMPRA.DatosOrden datos = construirDatosPDF();
+            PDFORDENCOMPRA.generar(archivoPDF, datos);
+            ultimoPdfGenerado = archivoPDF;
+            actualizarEstadoBotonFirma();
+            JOptionPane.showMessageDialog(this,
+                    "PDF generado exitosamente.\nEl archivo está listo para imprimir.",
+                    "Listo", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } catch (IOException | RuntimeException ex) {
+            logger.log(java.util.logging.Level.SEVERE, "Error generando PDF", ex);
+            JOptionPane.showMessageDialog(this, "Error al generar el PDF:\n"
+                    + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private PDFORDENCOMPRA.DatosOrden construirDatosPDF() throws IOException {
+        PDFORDENCOMPRA.DatosOrden datos = new PDFORDENCOMPRA.DatosOrden();
+        datos.documento = jLabel5.getText();
+        datos.numeroOrden = jTextField6.getText().trim();
+        datos.cotizacion = jTextField4.getText().trim();
+        datos.fecha = jDateChooser2.getDate();
+        datos.proyecto = jTextField2.getText();
+        datos.idProveedor = jTextField1.getText();
+        datos.proveedor = jLabel8.getText();
+        datos.rfc = jLabel30.getText();
+        datos.contacto = jLabel32.getText();
+        datos.telefono = proveedorTelefono;
+        datos.direccion = jLabel15.getText();
+        datos.correo = proveedorCorreo;
+        datos.pago = valorCombo(jComboBox6);
+        datos.fechaEntrega = jDateChooserEntrega.getDate();
+        datos.fechaPago = jDateChooserPago.getDate();
+        datos.tipoCambio = jTextField5.getText().trim();
+        datos.moneda = valorCombo(jComboBox2);
+        datos.monedaDescripcion = monedaDescMap.getOrDefault(datos.moneda, "");
+        datos.monedaLeyenda = monedaLeyendaMap.getOrDefault(datos.moneda, "");
+        datos.solicitante = valorCombo(jComboBox1);
+        datos.area = jLabel26.getText();
+        datos.usoCfdi = valorCombo(jComboBox3);
+        datos.formaPago = valorCombo(jComboBox7);
+        datos.metodoPago = valorCombo(jComboBox8);
+        datos.elaboro = valorCombo(jComboBox4);
+        datos.autorizo = valorCombo(jComboBox5);
+        datos.subtotalTexto = jLabel23.getText();
+        datos.ivaTexto = jLabel24.getText();
+        datos.totalTexto = jLabel25.getText();
+        datos.subtotalOriginal = subtotalOriginal;
+        datos.descuentoImporte = descuentoImporte;
+        datos.isrImporte = isrImporte;
+        datos.mostrarDescuento = jCheckBoxDescuento != null
+                && jCheckBoxDescuento.isSelected() && descuentoImporte > 0;
+        datos.mostrarIsr = jCheckBoxISR != null
+                && jCheckBoxISR.isSelected() && isrImporte > 0;
+        datos.descuentoPorcentaje = parseNumero(jTextFieldDescuentoPct.getText());
+        datos.observaciones = jTextAreaObservaciones.getText();
+        try {
+            datos.terminos = Files.readString(AppConfig.terminosFile().toPath(),
+                    java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            datos.terminos = "";
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo leer términos y condiciones para el PDF.", ex);
+        }
+
+        javax.swing.table.DefaultTableModel modelo =
+                (javax.swing.table.DefaultTableModel) jTable1.getModel();
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            Object codigo = modelo.getValueAt(i, 0);
+            if (codigo == null || codigo.toString().trim().isEmpty()) {
+                continue;
+            }
+            PDFORDENCOMPRA.Producto producto = new PDFORDENCOMPRA.Producto();
+            producto.codigo = codigo.toString();
+            producto.descripcion = textoCelda(modelo.getValueAt(i, 1));
+            producto.unidad = textoCelda(modelo.getValueAt(i, 2));
+            producto.cantidad = textoCelda(modelo.getValueAt(i, 3));
+            producto.precioUnitario = numeroCelda(modelo.getValueAt(i, 4));
+            producto.importe = numeroCelda(modelo.getValueAt(i, 5));
+            datos.productos.add(producto);
+        }
+        return datos;
+    }
+
+    private static String valorCombo(javax.swing.JComboBox<?> combo) {
+        Object value = combo == null ? null : combo.getSelectedItem();
+        return value == null ? "" : value.toString();
+    }
+
+    private static String textoCelda(Object value) {
+        return value == null ? "" : value.toString();
+    }
+
+    private double numeroCelda(Object value) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        return parseNumero(textoCelda(value));
+    }
+
+    @SuppressWarnings("unused")
     private boolean generarPDF() {
         String errorValidacion = validarCampos(false);
         if (errorValidacion != null) {
@@ -2782,7 +3050,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             actualizarEstadoBotonFirma();
             JOptionPane.showMessageDialog(this,
                     "PDF generado exitosamente.\n"
-                    + "Ahora se solicitará la firma digital.",
+                    + "El archivo está listo para imprimir.",
                     "Listo", JOptionPane.INFORMATION_MESSAGE);
             return true;
 
@@ -2794,12 +3062,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private boolean generarPDFYFirmar(String rolForzado) {
         DatosFirma datosFirma = seleccionarDatosFirma(rolForzado);
         if (datosFirma == null) {
             return false;
         }
-        if (!generarPDF()) {
+        if (!generarPDFExtraido()) {
             return false;
         }
         try {
@@ -2897,6 +3166,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private boolean firmarPdf() {
         return firmarPdf(null);
     }
@@ -3356,13 +3626,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (errorValidacion != null) {
             JOptionPane.showMessageDialog(this, errorValidacion,
                     "Campos incompletos", JOptionPane.WARNING_MESSAGE);
-            return false;
-        }
-
-        if (!generarPDFYFirmar("ELABORÓ")) {
-            JOptionPane.showMessageDialog(this,
-                    "La orden no se registró porque el PDF no fue firmado como ELABORÓ.",
-                    "Firma requerida", JOptionPane.WARNING_MESSAGE);
             return false;
         }
 

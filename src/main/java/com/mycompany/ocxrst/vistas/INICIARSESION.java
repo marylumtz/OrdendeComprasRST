@@ -43,6 +43,7 @@ public class INICIARSESION extends javax.swing.JFrame {
         LOGO.setIcon(cargarImagenEscalada("/com/mycompany/ocxrst/IMAGENES/FONDO LOGIN.png", 550, 410));
         IconoVentanaUtil.aplicar(this);
         setLocationRelativeTo(null); 
+        EstiloAplicacion.aplicarEstiloBotones(getContentPane());
         java.awt.EventQueue.invokeLater(() -> jTextField1.requestFocusInWindow());
     
     }

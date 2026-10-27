@@ -1,11 +1,10 @@
 package com.mycompany.ocxrst.vistas;
 
-import com.mycompany.ocxrst.config.AppConfig;
+import com.mycompany.ocxrst.EstiloAplicacion;
 import com.mycompany.ocxrst.model.Tarea;
 import com.mycompany.ocxrst.repository.TareaRepository;
 import java.awt.*;
 import java.io.IOException;
-import java.awt.image.BufferedImage;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -50,6 +49,7 @@ public class NUEVATAREA extends JDialog {
         if (original != null) cargarOriginal();
         configurarCamposProtegidos();
         estadoInicial = estadoActual();
+        EstiloAplicacion.aplicarEstiloBotones((Container) getContentPane());
     }
 
     private JPanel crearContenido() {
@@ -268,63 +268,6 @@ public class NUEVATAREA extends JDialog {
         boton.setIcon(new IconoTarea(tipoIcono, 16));
         boton.setIconTextGap(6);
         return boton;
-    }
-
-    private ImageIcon cargarIcono(String archivo, int tamano, String respaldo, boolean blanco) {
-        java.io.File archivoIcono = AppConfig.iconoFile(archivo);
-        if (archivoIcono.isFile()) {
-            ImageIcon original = new ImageIcon(archivoIcono.getAbsolutePath());
-            if (original.getIconWidth() > 0 && original.getIconHeight() > 0) {
-                BufferedImage imagenOriginal = new BufferedImage(
-                        original.getIconWidth(), original.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-                Graphics2D graphics = imagenOriginal.createGraphics();
-                graphics.drawImage(original.getImage(), 0, 0, null);
-                graphics.dispose();
-                if (blanco) {
-                    for (int y = 0; y < imagenOriginal.getHeight(); y++) {
-                        for (int x = 0; x < imagenOriginal.getWidth(); x++) {
-                            int pixel = imagenOriginal.getRGB(x, y);
-                            int alpha = (pixel >>> 24) & 0xFF;
-                            imagenOriginal.setRGB(x, y, (alpha << 24) | 0x00FFFFFF);
-                        }
-                    }
-                }
-                return escalarIcono(imagenOriginal, tamano);
-            }
-        }
-        if (respaldo != null) {
-            return new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB)) {
-                @Override public void paintIcon(Component c, Graphics g, int x, int y) {
-                    g.setFont(new Font("Segoe UI Symbol", Font.BOLD, tamano));
-                    g.setColor(AZUL);
-                    g.drawString(respaldo, x, y + tamano);
-                }
-            };
-        }
-        return new ImageIcon();
-    }
-
-    private ImageIcon escalarIcono(BufferedImage origen, int tamanoMaximo) {
-        double escala = Math.min(
-                (double) tamanoMaximo / origen.getWidth(),
-                (double) tamanoMaximo / origen.getHeight());
-        int ancho = Math.max(1, (int) Math.round(origen.getWidth() * escala));
-        int alto = Math.max(1, (int) Math.round(origen.getHeight() * escala));
-
-        BufferedImage salida = new BufferedImage(ancho, alto, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphics = salida.createGraphics();
-        graphics.setComposite(AlphaComposite.Src);
-        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        graphics.setRenderingHint(RenderingHints.KEY_RENDERING,
-                RenderingHints.VALUE_RENDER_QUALITY);
-        graphics.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
-                RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
-        graphics.drawImage(origen, 0, 0, ancho, alto, null);
-        graphics.dispose();
-        return new ImageIcon(salida);
     }
 
     private void estilizarCampos() {

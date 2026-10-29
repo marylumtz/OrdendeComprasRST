@@ -1,6 +1,6 @@
 package com.mycompany.ocxrst;
 
-import com.mycompany.ocxrst.vistas.INICIARSESION;
+import com.mycompany.ocxrst.ui.INICIARSESION;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

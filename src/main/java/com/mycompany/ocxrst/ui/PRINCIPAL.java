@@ -339,8 +339,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
 
     private void reconstruirTablero() {
         cuerpoTablero.removeAll();
-        cuerpoTablero.add(crearTarjetasIndicadores());
-        cuerpoTablero.add(Box.createVerticalStrut(10));
         JPanel centro = new JPanel(new GridLayout(1, 2, 12, 0));
         centro.setOpaque(false);
         centro.setPreferredSize(new Dimension(0, 194));
@@ -376,71 +374,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
         mensaje.setFont(new Font("Segoe UI", Font.BOLD, 24));
         pagina.add(mensaje);
         return pagina;
-    }
-
-    private JPanel crearTarjetasIndicadores() {
-        JPanel tarjetas = new JPanel(new GridLayout(1, 4, 10, 0));
-        tarjetas.setOpaque(false);
-        int ordenes = PROVEEDORES.contarOrdenesRegistradas();
-        int pendientes = PROVEEDORES.contarEntregasPorRevisar();
-        int alertas = PROVEEDORES.contarAlertasEntregasPendientes();
-        int stockBajo = contarStockBajo();
-        tarjetas.add(crearTarjeta(String.valueOf(ordenes), "Órdenes de compra", "Total registradas",
-                new Color(224, 234, 255), "orden", new Color(61, 96, 190)));
-        tarjetas.add(crearTarjeta(String.valueOf(pendientes), "Entregas por revisar", "Requieren seguimiento",
-                new Color(255, 237, 239), "pendiente", new Color(210, 48, 65)));
-        tarjetas.add(crearTarjeta(String.valueOf(alertas), "Alertas de entrega y pago", "Requieren atención",
-                new Color(255, 220, 220), "alerta", new Color(225, 76, 85)));
-        tarjetas.add(crearTarjeta(String.valueOf(stockBajo), "Productos con stock bajo", "Necesitan reposición",
-                new Color(222, 246, 220), "inventario", new Color(35, 161, 91)));
-        tarjetas.setPreferredSize(new Dimension(0, 86));
-        tarjetas.setMaximumSize(new Dimension(Integer.MAX_VALUE, 86));
-        return tarjetas;
-    }
-
-    private JPanel crearTarjeta(String valor, String titulo, String detalle, Color fondo,
-            String tipoIcono, Color colorIcono) {
-        JPanel tarjeta = new JPanel(new BorderLayout(10, 0));
-        tarjeta.setBackground(fondo);
-        tarjeta.setBorder(BorderFactory.createEmptyBorder(9, 10, 9, 8));
-        tarjeta.setToolTipText(titulo + ": " + valor + " · " + detalle);
-        tarjeta.setPreferredSize(new Dimension(180, 86));
-
-        JPanel iconoContenedor = new JPanel(new GridBagLayout());
-        iconoContenedor.setPreferredSize(new Dimension(44, 44));
-        iconoContenedor.setBackground(new Color(colorIcono.getRed(), colorIcono.getGreen(), colorIcono.getBlue(), 28));
-        iconoContenedor.setBorder(BorderFactory.createLineBorder(new Color(colorIcono.getRed(), colorIcono.getGreen(), colorIcono.getBlue(), 40)));
-        JLabel icono = new JLabel(new IconoMenu(tipoIcono));
-        icono.setForeground(colorIcono);
-        iconoContenedor.add(icono);
-        tarjeta.add(iconoContenedor, BorderLayout.WEST);
-
-        JPanel contenido = new JPanel();
-        contenido.setOpaque(false);
-        contenido.setLayout(new BoxLayout(contenido, BoxLayout.Y_AXIS));
-        JLabel numero = new JLabel(valor);
-        numero.setFont(new Font("Segoe UI", Font.BOLD, 23));
-        numero.setForeground(AZUL);
-        JLabel nombre = new JLabel(titulo);
-        nombre.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        nombre.setForeground(TEXTO);
-        JLabel descripcion = new JLabel("<html><span style='white-space:nowrap'>" + escaparHtml(detalle) + "</span></html>");
-        descripcion.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        descripcion.setForeground(new Color(90, 105, 125));
-        contenido.add(numero);
-        contenido.add(nombre);
-        contenido.add(descripcion);
-        tarjeta.add(contenido, BorderLayout.CENTER);
-
-        JLabel flecha = new JLabel("›");
-        flecha.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        flecha.setForeground(new Color(72, 92, 125));
-        tarjeta.add(flecha, BorderLayout.EAST);
-        return tarjeta;
-    }
-
-    private String escaparHtml(String texto) {
-        return texto.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     private JPanel crearPanelTabla(String titulo, Object[][] datos) {
@@ -824,7 +757,10 @@ public class PRINCIPAL extends javax.swing.JFrame {
     }
 
     private boolean esStockBajo(String cantidad, String minimo) {
-        try { return Double.parseDouble(cantidad.replace(",", "")) <= Double.parseDouble(minimo.replace(",", "")); }
+        try {
+            return Double.parseDouble(cantidad.replace(",", ""))
+                    <= Double.parseDouble(minimo.replace(",", ""));
+        }
         catch (NumberFormatException ex) { return false; }
     }
 
@@ -941,6 +877,10 @@ public class PRINCIPAL extends javax.swing.JFrame {
                 titulo = "Mesa de trabajo";
                 descripcion = "Tareas pendientes, actividades prioritarias y seguimiento operativo.";
                 break;
+            case "SOLICITUDAYUDA":
+                titulo = "Solicitud de ayuda";
+                descripcion = "Registra una problemática, solicita apoyo o crea un requerimiento.";
+                break;
             case "ORDENES":
                 titulo = "Órdenes de compra";
                 descripcion = "Creación, consulta y seguimiento de órdenes de compra.";
@@ -977,7 +917,11 @@ public class PRINCIPAL extends javax.swing.JFrame {
     }
 
     private void abrirMesaTrabajo() {
-        mostrarVentanaEnPanel("MESATRABAJO", new MESATRABAJO());
+        if (SesionActual.esAdministrador()) {
+            mostrarVentanaEnPanel("MESATRABAJO", new MESATRABAJO());
+        } else {
+            mostrarVentanaEnPanel("SOLICITUDAYUDA", new SOLICITUDAYUDA());
+        }
     }
 
     private void confirmarSalida() {

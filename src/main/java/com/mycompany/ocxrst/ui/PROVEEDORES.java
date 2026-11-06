@@ -7,6 +7,7 @@ package com.mycompany.ocxrst.ui;
 import com.mycompany.ocxrst.util.IconoVentanaUtil;
 import com.mycompany.ocxrst.util.EstiloAplicacion;
 import com.mycompany.ocxrst.config.AppConfig;
+import com.mycompany.ocxrst.reporting.PDFALTAProveedor;
 import com.mycompany.ocxrst.repository.ActividadRepository;
 import com.mycompany.ocxrst.repository.InventarioRepository;
 import com.mycompany.ocxrst.repository.ProveedorRepository;
@@ -66,12 +67,14 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private static final int COLUMNA_PROYECTO = 17;
     private static final int COLUMNA_OBSERVACIONES = 18;
     private static final int COLUMNA_CARPETA_PDF = 19;
+    private static final int COLUMNA_AUTORIZADOR = 20;
     private static final String DOCUMENTO_PROVEEDOR = "FO-SG-01-00";
     private static final File DIRECTORIO_PDF_PROVEEDORES = new File(
             "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\PROVEEDORES");
     private final javax.swing.JTextField campoFechaAlta = new javax.swing.JTextField();
     private final javax.swing.JTextField campoDocumento = new javax.swing.JTextField();
     private final javax.swing.JComboBox<String> comboSolicitante = new javax.swing.JComboBox<>();
+    private final javax.swing.JComboBox<String> comboAutorizador = new javax.swing.JComboBox<>();
     private final javax.swing.JTextField campoDepartamento = new javax.swing.JTextField();
     private final javax.swing.JTextField campoTipoProveedor = new javax.swing.JTextField();
     private final javax.swing.JTextField campoProyecto = new javax.swing.JTextField();
@@ -85,9 +88,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private String carpetaPdfProveedorActual = "";
 
     // Caché de proveedores para autocompletar: id -> "id | nombre"
-    private final java.util.List<String[]> cacheProveedores = new java.util.ArrayList<>();
-    private final javax.swing.JPopupMenu popupProveedores = new javax.swing.JPopupMenu();
-    private boolean seleccionandoProveedor = false;
     private final java.awt.CardLayout vistasLayout = new java.awt.CardLayout();
     private final javax.swing.JPanel vistasProveedores = new javax.swing.JPanel(vistasLayout);
     private javax.swing.table.DefaultTableModel modeloDirectorio;
@@ -329,8 +329,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         asegurarArchivoProveedores();
         configurarVistasProveedores();
         cargarSolicitantes();
-        cargarCacheProveedores();
-        configurarAutocompleteNombre();
         configurarEventos();
         EstiloAplicacion.aplicarEstiloBotones(jPanel1);
         EstiloAplicacion.aplicarTipografia(vistasProveedores);
@@ -546,14 +544,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
         String id = String.valueOf(modeloDirectorio.getValueAt(fila, 0));
         String nombre = String.valueOf(modeloDirectorio.getValueAt(fila, 1));
         String rfc = String.valueOf(modeloDirectorio.getValueAt(fila, 2));
-        seleccionandoProveedor = true;
-        try {
-            jTextFieldId.setText(id);
-            jTextField1.setText(nombre);
-            jTextField2.setText(rfc);
-        } finally {
-            seleccionandoProveedor = false;
-        }
+        jTextFieldId.setText(id);
+        jTextField1.setText(nombre);
+        jTextField2.setText(rfc);
         vistasLayout.show(vistasProveedores, "FORMULARIO");
         buscarProveedor();
     }
@@ -624,7 +617,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         formulario.setOpaque(false);
         agregarCampo(formulario, 0, iconoId(COLOR_AZUL_OSCURO), "ID:", jTextFieldId,
                 "ID asignado automáticamente", true);
-        agregarCampo(formulario, 1, iconoDocumento(COLOR_AZUL_OSCURO), "FECHA DE ALTA:", campoFechaAlta,
+        agregarCampo(formulario, 1, iconoDocumento(COLOR_AZUL_OSCURO), "FECHA DE SOLICITUD:", campoFechaAlta,
                 "Se asigna automáticamente", true);
         agregarCampo(formulario, 2, iconoDocumento(COLOR_AZUL_OSCURO), "DOCUMENTO:", campoDocumento,
                 "Código de formato", false);
@@ -643,22 +636,26 @@ public class PROVEEDORES extends javax.swing.JFrame {
         configurarPanelCuentasBancarias();
         agregarCampo(formulario, 9, iconoDocumento(COLOR_AZUL_OSCURO), "CUENTAS BANCARIAS:", panelCuentasBancarias,
                 "Puedes agregar varias cuentas bancarias", false);
-        agregarCampo(formulario, 10, iconoCorreo(COLOR_AZUL_OSCURO), "CORREO:", jTextField4,
+        agregarCampo(formulario, 10, iconoCorreo(COLOR_AZUL_OSCURO), "CORREO ELECTRÓNICO:", jTextField4,
                 "correo@ejemplo.com", false);
-        agregarCampo(formulario, 11, iconoDocumento(COLOR_AZUL_OSCURO), "TIPO DE PROVEEDOR:", campoTipoProveedor,
-                "Tipo de proveedor", false);
-        agregarCampo(formulario, 12, iconoDocumento(COLOR_AZUL_OSCURO), "PROYECTO:", campoProyecto,
-                "Proyecto relacionado", false);
+        agregarCampo(formulario, 11, iconoDocumento(COLOR_AZUL_OSCURO),
+                "PROVEEDOR DE / BIENES O SERVICIOS:", campoTipoProveedor,
+                "Bienes o servicios que proporciona", false);
+        agregarCampo(formulario, 12, iconoDocumento(COLOR_AZUL_OSCURO), "PROYECTO RELACIONADO:",
+                campoProyecto, "Proyecto relacionado", false);
+        agregarCampo(formulario, 13, iconoContacto(COLOR_AZUL_OSCURO), "PERSONA QUE AUTORIZA:",
+                comboAutorizador, "Selecciona la persona que autoriza el alta", false);
         campoObservaciones.setLineWrap(true);
         campoObservaciones.setWrapStyleWord(true);
         javax.swing.JScrollPane observacionesScroll = new javax.swing.JScrollPane(campoObservaciones);
         observacionesScroll.setPreferredSize(new java.awt.Dimension(430, 58));
         observacionesScroll.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         observacionesScroll.setViewportBorder(javax.swing.BorderFactory.createEmptyBorder());
-        agregarCampo(formulario, 13, iconoDocumento(COLOR_AZUL_OSCURO), "OBSERVACIONES:", observacionesScroll,
+        agregarCampo(formulario, 14, iconoDocumento(COLOR_AZUL_OSCURO),
+                "OBSERVACIONES ESPECÍFICAS:", observacionesScroll,
                 "Observaciones adicionales", false);
         configurarPanelPdf();
-        agregarCampo(formulario, 14, iconoDocumento(COLOR_AZUL_OSCURO), "DOCUMENTOS PDF:", panelDocumentosPdf,
+        agregarCampo(formulario, 15, iconoDocumento(COLOR_AZUL_OSCURO), "DOCUMENTOS PDF:", panelDocumentosPdf,
                 "Adjunta uno o varios archivos PDF", false);
 
         javax.swing.JScrollPane formularioScroll = new javax.swing.JScrollPane(formulario);
@@ -678,7 +675,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         prepararBoton(jButton4, "HISTORIAL DE COMPRAS", iconoHistorial(COLOR_AZUL), java.awt.Color.WHITE,
                 COLOR_AZUL, COLOR_AZUL);
         prepararBoton(jButton1, "CREAR", iconoMas(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
-        prepararBoton(jButton2, "EDITAR", iconoEditar(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
+        prepararBoton(jButton2, "GUARDAR", iconoEditar(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
         acciones.add(jButton4);
         acciones.add(jButton1);
         acciones.add(jButton2);
@@ -1397,7 +1394,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
         jButton2.setBackground(new java.awt.Color(0, 95, 131));
         jButton2.setForeground(new java.awt.Color(255, 255, 255));
-        jButton2.setText("EDITAR");
+        jButton2.setText("GUARDAR");
 
         jButton3.setBackground(java.awt.Color.WHITE);
         jButton3.setForeground(new java.awt.Color(255, 255, 255));
@@ -1615,6 +1612,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private void cargarSolicitantes() {
         comboSolicitante.removeAllItems();
         comboSolicitante.addItem("-- Selecciona --");
+        comboAutorizador.removeAllItems();
+        comboAutorizador.addItem("-- Selecciona --");
         areasPorSolicitante.clear();
         try {
             usuarioRepository.asegurarArchivoUsuarios();
@@ -1635,6 +1634,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     }
                     areasPorSolicitante.put(nombre, usuarioRepository.leerCelda(fila, 3));
                     comboSolicitante.addItem(nombre);
+                    comboAutorizador.addItem(nombre);
                 }
             }
         } catch (IOException | IllegalStateException ex) {
@@ -1695,6 +1695,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                         jTextField1.getText().trim(), idCreado,
                         filaProveedorActual < 0 ? carpetaPdfProveedorActual : "");
                 escribirCelda(fila, COLUMNA_CARPETA_PDF, carpetaPdfProveedorActual);
+                generarSolicitudAltaProveedor(carpetaPdfProveedorActual, idCreado);
                 guardarArchivosPdfPendientes(carpetaPdfProveedorActual);
                 proveedorRepository.guardarCuentasBancarias(libro, idCreado, obtenerCuentasBancariasFormulario());
                 completarValoresComercialesPorDefecto(fila);
@@ -1709,15 +1710,58 @@ public class PROVEEDORES extends javax.swing.JFrame {
             registrarActividadProveedor("Proveedor dado de alta", idCreado);
             JOptionPane.showMessageDialog(this, "Proveedor creado.\nID asignado: " + idCreado + "\nEstado: ACTIVO (1)");
             limpiarFormulario(false);
-            cargarCacheProveedores();
         } catch (IOException | SecurityException ex) {
             mostrarError("No se pudo crear el proveedor.", ex);
         }
     }//crearProveedor
 
+    private void generarSolicitudAltaProveedor(String nombreCarpeta, String idProveedor) throws IOException {
+        PDFALTAProveedor.DatosProveedor datos = new PDFALTAProveedor.DatosProveedor();
+        datos.id = idProveedor;
+        datos.fecha = campoFechaAlta.getText().trim();
+        datos.documento = campoDocumento.getText().trim();
+        datos.solicitante = obtenerTextoSolicitante();
+        datos.departamento = campoDepartamento.getText().trim();
+        datos.nombre = jTextField1.getText().trim();
+        datos.rfc = jTextField2.getText().trim();
+        datos.telefono = jTextField3.getText().trim();
+        datos.correo = jTextField4.getText().trim();
+        datos.direccion = jTextField5.getText().trim();
+        datos.tipoProveedor = campoTipoProveedor.getText().trim();
+        datos.proyecto = campoProyecto.getText().trim();
+        datos.autorizadoPor = obtenerTextoCombo(comboAutorizador);
+        datos.observaciones = campoObservaciones.getText().trim();
+        for (String[] cuenta : obtenerCuentasBancariasFormulario()) {
+            PDFALTAProveedor.CuentaBancaria cuentaPdf = new PDFALTAProveedor.CuentaBancaria();
+            cuentaPdf.banco = cuenta[0];
+            cuentaPdf.numeroCuenta = cuenta[1];
+            cuentaPdf.clabe = cuenta[2];
+            datos.cuentas.add(cuentaPdf);
+        }
+        File destino = new File(new File(DIRECTORIO_PDF_PROVEEDORES, nombreCarpeta),
+                "Solicitud de alta de proveedor.pdf");
+        PDFALTAProveedor.generar(destino, datos);
+    }
+
+    private String obtenerTextoSolicitante() {
+        return obtenerTextoCombo(comboSolicitante);
+    }
+
+    private String obtenerTextoCombo(javax.swing.JComboBox<String> combo) {
+        Object seleccionado = combo.getSelectedItem();
+        return seleccionado == null || "-- Selecciona --".equals(seleccionado.toString())
+                ? "" : seleccionado.toString().trim();
+    }
+
     /** Valida y guarda los cambios del proveedor actualmente seleccionado. */
     private void editarProveedor() {
         if (!validarCamposBase()) {
+            return;
+        }
+        int confirmacion = JOptionPane.showConfirmDialog(this,
+                "¿Deseas guardar los cambios del proveedor y actualizar su PDF?",
+                "Confirmar cambios", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (confirmacion != JOptionPane.YES_OPTION) {
             return;
         }
 
@@ -1755,6 +1799,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                         jTextField1.getText().trim(), leerCelda(fila, 0),
                         leerCelda(fila, COLUMNA_CARPETA_PDF));
                 escribirCelda(fila, COLUMNA_CARPETA_PDF, carpetaPdfProveedorActual);
+                generarSolicitudAltaProveedor(carpetaPdfProveedorActual, leerCelda(fila, 0));
                 guardarArchivosPdfPendientes(carpetaPdfProveedorActual);
                 proveedorRepository.guardarCuentasBancarias(
                         libro, leerCelda(fila, 0), obtenerCuentasBancariasFormulario());
@@ -1774,7 +1819,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
             }
             registrarActividadProveedor("Proveedor actualizado", jTextFieldId.getText().trim());
             JOptionPane.showMessageDialog(this, "Proveedor actualizado correctamente.");
-            cargarCacheProveedores();
         } catch (IOException | SecurityException ex) {
             mostrarError("No se pudo editar el proveedor.", ex);
         }
@@ -1863,16 +1907,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     return;
                 }
 
-                seleccionandoProveedor = true;
-                try {
-                    cargarFilaEnFormulario(fila);
-                    cargarCuentasBancariasFormulario(libro, leerCelda(fila, 0));
-                    carpetaPdfProveedorActual = leerCelda(fila, COLUMNA_CARPETA_PDF);
-                    archivosPdfPendientes.clear();
-                    refrescarListaPdf(carpetaPdfProveedorActual);
-                } finally {
-                    seleccionandoProveedor = false;
-                }
+                cargarFilaEnFormulario(fila);
+                cargarCuentasBancariasFormulario(libro, leerCelda(fila, 0));
+                carpetaPdfProveedorActual = leerCelda(fila, COLUMNA_CARPETA_PDF);
+                archivosPdfPendientes.clear();
+                refrescarListaPdf(carpetaPdfProveedorActual);
                 filaProveedorActual = filaIndex;
 
                 String estado = normalizarEstado(leerCelda(fila, 11));
@@ -5001,6 +5040,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         escribirCelda(fila, COLUMNA_DEPARTAMENTO, campoDepartamento.getText());
         escribirCelda(fila, COLUMNA_TIPO_PROVEEDOR, campoTipoProveedor.getText());
         escribirCelda(fila, COLUMNA_PROYECTO, campoProyecto.getText());
+        escribirCelda(fila, COLUMNA_AUTORIZADOR, obtenerTextoCombo(comboAutorizador));
         escribirCelda(fila, COLUMNA_OBSERVACIONES, campoObservaciones.getText());
     }
 
@@ -5125,9 +5165,15 @@ public class PROVEEDORES extends javax.swing.JFrame {
         if (comboSolicitante.getItemCount() > 0) {
             comboSolicitante.setSelectedIndex(0);
         }
+        if (comboAutorizador.getItemCount() > 0) {
+            comboAutorizador.setSelectedIndex(0);
+        }
         campoDepartamento.setText("");
         campoTipoProveedor.setText("");
         campoProyecto.setText("");
+        if (comboAutorizador.getItemCount() > 0) {
+            comboAutorizador.setSelectedIndex(0);
+        }
         campoObservaciones.setText("");
     }
 
@@ -5206,6 +5252,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
         campoDepartamento.setText(leerCelda(fila, COLUMNA_DEPARTAMENTO));
         campoTipoProveedor.setText(leerCelda(fila, COLUMNA_TIPO_PROVEEDOR));
         campoProyecto.setText(leerCelda(fila, COLUMNA_PROYECTO));
+        comboAutorizador.setSelectedItem("-- Selecciona --");
+        String autorizador = leerCelda(fila, COLUMNA_AUTORIZADOR);
+        if (!autorizador.isBlank()) {
+            comboAutorizador.setSelectedItem(autorizador);
+        }
         campoObservaciones.setText(leerCelda(fila, COLUMNA_OBSERVACIONES));
     }//cargarFilaEnFormulario
 
@@ -5228,86 +5279,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         filaProveedorActual = -1;
         restablecerIndicadorEstado();
     }//limpiarFormulario
-
-    private void configurarAutocompleteNombre() {
-        jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
-                if (!e.isTemporary()) {
-                    popupProveedores.setVisible(false);
-                    if (jTextField1.getText().trim().isEmpty()) {
-                        limpiarFormulario(false);
-                    }
-                }
-            }
-        });
-
-        jTextField1.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedoresNombre(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedoresNombre(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrarProveedoresNombre(); }
-        });
-    }//configurarAutocompleteNombre
-
-    private void cargarCacheProveedores() {
-        cacheProveedores.clear();
-        try {
-            File archivo = obtenerArchivoProveedores();
-            try (Workbook libro = cargarLibro(archivo)) {
-                Sheet hoja = obtenerHojaProveedores(libro);
-                for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
-                    Row row = hoja.getRow(fila);
-                    if (row == null) {
-                        continue;
-                    }
-                    String id = leerCelda(row, 0);
-                    String nombre = leerCelda(row, 1);
-                    if (!nombre.isEmpty()) {
-                        cacheProveedores.add(new String[]{id, nombre});
-                    }
-                }
-            }
-        } catch (IOException ex) {
-            logger.log(java.util.logging.Level.WARNING, "No se pudo cargar cache de proveedores", ex);
-        }
-    }//cargarCacheProveedores
-
-    private void filtrarProveedoresNombre() {
-        if (seleccionandoProveedor) {
-            return;
-        }
-        String texto = jTextField1.getText().trim().toLowerCase();
-        popupProveedores.setVisible(false);
-        popupProveedores.removeAll();
-        if (texto.isEmpty()) {
-            return;
-        }
-
-        int count = 0;
-        for (String[] prov : cacheProveedores) {
-            if (prov[1].toLowerCase().contains(texto)) {
-                String etiqueta = prov[0] + "  |  " + prov[1];
-                javax.swing.JMenuItem item = new javax.swing.JMenuItem(etiqueta);
-                final String nombre = prov[1];
-                item.addActionListener(ev -> {
-                    seleccionandoProveedor = true;
-                    popupProveedores.setVisible(false);
-                    jTextField1.setText(nombre);
-                    buscarProveedor();
-                    seleccionandoProveedor = false;
-                });
-                popupProveedores.add(item);
-                if (++count == 10) {
-                    break;
-                }
-            }
-        }
-
-        if (count > 0 && jTextField1.isShowing()) {
-            popupProveedores.show(jTextField1, 0, jTextField1.getHeight());
-            jTextField1.requestFocusInWindow();
-        }
-    }//filtrarProveedoresNombre
 
     private int buscarFilaProveedorPorId(Sheet hoja, String id) {
         for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {

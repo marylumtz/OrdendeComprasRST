@@ -54,6 +54,8 @@ public class NUEVATAREA extends JDialog {
         EstiloAplicacion.aplicarEstiloBotones((Container) getContentPane());
         EstiloAplicacion.aplicarTipografia(getContentPane());
         EstiloAplicacion.aplicarEstiloCamposTexto(getContentPane());
+        EstiloAplicacion.estilizarSelectorFecha(inicio);
+        EstiloAplicacion.estilizarSelectorFecha(vencimiento);
     }
 
     private JPanel crearContenido() {

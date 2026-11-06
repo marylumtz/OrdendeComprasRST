@@ -60,16 +60,34 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private static final java.awt.Color COLOR_AZUL_OSCURO = new java.awt.Color(28, 82, 132);
     private static final java.awt.Color COLOR_AZUL = new java.awt.Color(31, 112, 184);
     private static final java.awt.Color COLOR_FONDO = EstiloAplicacion.FONDO_PANTALLA;
-    private static final java.awt.Color COLOR_BORDE_CAMPO = new java.awt.Color(198, 210, 225);
+    private static final java.awt.Color COLOR_BORDE_CAMPO = new java.awt.Color(224, 232, 242);
+    private static final java.awt.Color COLOR_BORDE_TABLA = new java.awt.Color(225, 232, 241);
+    private static final java.awt.Color COLOR_TEXTO = new java.awt.Color(24, 58, 104);
+    private static final java.awt.Color COLOR_TEXTO_SECUNDARIO = new java.awt.Color(93, 119, 153);
     private static final java.awt.Color COLOR_VERDE = new java.awt.Color(0, 130, 60);
     private static final java.awt.Color COLOR_ROJO = new java.awt.Color(190, 0, 0);
-    private static final java.awt.Color COLOR_AZUL_CLARO = new java.awt.Color(219, 234, 248);
+    private static final java.awt.Color COLOR_AZUL_CLARO = new java.awt.Color(225, 239, 255);
     private static final java.awt.Color COLOR_AZUL_PALIDO = new java.awt.Color(240, 246, 253);
-    private static final java.awt.Color COLOR_TEXTO_GRIS = new java.awt.Color(110, 122, 138);
+    private static final java.awt.Color COLOR_AMARILLO_PALIDO = new java.awt.Color(255, 242, 211);
+    private static final java.awt.Color COLOR_VERDE_PALIDO = new java.awt.Color(224, 246, 231);
+    private static final java.awt.Color COLOR_ENCABEZADO_TABLA = new java.awt.Color(232, 238, 247);
+    private static final java.awt.Color COLOR_FILA_TABLA = new java.awt.Color(248, 250, 253);
+    private static final String FAMILIA_TIPOGRAFICA = "Segoe UI";
+    private static final java.awt.Font FUENTE_TITULO = new java.awt.Font(FAMILIA_TIPOGRAFICA,
+            java.awt.Font.BOLD, 20);
+    private static final java.awt.Font FUENTE_SUBTITULO = new java.awt.Font(FAMILIA_TIPOGRAFICA,
+            java.awt.Font.PLAIN, 11);
+    private static final java.awt.Font FUENTE_BOTON = new java.awt.Font(FAMILIA_TIPOGRAFICA,
+            java.awt.Font.BOLD, 11);
+    private static final java.awt.Font FUENTE_ETIQUETA = new java.awt.Font(FAMILIA_TIPOGRAFICA,
+            java.awt.Font.BOLD, 10);
+    private static final java.awt.Font FUENTE_TABLA = new java.awt.Font(FAMILIA_TIPOGRAFICA,
+            java.awt.Font.PLAIN, 11);
+    private static final java.awt.Font FUENTE_TABLA_ENCABEZADO = new java.awt.Font(FAMILIA_TIPOGRAFICA,
+            java.awt.Font.BOLD, 10);
 
     // ===================== Campos de la interfaz =====================
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton6;
     private javax.swing.JButton botonGuardar;
@@ -89,6 +107,19 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private javax.swing.JLabel etiquetaImagen;
     private javax.swing.JTable tablaProveedoresProducto;
     private javax.swing.table.DefaultTableModel modeloProveedoresProducto;
+    private javax.swing.JPanel panelDashboard;
+    private javax.swing.JPanel panelFormularioInventario;
+    private javax.swing.table.DefaultTableModel modeloInventarioDashboard;
+    private javax.swing.JTable tablaInventarioDashboard;
+    private javax.swing.JTextField filtroInventario;
+    private javax.swing.JComboBox<String> filtroCategoriaInventario;
+    private javax.swing.JComboBox<String> filtroMarcaInventario;
+    private javax.swing.JComboBox<String> filtroEstadoInventario;
+    private javax.swing.JLabel totalProductosDashboard;
+    private javax.swing.JLabel stockBajoDashboard;
+    private javax.swing.JLabel sinExistenciaDashboard;
+    private javax.swing.JLabel valorInventarioDashboard;
+    private boolean actualizandoFiltrosInventario;
 
     // =====================================================================
     // Construccion y componentes del formulario
@@ -100,7 +131,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
         initComponents();
         configurarDisenoVisual();
         IconoVentanaUtil.aplicar(this);
-        setSize(1200, 820);
+        setSize(1280, 820);
         setResizable(false);
         setLocationRelativeTo(null);
         asegurarArchivoInventarios();
@@ -117,7 +148,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         setTitle("INVENTARIOS");
 
         jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel("INVENTARIOS");
         jButton3 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         botonGuardar = new javax.swing.JButton();
@@ -191,36 +221,498 @@ public class INVENTARIOS extends javax.swing.JFrame {
         jPanel1.setBackground(COLOR_FONDO);
         jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
-        jPanel1.add(crearPanelCuerpo(), java.awt.BorderLayout.CENTER);
-        jPanel1.add(crearBarraInferior(), java.awt.BorderLayout.SOUTH);
+        panelFormularioInventario = new javax.swing.JPanel(new java.awt.BorderLayout());
+        panelFormularioInventario.setOpaque(false);
+        panelFormularioInventario.add(crearPanelCuerpo(), java.awt.BorderLayout.CENTER);
+        panelFormularioInventario.add(crearBarraInferior(), java.awt.BorderLayout.SOUTH);
+        panelDashboard = crearDashboardInventario();
+        EstiloAplicacion.aplicarEstiloBotones(panelDashboard);
+        EstiloAplicacion.aplicarTipografia(panelDashboard);
+        ajustarBotonesDashboard();
+        jPanel1.add(panelDashboard, java.awt.BorderLayout.CENTER);
     }//configurarDisenoVisual
 
-    private javax.swing.JPanel crearPanelEncabezado() {
-        javax.swing.JPanel panelHeader = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
-        panelHeader.setOpaque(false);
-        panelHeader.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 16, 0));
+    private void ajustarBotonesDashboard() {
+        javax.swing.JButton nuevo = buscarBotonDashboard("NUEVO PRODUCTO");
+        javax.swing.JButton exportar = buscarBotonDashboard("EXPORTAR");
+        javax.swing.JButton actualizar = buscarBotonDashboard("ACTUALIZAR");
+        javax.swing.JButton limpiar = buscarBotonDashboard("LIMPIAR FILTROS");
+        dimensionarBotonDashboard(nuevo, 175, 40);
+        dimensionarBotonDashboard(exportar, 142, 40);
+        dimensionarBotonDashboard(actualizar, 142, 40);
+        dimensionarBotonDashboard(limpiar, 150, 34);
+    }
 
-        javax.swing.JPanel panelIzquierda = new javax.swing.JPanel(new java.awt.BorderLayout(14, 0));
-        panelIzquierda.setOpaque(false);
-        panelIzquierda.add(crearInsigniaCuadrada(iconoCaja(java.awt.Color.WHITE), COLOR_AZUL, 46, 12),
-                java.awt.BorderLayout.WEST);
+    private javax.swing.JButton buscarBotonDashboard(String texto) {
+        return buscarBotonDashboard(panelDashboard, texto);
+    }
 
-        javax.swing.JPanel textoTitulo = new javax.swing.JPanel();
-        textoTitulo.setOpaque(false);
-        textoTitulo.setLayout(new javax.swing.BoxLayout(textoTitulo, javax.swing.BoxLayout.Y_AXIS));
-        jLabel1.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 22));
-        jLabel1.setForeground(COLOR_AZUL_OSCURO);
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        javax.swing.JLabel subtitulo = new javax.swing.JLabel("Gesti\u00f3n de productos y proveedores asociados");
-        subtitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        subtitulo.setForeground(COLOR_TEXTO_GRIS);
-        textoTitulo.add(jLabel1);
-        textoTitulo.add(subtitulo);
-        panelIzquierda.add(textoTitulo, java.awt.BorderLayout.CENTER);
-        panelHeader.add(panelIzquierda, java.awt.BorderLayout.WEST);
+    private javax.swing.JButton buscarBotonDashboard(java.awt.Container contenedor, String texto) {
+        for (java.awt.Component componente : contenedor.getComponents()) {
+            if (componente instanceof javax.swing.JButton boton
+                    && boton.getText().replace(" ", "").equals(texto.replace(" ", ""))) {
+                return boton;
+            }
+            if (componente instanceof java.awt.Container hijo) {
+                javax.swing.JButton encontrado = buscarBotonDashboard(hijo, texto);
+                if (encontrado != null) {
+                    return encontrado;
+                }
+            }
+        }
+        return null;
+    }
 
-        return panelHeader;
-    }//crearPanelEncabezado
+    private void dimensionarBotonDashboard(javax.swing.JButton boton, int ancho, int alto) {
+        if (boton == null) {
+            return;
+        }
+        java.awt.Dimension dimension = new java.awt.Dimension(ancho, alto);
+        boton.setPreferredSize(dimension);
+        boton.setMinimumSize(dimension);
+        boton.setMaximumSize(dimension);
+        boton.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        boton.setHorizontalTextPosition(javax.swing.SwingConstants.RIGHT);
+        boton.setIconTextGap(7);
+    }
+
+    private javax.swing.JPanel crearDashboardInventario() {
+        javax.swing.JPanel dashboard = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
+        dashboard.setOpaque(false);
+        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        encabezado.setOpaque(false);
+        javax.swing.JLabel titulo = new javax.swing.JLabel("<html><b>Inventario de Productos</b><br>"
+                + "<font size='3'>Administración, consulta y seguimiento de existencias.</font></html>");
+        titulo.setForeground(COLOR_AZUL_OSCURO);
+        titulo.setFont(FUENTE_TITULO);
+        encabezado.add(titulo, java.awt.BorderLayout.CENTER);
+        javax.swing.JPanel acciones = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
+        acciones.setOpaque(false);
+        javax.swing.JButton nuevo = new javax.swing.JButton("  NUEVO PRODUCTO", iconoMas(java.awt.Color.WHITE));
+        nuevo.setBackground(COLOR_AZUL);
+        nuevo.setForeground(java.awt.Color.WHITE);
+        nuevo.setFont(FUENTE_BOTON);
+        nuevo.addActionListener(e -> mostrarFormularioNuevo());
+        javax.swing.JButton exportar = new javax.swing.JButton("  EXPORTAR", iconoGuardar(COLOR_AZUL_OSCURO));
+        exportar.setForeground(COLOR_AZUL_OSCURO);
+        exportar.setFont(FUENTE_BOTON);
+        exportar.setBackground(java.awt.Color.WHITE);
+        exportar.addActionListener(e -> exportarInventarioDashboard());
+        javax.swing.JButton actualizar = new javax.swing.JButton("  ACTUALIZAR", iconoLimpiar(COLOR_AZUL_OSCURO));
+        actualizar.setForeground(COLOR_AZUL_OSCURO);
+        actualizar.setFont(FUENTE_BOTON);
+        actualizar.setBackground(java.awt.Color.WHITE);
+        actualizar.addActionListener(e -> cargarTablaInventarioDashboard());
+        acciones.add(nuevo);
+        acciones.add(exportar);
+        acciones.add(actualizar);
+        encabezado.add(acciones, java.awt.BorderLayout.EAST);
+        dashboard.add(encabezado, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel tarjetas = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 10, 0));
+        tarjetas.setOpaque(false);
+        totalProductosDashboard = new javax.swing.JLabel("0");
+        stockBajoDashboard = new javax.swing.JLabel("0");
+        sinExistenciaDashboard = new javax.swing.JLabel("0");
+        valorInventarioDashboard = new javax.swing.JLabel("$ 0.00");
+        tarjetas.add(crearTarjetaResumenInventario("Total de productos", totalProductosDashboard,
+                COLOR_AZUL, COLOR_AZUL_CLARO));
+        tarjetas.add(crearTarjetaResumenInventario("Stock bajo", stockBajoDashboard,
+                new java.awt.Color(190, 125, 0), COLOR_AMARILLO_PALIDO));
+        tarjetas.add(crearTarjetaResumenInventario("Sin existencias", sinExistenciaDashboard,
+                new java.awt.Color(190, 45, 55), new java.awt.Color(255, 232, 234)));
+        tarjetas.add(crearTarjetaResumenInventario("Valor del inventario", valorInventarioDashboard,
+                new java.awt.Color(0, 125, 70), COLOR_VERDE_PALIDO));
+
+        javax.swing.JPanel filtros = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        filtros.setOpaque(false);
+        filtroInventario = new javax.swing.JTextField();
+        filtroInventario.setBackground(java.awt.Color.WHITE);
+        filtroInventario.setForeground(COLOR_TEXTO);
+        filtroInventario.setFont(FUENTE_SUBTITULO);
+        filtroInventario.setToolTipText("Buscar por código, descripción o marca");
+        filtroCategoriaInventario = new javax.swing.JComboBox<>(new String[]{"Todas"});
+        filtroMarcaInventario = new javax.swing.JComboBox<>(new String[]{"Todas"});
+        filtroEstadoInventario = new javax.swing.JComboBox<>(new String[]{"Todos", "Disponible", "Stock bajo", "Agotado"});
+        filtroCategoriaInventario.setFont(FUENTE_SUBTITULO);
+        filtroMarcaInventario.setFont(FUENTE_SUBTITULO);
+        filtroEstadoInventario.setFont(FUENTE_SUBTITULO);
+        agregarFiltroInventario(filtros, "Buscar por código, descripción o marca", filtroInventario, 0, 1.8);
+        agregarFiltroInventario(filtros, "Categoría", filtroCategoriaInventario, 1, 0.8);
+        agregarFiltroInventario(filtros, "Marca", filtroMarcaInventario, 2, 0.8);
+        agregarFiltroInventario(filtros, "Estado de stock", filtroEstadoInventario, 3, 0.9);
+        javax.swing.JButton limpiar = new javax.swing.JButton("  LIMPIAR FILTROS", iconoLimpiar(COLOR_AZUL));
+        limpiar.addActionListener(e -> {
+            filtroInventario.setText("");
+            filtroCategoriaInventario.setSelectedIndex(0);
+            filtroMarcaInventario.setSelectedIndex(0);
+            filtroEstadoInventario.setSelectedIndex(0);
+        });
+        limpiar.setFont(FUENTE_BOTON);
+        limpiar.setBackground(java.awt.Color.WHITE);
+        java.awt.GridBagConstraints limpiarGbc = new java.awt.GridBagConstraints();
+        limpiarGbc.gridx = 4; limpiarGbc.gridy = 0; limpiarGbc.weightx = 0.7;
+        limpiarGbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        limpiarGbc.insets = new java.awt.Insets(8, 5, 2, 0);
+        filtros.add(limpiar, limpiarGbc);
+
+        javax.swing.JPanel superior = new javax.swing.JPanel();
+        superior.setLayout(new javax.swing.BoxLayout(superior, javax.swing.BoxLayout.Y_AXIS));
+        superior.setOpaque(false);
+        superior.add(encabezado);
+        superior.add(javax.swing.Box.createVerticalStrut(10));
+        superior.add(tarjetas);
+        superior.add(javax.swing.Box.createVerticalStrut(8));
+        superior.add(filtros);
+        dashboard.remove(encabezado);
+        dashboard.add(superior, java.awt.BorderLayout.NORTH);
+
+        modeloInventarioDashboard = new javax.swing.table.DefaultTableModel(
+                new String[]{"CÓDIGO", "DESCRIPCIÓN", "CATEGORÍA", "MARCA",
+                    "UNIDAD", "EXISTENCIA", "STOCK MÍN.", "PRECIO UNIT.", "ESTADO", "ACCIONES"}, 0) {
+            @Override public boolean isCellEditable(int fila, int columna) { return false; }
+        };
+        tablaInventarioDashboard = new javax.swing.JTable(modeloInventarioDashboard) {
+            @Override
+            public String getToolTipText(java.awt.event.MouseEvent evento) {
+                int fila = rowAtPoint(evento.getPoint());
+                int columna = columnAtPoint(evento.getPoint());
+                if (fila >= 0 && columna == 1) {
+                    int filaModelo = convertRowIndexToModel(fila);
+                    return String.valueOf(getModel().getValueAt(filaModelo, columna));
+                }
+                if (fila >= 0 && columna == 9) {
+                    return "Visualizar, editar o desactivar producto";
+                }
+                return super.getToolTipText(evento);
+            }
+        };
+        EstiloAplicacion.aplicarEstiloTabla(tablaInventarioDashboard);
+        javax.swing.table.TableRowSorter<javax.swing.table.TableModel> ordenInventario =
+                new javax.swing.table.TableRowSorter<>(modeloInventarioDashboard);
+        java.util.Comparator<Object> comparadorNumerico = (primero, segundo) ->
+                Double.compare(numero(String.valueOf(primero)), numero(String.valueOf(segundo)));
+        ordenInventario.setComparator(5, comparadorNumerico);
+        ordenInventario.setComparator(6, comparadorNumerico);
+        ordenInventario.setComparator(7, comparadorNumerico);
+        tablaInventarioDashboard.setRowSorter(ordenInventario);
+        tablaInventarioDashboard.getColumnModel().getColumn(9).setPreferredWidth(120);
+        tablaInventarioDashboard.getColumnModel().getColumn(8).setCellRenderer(
+                (tabla, valor, seleccionado, foco, fila, columna) -> {
+                    String estado = String.valueOf(valor);
+                    java.awt.Color textoEstado = "Disponible".equals(estado)
+                            ? COLOR_VERDE : "Stock bajo".equals(estado)
+                            ? new java.awt.Color(184, 116, 0) : COLOR_ROJO;
+                    java.awt.Color fondoEstado = "Disponible".equals(estado)
+                            ? COLOR_VERDE_PALIDO : "Stock bajo".equals(estado)
+                            ? COLOR_AMARILLO_PALIDO : new java.awt.Color(255, 232, 234);
+                    javax.swing.JPanel celdaEstado = new javax.swing.JPanel(
+                            new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 5));
+                    celdaEstado.setOpaque(true);
+                    celdaEstado.setBackground(seleccionado ? COLOR_AZUL_CLARO
+                            : (fila % 2 == 0 ? java.awt.Color.WHITE : new java.awt.Color(242, 242, 242)));
+                    javax.swing.JLabel etiquetaEstado = new javax.swing.JLabel(
+                            ("Disponible".equals(estado) ? "\u2713 " : "\u26a0 ") + estado);
+                    etiquetaEstado.setOpaque(true);
+                    etiquetaEstado.setFont(FUENTE_ETIQUETA);
+                    etiquetaEstado.setForeground(textoEstado);
+                    etiquetaEstado.setBackground(fondoEstado);
+                    etiquetaEstado.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                            new BordeRedondeado(10, fondoEstado, 1f),
+                            javax.swing.BorderFactory.createEmptyBorder(3, 8, 3, 8)));
+                    celdaEstado.add(etiquetaEstado);
+                    return celdaEstado;
+                });
+        tablaInventarioDashboard.getColumnModel().getColumn(9).setCellRenderer(
+                (tabla, valor, seleccionado, foco, fila, columna) -> {
+                    javax.swing.JPanel botonesAccion = new javax.swing.JPanel(
+                            new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 7, 7));
+                    botonesAccion.setOpaque(true);
+                    botonesAccion.setBackground(seleccionado ? COLOR_AZUL_CLARO : java.awt.Color.WHITE);
+                    javax.swing.JLabel ver = new javax.swing.JLabel(iconoOjo(COLOR_AZUL));
+                    ver.setToolTipText("Visualizar producto");
+                    javax.swing.JLabel editar = new javax.swing.JLabel(iconoEditar(COLOR_AZUL));
+                    editar.setToolTipText("Editar producto");
+                    javax.swing.JLabel eliminar = new javax.swing.JLabel(iconoBasura(COLOR_ROJO));
+                    eliminar.setToolTipText("Desactivar producto");
+                    botonesAccion.add(ver);
+                    botonesAccion.add(editar);
+                    botonesAccion.add(eliminar);
+                    return botonesAccion;
+                });
+        tablaInventarioDashboard.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                int fila = tablaInventarioDashboard.rowAtPoint(e.getPoint());
+                if (fila >= 0 && tablaInventarioDashboard.columnAtPoint(e.getPoint()) == 9) {
+                    int filaModelo = tablaInventarioDashboard.convertRowIndexToModel(fila);
+                    String codigo = String.valueOf(modeloInventarioDashboard.getValueAt(filaModelo, 0));
+                    int posicion = e.getX() - tablaInventarioDashboard.getCellRect(fila, 9, true).x;
+                    if (posicion < 38) {
+                        verProductoDashboard(codigo);
+                    } else if (posicion < 76) {
+                        cargarProductoPorCodigo(codigo);
+                        mostrarFormularioInventario();
+                    } else {
+                        cargarProductoPorCodigo(codigo);
+                        alternarEstadoProducto();
+                        mostrarDashboardInventario();
+                    }
+                }
+            }
+        });
+        javax.swing.JScrollPane scrollTabla = new javax.swing.JScrollPane(tablaInventarioDashboard);
+        scrollTabla.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_TABLA));
+        dashboard.add(scrollTabla, java.awt.BorderLayout.CENTER);
+        filtroInventario.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { cargarTablaInventarioDashboard(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { cargarTablaInventarioDashboard(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { cargarTablaInventarioDashboard(); }
+        });
+        filtroCategoriaInventario.addActionListener(e -> cargarTablaInventarioDashboard());
+        filtroMarcaInventario.addActionListener(e -> cargarTablaInventarioDashboard());
+        filtroEstadoInventario.addActionListener(e -> cargarTablaInventarioDashboard());
+        cargarTablaInventarioDashboard();
+        return dashboard;
+    }
+
+    private javax.swing.JPanel crearTarjetaResumenInventario(String titulo,
+            javax.swing.JLabel valor, java.awt.Color color, java.awt.Color fondoIcono) {
+        javax.swing.JPanel tarjeta = new javax.swing.JPanel(new java.awt.BorderLayout(0, 3));
+        tarjeta.setBackground(java.awt.Color.WHITE);
+        tarjeta.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
+                javax.swing.BorderFactory.createEmptyBorder(10, 14, 10, 14)));
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel(titulo);
+        etiqueta.setIcon("Total de productos".equals(titulo) ? iconoCaja(color)
+                : "Stock bajo".equals(titulo) ? iconoAdvertencia(color)
+                : "Sin existencias".equals(titulo) ? iconoBasura(color) : iconoMonedas(color));
+        etiqueta.setIconTextGap(8);
+        etiqueta.setForeground(COLOR_TEXTO_SECUNDARIO);
+        etiqueta.setFont(FUENTE_SUBTITULO);
+        valor.setForeground(color);
+        valor.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
+        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
+        contenido.setOpaque(false);
+        javax.swing.JLabel icono = new javax.swing.JLabel();
+        icono.setIcon(etiqueta.getIcon());
+        icono.setOpaque(true);
+        icono.setBackground(fondoIcono);
+        icono.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        icono.setPreferredSize(new java.awt.Dimension(48, 48));
+        contenido.add(icono, java.awt.BorderLayout.WEST);
+        javax.swing.JPanel textos = new javax.swing.JPanel(new java.awt.BorderLayout(0, 2));
+        textos.setOpaque(false);
+        textos.add(etiqueta, java.awt.BorderLayout.NORTH);
+        textos.add(valor, java.awt.BorderLayout.CENTER);
+        contenido.add(textos, java.awt.BorderLayout.CENTER);
+        tarjeta.add(contenido, java.awt.BorderLayout.CENTER);
+        return tarjeta;
+    }
+
+    private void agregarFiltroInventario(javax.swing.JPanel panel, String texto,
+            java.awt.Component campo, int columna, double peso) {
+        javax.swing.JPanel envoltura = new javax.swing.JPanel(new java.awt.BorderLayout(0, 3));
+        envoltura.setOpaque(false);
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel(texto);
+        etiqueta.setForeground(COLOR_AZUL_OSCURO);
+        etiqueta.setFont(FUENTE_ETIQUETA);
+        envoltura.add(etiqueta, java.awt.BorderLayout.NORTH);
+        envoltura.add(campo, java.awt.BorderLayout.CENTER);
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.gridx = columna; gbc.gridy = 0; gbc.weightx = peso;
+        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gbc.insets = new java.awt.Insets(2, columna == 0 ? 0 : 5, 2, 0);
+        panel.add(envoltura, gbc);
+    }
+
+    private void verProductoDashboard(String codigo) {
+        try {
+            File archivo = obtenerArchivoInventarios();
+            try (Workbook libro = cargarLibro(archivo)) {
+                Row fila = obtenerHojaInventarios(libro).getRow(buscarFilaPorCodigo(
+                        obtenerHojaInventarios(libro), codigo));
+                if (fila != null) {
+                    JOptionPane.showMessageDialog(this,
+                            "<html><b>" + leerCelda(fila, 0) + " - " + leerCelda(fila, 1)
+                            + "</b><br>Categoría: " + leerCelda(fila, 6)
+                            + "<br>Marca: " + leerCelda(fila, 7)
+                            + "<br>Existencia: " + leerCelda(fila, 4)
+                            + "<br>Stock mínimo: " + leerCelda(fila, 8)
+                            + "<br>Precio unitario: $ " + leerCelda(fila, 3) + "</html>",
+                            "Detalle del producto", JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+        } catch (IOException ex) {
+            mostrarError("No se pudo consultar el producto.", ex);
+        }
+    }
+
+    private void mostrarFormularioInventario() {
+        jPanel1.removeAll();
+        jPanel1.add(panelFormularioInventario, java.awt.BorderLayout.CENTER);
+        jPanel1.revalidate();
+        jPanel1.repaint();
+    }
+
+    private void mostrarFormularioNuevo() {
+        limpiarFormulario(false);
+        mostrarFormularioInventario();
+    }
+
+    private void mostrarDashboardInventario() {
+        cargarTablaInventarioDashboard();
+        jPanel1.removeAll();
+        jPanel1.add(panelDashboard, java.awt.BorderLayout.CENTER);
+        jPanel1.revalidate();
+        jPanel1.repaint();
+    }
+
+    private void cargarTablaInventarioDashboard() {
+        if (modeloInventarioDashboard == null || actualizandoFiltrosInventario) {
+            return;
+        }
+        java.util.List<String[]> productos = new java.util.ArrayList<>();
+        java.util.Set<String> categorias = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        java.util.Set<String> marcas = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        int[] totales = {0, 0, 0};
+        double[] valor = {0};
+        try {
+            File archivo = obtenerArchivoInventarios();
+            if (archivo.exists()) {
+                try (Workbook libro = cargarLibro(archivo)) {
+                    Sheet hoja = obtenerHojaInventarios(libro);
+                    for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                        Row fila = hoja.getRow(indice);
+                        if (fila == null) {
+                            continue;
+                        }
+                        String codigo = leerCelda(fila, 0);
+                        if (codigo.isBlank()) {
+                            continue;
+                        }
+                        String descripcion = leerCelda(fila, 1);
+                        String categoria = leerCelda(fila, 6);
+                        String marca = leerCelda(fila, 7);
+                        String unidad = leerCelda(fila, 2);
+                        String existencia = leerCelda(fila, 4);
+                        String minimo = leerCelda(fila, 8);
+                        String precio = leerCelda(fila, 3);
+                        boolean activo = "1".equals(normalizarEstado(leerCelda(fila, 5)));
+                        if (!activo) {
+                            continue;
+                        }
+                        categorias.add(categoria);
+                        marcas.add(marca);
+                        double cantidad = numero(existencia);
+                        double minimoNumero = numero(minimo);
+                        double precioNumero = numero(precio);
+                        String estado = cantidad <= 0 ? "Agotado"
+                                : cantidad <= minimoNumero ? "Stock bajo" : "Disponible";
+                        totales[0]++;
+                        if (cantidad <= minimoNumero && cantidad > 0) {
+                            totales[1]++;
+                        }
+                        if (cantidad <= 0) {
+                            totales[2]++;
+                        }
+                        valor[0] += cantidad * precioNumero;
+                        productos.add(new String[]{codigo, descripcion, categoria, marca, unidad,
+                            existencia, minimo, precio, estado});
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo cargar el tablero de inventario.", ex);
+        }
+        actualizandoFiltrosInventario = true;
+        actualizarOpcionesFiltro(filtroCategoriaInventario, categorias);
+        actualizarOpcionesFiltro(filtroMarcaInventario, marcas);
+        actualizandoFiltrosInventario = false;
+        String texto = filtroInventario.getText().trim().toLowerCase(java.util.Locale.ROOT);
+        String categoriaSeleccionada = String.valueOf(filtroCategoriaInventario.getSelectedItem());
+        String marcaSeleccionada = String.valueOf(filtroMarcaInventario.getSelectedItem());
+        String estadoSeleccionado = String.valueOf(filtroEstadoInventario.getSelectedItem());
+        java.util.List<String[]> filtrados = new java.util.ArrayList<>();
+        for (String[] producto : productos) {
+            boolean coincideTexto = texto.isBlank()
+                    || String.join(" ", producto).toLowerCase(java.util.Locale.ROOT).contains(texto);
+            boolean coincideCategoria = "Todas".equals(categoriaSeleccionada)
+                    || categoriaSeleccionada.equals(producto[2]);
+            boolean coincideMarca = "Todas".equals(marcaSeleccionada)
+                    || marcaSeleccionada.equals(producto[3]);
+            boolean coincideEstado = "Todos".equals(estadoSeleccionado)
+                    || estadoSeleccionado.equals(producto[8]);
+            if (coincideTexto && coincideCategoria && coincideMarca && coincideEstado) {
+                filtrados.add(producto);
+            }
+        }
+        modeloInventarioDashboard.setRowCount(0);
+        for (String[] producto : filtrados) {
+            modeloInventarioDashboard.addRow(new Object[]{producto[0], producto[1], producto[2],
+                producto[3], producto[4], producto[5], producto[6], "$ " + producto[7], producto[8], "ACCIONES"});
+        }
+        totalProductosDashboard.setText(String.valueOf(totales[0]));
+        stockBajoDashboard.setText(String.valueOf(totales[1]));
+        sinExistenciaDashboard.setText(String.valueOf(totales[2]));
+        valorInventarioDashboard.setText(String.format(java.util.Locale.ROOT, "$ %,.2f", valor[0]));
+    }
+
+    private void actualizarOpcionesFiltro(javax.swing.JComboBox<String> combo,
+            java.util.Set<String> valores) {
+        String seleccionado = String.valueOf(combo.getSelectedItem());
+        combo.removeAllItems();
+        combo.addItem(combo == filtroEstadoInventario ? "Todos" : "Todas");
+        for (String valor : valores) {
+            if (!valor.isBlank()) {
+                combo.addItem(valor);
+            }
+        }
+        combo.setSelectedItem(seleccionado);
+        if (combo.getSelectedIndex() < 0) {
+            combo.setSelectedIndex(0);
+        }
+    }
+
+    private double numero(String valor) {
+        try {
+            return Double.parseDouble(valor.replace(",", "").replace("$", "").trim());
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }
+
+    private void exportarInventarioDashboard() {
+        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
+        selector.setSelectedFile(new File("inventario_productos.csv"));
+        if (selector.showSaveDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File destino = selector.getSelectedFile();
+        try (java.io.BufferedWriter escritor = java.nio.file.Files.newBufferedWriter(
+                destino.toPath(), java.nio.charset.StandardCharsets.UTF_8)) {
+            for (int columna = 0; columna < modeloInventarioDashboard.getColumnCount() - 1; columna++) {
+                if (columna > 0) {
+                    escritor.write(",");
+                }
+                escritor.write("\"" + modeloInventarioDashboard.getColumnName(columna) + "\"");
+            }
+            escritor.newLine();
+            for (int fila = 0; fila < modeloInventarioDashboard.getRowCount(); fila++) {
+                for (int columna = 0; columna < modeloInventarioDashboard.getColumnCount() - 1; columna++) {
+                    if (columna > 0) {
+                        escritor.write(",");
+                    }
+                    String dato = String.valueOf(modeloInventarioDashboard.getValueAt(fila, columna))
+                            .replace("\"", "\"\"");
+                    escritor.write("\"" + dato + "\"");
+                }
+                escritor.newLine();
+            }
+            JOptionPane.showMessageDialog(this, "Inventario exportado correctamente.");
+        } catch (IOException ex) {
+            mostrarError("No se pudo exportar el inventario.", ex);
+        }
+    }
 
     private javax.swing.JPanel crearPanelCuerpo() {
         javax.swing.JPanel panelCuerpo = new javax.swing.JPanel(new java.awt.GridBagLayout());
@@ -463,6 +955,9 @@ public class INVENTARIOS extends javax.swing.JFrame {
 
         javax.swing.JPanel panelDerecha = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 12, 0));
         panelDerecha.setOpaque(false);
+        javax.swing.JButton volver = new javax.swing.JButton("VOLVER AL LISTADO");
+        volver.addActionListener(e -> mostrarDashboardInventario());
+        panelDerecha.add(volver);
         panelDerecha.add(botonLimpiar);
         panelDerecha.add(botonGuardar);
         panelDerecha.add(jButton3);
@@ -1379,6 +1874,33 @@ public class INVENTARIOS extends javax.swing.JFrame {
             g2.drawLine(t / 2, 1, t / 2, t - 2);
         });
     }//iconoCaja
+
+    private static javax.swing.Icon iconoOjo(java.awt.Color color) {
+        return new VectorIcon(16, color, (g2, t) -> {
+            g2.drawOval(1, 4, t - 2, t - 8);
+            g2.fillOval(t / 2 - 2, t / 2 - 2, 4, 4);
+        });
+    }
+
+    private static javax.swing.Icon iconoAdvertencia(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            java.awt.Polygon triangulo = new java.awt.Polygon(
+                    new int[]{t / 2, 1, t - 2, t - 2, 2, t - 2},
+                    new int[]{1, t - 2, t - 2}, 3);
+            g2.drawPolygon(triangulo);
+            g2.drawLine(t / 2, 5, t / 2, t - 6);
+            g2.drawLine(t / 2, t - 4, t / 2, t - 3);
+        });
+    }
+
+    private static javax.swing.Icon iconoMonedas(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawOval(2, 7, t - 6, 8);
+            g2.drawOval(5, 3, t - 6, 8);
+            g2.drawLine(2, 11, 2, 15);
+            g2.drawLine(5, 7, 5, 11);
+        });
+    }
 
     private static javax.swing.Icon iconoCamion(java.awt.Color color) {
         return new VectorIcon(18, color, (g2, t) -> {

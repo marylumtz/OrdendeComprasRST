@@ -1,6 +1,7 @@
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\config\AppConfig.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\model\Tarea.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\model\Usuario.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\reporting\PDFALTAProveedor.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\reporting\PDFORDENCOMPRA.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\repository\ActividadRepository.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\repository\InventarioRepository.java
@@ -16,6 +17,7 @@ C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\service\Proveedor
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\service\SesionActual.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\service\TerminosService.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\service\UsuarioService.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\ADJUNTOS.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\INICIARSESION.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\INVENTARIOS.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\MESATRABAJO.java
@@ -23,6 +25,7 @@ C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\NUEVATAREA.jav
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\ORDENCOMPRA.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\PRINCIPAL.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\PROVEEDORES.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\SOLICITUDAYUDA.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\TERMINOS.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\USUARIOS.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\util\EstiloAplicacion.java

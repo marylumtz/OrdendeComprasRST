@@ -62,6 +62,7 @@ public class INICIARSESION extends javax.swing.JFrame {
      * indicado (sin conservar relación de aspecto), útil para fondos que
      * deben cubrir por completo un área determinada.
      */
+    @SuppressWarnings("unused")
     private static ImageIcon cargarImagenEscalada(String rutaClasspath, int ancho, int alto) {
         URL url = INICIARSESION.class.getResource(rutaClasspath);
         if (url == null) {
@@ -236,7 +237,8 @@ public class INICIARSESION extends javax.swing.JFrame {
         autenticar();
     }//GEN-LAST:event_jTextField1ActionPerformed
 
-    // =====================================================================
+    // ==========================
+    // ===========================================
     // Autenticacion y navegacion
     // =====================================================================
 
@@ -316,11 +318,7 @@ public class INICIARSESION extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+   
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -356,8 +354,6 @@ public class INICIARSESION extends javax.swing.JFrame {
     private javax.swing.JLabel lblTagline;
     private javax.swing.JLabel lblFooter;
     // End of variables declaration//GEN-END:variables
-
-
 
     // =====================================================================
     // Lectura de credenciales desde Excel

@@ -666,93 +666,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
-    private void aplicarEstiloSelectoresFecha() {
-        estilizarSelectorFecha(jDateChooser2);
-        estilizarSelectorFecha(jDateChooserEntrega);
-        estilizarSelectorFecha(jDateChooserPago);
-    }
-
-    private void estilizarSelectorFecha(com.toedter.calendar.JDateChooser selector) {
-        final java.awt.Color azul = new java.awt.Color(31, 112, 184);
-        final java.awt.Color azulOscuro = new java.awt.Color(28, 82, 132);
-        final java.awt.Color azulClaro = new java.awt.Color(225, 238, 250);
-        final java.awt.Color borde = new java.awt.Color(180, 202, 226);
-        final java.awt.Font fuente = new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12);
-        final java.util.Locale espanol = java.util.Locale.forLanguageTag("es-MX");
-
-        selector.setLocale(espanol);
-        selector.setDateFormatString("d MMM. yyyy");
-        selector.setFont(fuente);
-        selector.setOpaque(false);
-        selector.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(borde, 1, true),
-                javax.swing.BorderFactory.createEmptyBorder(1, 4, 1, 1)));
-        agregarListaAnios(selector);
-
-        java.awt.Component editor = selector.getDateEditor().getUiComponent();
-        if (editor instanceof javax.swing.JTextField campoFecha) {
-            campoFecha.setFont(fuente);
-            campoFecha.setForeground(azulOscuro);
-            campoFecha.setBackground(java.awt.Color.WHITE);
-            campoFecha.setOpaque(true);
-            campoFecha.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 7, 4, 4));
-            EstiloAplicacion.aplicarEstiloCamposTexto(campoFecha);
-        }
-
-        javax.swing.JButton botonCalendario = selector.getCalendarButton();
-        botonCalendario.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
-        botonCalendario.setForeground(java.awt.Color.WHITE);
-        botonCalendario.setBackground(azul);
-        botonCalendario.setOpaque(true);
-        botonCalendario.setContentAreaFilled(true);
-        botonCalendario.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 8, 2, 8));
-        botonCalendario.setFocusPainted(false);
-
-        com.toedter.calendar.JCalendar calendario = selector.getJCalendar();
-        calendario.setLocale(espanol);
-        calendario.setFont(fuente);
-        calendario.setBackground(java.awt.Color.WHITE);
-        calendario.setForeground(azulOscuro);
-        calendario.setDecorationBackgroundColor(azul);
-        calendario.setWeekdayForeground(java.awt.Color.WHITE);
-        calendario.setSundayForeground(new java.awt.Color(220, 235, 250));
-        calendario.setDecorationBordersVisible(false);
-        calendario.setTodayButtonVisible(true);
-        calendario.setTodayButtonText("Hoy");
-        calendario.setNullDateButtonVisible(true);
-        calendario.setNullDateButtonText("Limpiar");
-        calendario.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 6, 6, 6));
-        calendario.getDayChooser().setDayBordersVisible(false);
-        calendario.getDayChooser().setDecorationBordersVisible(false);
-        calendario.getDayChooser().setFont(fuente);
-        calendario.getDayChooser().setBackground(java.awt.Color.WHITE);
-        calendario.getDayChooser().setForeground(azulOscuro);
-        calendario.getDayChooser().setDecorationBackgroundColor(azul);
-        calendario.getDayChooser().setWeekdayForeground(java.awt.Color.WHITE);
-        calendario.getDayChooser().setSundayForeground(new java.awt.Color(220, 235, 250));
-
-        estilizarComponentesCalendario(calendario.getMonthChooser(), azul, java.awt.Color.WHITE, fuente);
-        estilizarComponentesCalendario(calendario.getYearChooser(), azul, java.awt.Color.WHITE, fuente);
-        estilizarCajasMesAno(calendario, azulOscuro, fuente, borde);
-        estilizarBotonesAuxiliares(calendario, azulClaro, azulOscuro, fuente);
-        blanquearFondosCalendario(calendario);
-        blanquearFondosControlesCalendario(calendario);
-        quitarBordesControlesCalendario(calendario);
-        refrescarDiasCalendario(selector, azul, azulOscuro);
-
-        java.beans.PropertyChangeListener actualizarDias = e ->
-                refrescarDiasCalendario(selector, azul, azulOscuro);
-        selector.addPropertyChangeListener("date", actualizarDias);
-        calendario.addPropertyChangeListener("calendar", actualizarDias);
-        botonCalendario.addActionListener(e ->
-                javax.swing.SwingUtilities.invokeLater(() ->
-                        {
-                            quitarBordePopupCalendario(calendario);
-                            refrescarDiasCalendario(selector, azul, azulOscuro);
-                        }));
-        quitarBordePopupCalendario(calendario);
-    }
-
+    @SuppressWarnings("unused")
     private void quitarBordePopupCalendario(java.awt.Component calendario) {
         java.awt.Container padre = calendario.getParent();
         while (padre != null) {
@@ -768,6 +682,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private void blanquearFondosCalendario(java.awt.Container contenedor) {
         for (java.awt.Component componente : contenedor.getComponents()) {
             if (componente instanceof javax.swing.JButton
@@ -784,6 +699,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private void blanquearFondosControlesCalendario(
             com.toedter.calendar.JCalendar calendario) {
         quitarContornoYBlanquear(calendario.getMonthChooser());
@@ -808,6 +724,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private void quitarBordesControlesCalendario(
             com.toedter.calendar.JCalendar calendario) {
         quitarBordeInterno(calendario.getMonthChooser());
@@ -830,6 +747,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private void estilizarComponentesCalendario(java.awt.Container contenedor,
             java.awt.Color fondo, java.awt.Color texto, java.awt.Font fuente) {
         contenedor.setBackground(fondo);
@@ -852,6 +770,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private void estilizarCajasMesAno(com.toedter.calendar.JCalendar calendario,
             java.awt.Color texto, java.awt.Font fuente, java.awt.Color borde) {
         java.awt.Component mesesComponente = calendario.getMonthChooser().getComboBox();
@@ -903,6 +822,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 javax.swing.BorderFactory.createEmptyBorder(1, 6, 1, 6)));
     }
 
+    @SuppressWarnings("unused")
     private void estilizarBotonesAuxiliares(java.awt.Container contenedor,
             java.awt.Color fondo, java.awt.Color texto, java.awt.Font fuente) {
         for (java.awt.Component componente : contenedor.getComponents()) {
@@ -925,6 +845,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    @SuppressWarnings("unused")
     private void refrescarDiasCalendario(com.toedter.calendar.JDateChooser selector,
             java.awt.Color azul, java.awt.Color azulOscuro) {
         com.toedter.calendar.JDayChooser selectorDias = selector.getJCalendar().getDayChooser();
@@ -949,18 +870,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 continue;
             }
             boolean seleccionado = Integer.parseInt(texto) == diaSeleccionado;
-            boolean numeroSemana = Integer.parseInt(texto) >= 40;
-            if (numeroSemana) {
-                boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
-                boton.setUI(new javax.swing.plaf.basic.BasicButtonUI());
-                boton.setBackground(java.awt.Color.WHITE);
-                boton.setForeground(azulOscuro);
-                boton.setOpaque(false);
-                boton.setContentAreaFilled(false);
-                boton.setBorderPainted(false);
-                boton.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 5, 4, 5));
-                continue;
-            }
             boton.setOpaque(true);
             boton.setBackground(seleccionado ? azul : java.awt.Color.WHITE);
             boton.setForeground(seleccionado ? java.awt.Color.WHITE : azulOscuro);
@@ -1002,10 +911,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 new java.awt.Color(225, 239, 255), "configuracion"));
         resumen.add(crearTarjetaResumen("Importe del mes", importeResumen,
                 new java.awt.Color(224, 246, 231), "dinero"));
-        javax.swing.JPanel zonaSuperior = new javax.swing.JPanel(new java.awt.BorderLayout(0, 16));
-        zonaSuperior.setOpaque(false);
-        zonaSuperior.add(encabezado, java.awt.BorderLayout.NORTH);
-        fondo.add(zonaSuperior, java.awt.BorderLayout.NORTH);
+        fondo.add(encabezado, java.awt.BorderLayout.NORTH);
 
         javax.swing.JPanel tarjeta = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
         tarjeta.setOpaque(false);
@@ -1022,11 +928,12 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         fechaInicio.setName("fechaInicioOrden");
         fechaFin.setName("fechaFinOrden");
         prepararCampoBusqueda(buscar);
-        agregarFiltroBusqueda(filtros, "Buscar por folio, proveedor o proyecto", buscar, 0, 1.25);
-        agregarFiltroBusqueda(filtros, "Fecha inicio", fechaInicio, 1, 0.65);
-        agregarFiltroBusqueda(filtros, "Fecha fin", fechaFin, 2, 0.65);
-        agregarFiltroBusqueda(filtros, "Estado", estado, 3, 0.75);
+        agregarFiltroBusqueda(filtros, "Buscar por folio, proveedor o proyecto", buscar, 0, 0.95);
+        agregarFiltroBusqueda(filtros, "Fecha inicio", fechaInicio, 1, 0.7);
+        agregarFiltroBusqueda(filtros, "Fecha fin", fechaFin, 2, 0.7);
+        agregarFiltroBusqueda(filtros, "Estado", estado, 3, 0.65);
         javax.swing.JButton limpiar = botonBusqueda("Limpiar filtros", false);
+        limpiar.setPreferredSize(new java.awt.Dimension(0, 30));
         limpiar.addActionListener(e -> {
             buscar.setText("");
             fechaInicio.setDate(null);
@@ -1371,9 +1278,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             EstiloAplicacion.aplicarEstiloCamposTexto(campo);
             return;
         }
+        campo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 14));
+        campo.setForeground(new java.awt.Color(24, 58, 104));
+        campo.setBackground(java.awt.Color.WHITE);
+        campo.setPreferredSize(new java.awt.Dimension(0, 30));
         campo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
                 javax.swing.BorderFactory.createLineBorder(new java.awt.Color(198, 210, 225)),
-                javax.swing.BorderFactory.createEmptyBorder(7, 9, 7, 9)));
+                javax.swing.BorderFactory.createEmptyBorder(4, 9, 4, 9)));
     }
 
     private void agregarFiltroBusqueda(javax.swing.JPanel panel, String texto, java.awt.Component campo,
@@ -1403,12 +1314,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private com.toedter.calendar.JDateChooser crearSelectorFechaBusqueda() {
         com.toedter.calendar.JDateChooser selector = new com.toedter.calendar.JDateChooser();
         selector.setLocale(java.util.Locale.forLanguageTag("es-MX"));
-        selector.setDateFormatString("d MMM yyyy");
-        selector.setPreferredSize(new java.awt.Dimension(155, 28));
-        selector.setMinimumSize(new java.awt.Dimension(155, 28));
+        selector.setDateFormatString("d MMM. yyyy");
+        selector.setPreferredSize(new java.awt.Dimension(0, 28));
+        selector.setMinimumSize(new java.awt.Dimension(0, 28));
+        selector.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 28));
         selector.setToolTipText("Selecciona una fecha");
         agregarListaAnios(selector);
-        EstiloAplicacion.aplicarEstiloCamposTexto(selector);
+        EstiloAplicacion.estilizarSelectorFecha(selector);
         return selector;
     }
 
@@ -4852,5 +4764,12 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField4;
     private javax.swing.JTextField jTextField5;
     private javax.swing.JTextField jTextField6;
+
+    private void aplicarEstiloSelectoresFecha() {
+        EstiloAplicacion.estilizarSelectorFecha(jDateChooser2);
+        EstiloAplicacion.estilizarSelectorFecha(jDateChooserEntrega);
+        EstiloAplicacion.estilizarSelectorFecha(jDateChooserPago);
+    }
+
     // End of variables declaration//GEN-END:variables
 }

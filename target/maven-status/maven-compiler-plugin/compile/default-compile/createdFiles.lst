@@ -8,6 +8,7 @@ com\mycompany\ocxrst\ui\ORDENCOMPRA$13.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$23.class
 com\mycompany\ocxrst\ui\PRINCIPAL$GraficaDona.class
 com\mycompany\ocxrst\util\EstiloAplicacion.class
+com\mycompany\ocxrst\ui\INVENTARIOS$10.class
 com\mycompany\ocxrst\service\InventarioService.class
 com\mycompany\ocxrst\ui\PROVEEDORES$8.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$10.class
@@ -18,7 +19,6 @@ com\mycompany\ocxrst\config\AppConfig.class
 com\mycompany\ocxrst\service\CalculoOrdenService$Resultado.class
 com\mycompany\ocxrst\ui\USUARIOS$DibujoIcono.class
 com\mycompany\ocxrst\ui\PROVEEDORES$14.class
-com\mycompany\ocxrst\ui\PROVEEDORES$24.class
 com\mycompany\ocxrst\ui\INVENTARIOS$3.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$BordeBotonOrden.class
 com\mycompany\ocxrst\ui\PROVEEDORES$3.class
@@ -29,6 +29,7 @@ com\mycompany\ocxrst\ui\PROVEEDORES$21.class
 com\mycompany\ocxrst\ui\USUARIOS$BotonPlanoUI.class
 com\mycompany\ocxrst\ui\PRINCIPAL$FilaExcel.class
 com\mycompany\ocxrst\model\Usuario.class
+com\mycompany\ocxrst\reporting\PDFALTAProveedor$DatosProveedor.class
 com\mycompany\ocxrst\ui\PRINCIPAL$5.class
 com\mycompany\ocxrst\ui\INVENTARIOS$6.class
 com\mycompany\ocxrst\util\EstiloAplicacion$CampoTextoBorder.class
@@ -41,8 +42,8 @@ com\mycompany\ocxrst\ui\MESATRABAJO$ActionRenderer.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$1.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$16.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$4.class
+com\mycompany\ocxrst\ui\INVENTARIOS$9.class
 com\mycompany\ocxrst\validation\UsuarioValidator.class
-com\mycompany\ocxrst\ui\PROVEEDORES$25.class
 com\mycompany\ocxrst\ui\USUARIOS$BordeRedondeado.class
 com\mycompany\ocxrst\ui\PROVEEDORES$15.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$6.class
@@ -72,6 +73,8 @@ com\mycompany\ocxrst\ui\PROVEEDORES.class
 com\mycompany\ocxrst\ui\PROVEEDORES$DibujoIcono.class
 com\mycompany\ocxrst\ui\MESATRABAJO$IconoBoton.class
 com\mycompany\ocxrst\ui\INVENTARIOS$4.class
+com\mycompany\ocxrst\reporting\PDFALTAProveedor$CuentaBancaria.class
+com\mycompany\ocxrst\reporting\PDFALTAProveedor.class
 com\mycompany\ocxrst\util\EstiloAplicacion$TrianguloComboBorder.class
 com\mycompany\ocxrst\ui\INVENTARIOS$BotonPlanoUI.class
 com\mycompany\ocxrst\ui\PROVEEDORES$4.class
@@ -82,14 +85,17 @@ com\mycompany\ocxrst\service\SesionActual.class
 com\mycompany\ocxrst\ui\PRINCIPAL$4.class
 com\mycompany\ocxrst\ui\PRINCIPAL$1.class
 com\mycompany\ocxrst\validation\OrdenCompraValidator$Datos.class
+com\mycompany\ocxrst\ui\INVENTARIOS$7.class
 com\mycompany\ocxrst\util\ImagenUtil.class
 com\mycompany\ocxrst\ui\INVENTARIOS$VectorIcon.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$17.class
 com\mycompany\ocxrst\ui\PROVEEDORES$1.class
 com\mycompany\ocxrst\reporting\PDFORDENCOMPRA$DatosOrden.class
+com\mycompany\ocxrst\ui\SOLICITUDAYUDA.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$8.class
 com\mycompany\ocxrst\ui\MESATRABAJO$IconoAccion.class
 com\mycompany\ocxrst\ui\USUARIOS$VectorIcon.class
+com\mycompany\ocxrst\ui\ADJUNTOS.class
 com\mycompany\ocxrst\ui\PROVEEDORES$16.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$24.class
 com\mycompany\ocxrst\ui\INVENTARIOS$DibujoIcono.class
@@ -119,7 +125,9 @@ com\mycompany\ocxrst\service\CalculoOrdenService$Item.class
 com\mycompany\ocxrst\ui\PRINCIPAL$3.class
 com\mycompany\ocxrst\repository\ProveedorRepository.class
 com\mycompany\ocxrst\ui\INVENTARIOS.class
+com\mycompany\ocxrst\ui\INVENTARIOS$8.class
 com\mycompany\ocxrst\ui\PROVEEDORES$11.class
+com\mycompany\ocxrst\ui\SOLICITUDAYUDA$1.class
 com\mycompany\ocxrst\ui\USUARIOS.class
 com\mycompany\ocxrst\ui\MESATRABAJO$1.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA.class

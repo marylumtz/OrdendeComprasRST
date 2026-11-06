@@ -56,6 +56,8 @@ public class MESATRABAJO extends javax.swing.JFrame {
         EstiloAplicacion.aplicarEstiloBotones(getContentPane());
         EstiloAplicacion.aplicarTipografia(getContentPane());
         EstiloAplicacion.aplicarEstiloCamposTexto(getContentPane());
+        EstiloAplicacion.estilizarSelectorFecha(fechaInicio);
+        EstiloAplicacion.estilizarSelectorFecha(fechaFin);
         cargar();
     }
 
@@ -67,9 +69,14 @@ public class MESATRABAJO extends javax.swing.JFrame {
         encabezado.setOpaque(false);
         JButton nueva = boton("Nueva tarea", "crear", true, e -> nuevaTarea(null));
         JButton actualizar = boton("ACTUALIZAR", "actualizar", false, e -> cargar());
-        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
-        acciones.setOpaque(false); acciones.add(nueva); acciones.add(actualizar);
-        encabezado.add(acciones, BorderLayout.EAST);
+        JButton adjuntos = boton("ADJUNTOS", "documento", false,
+                e -> new ADJUNTOS().setVisible(true));
+        JPanel accionesCabecera = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 5));
+        accionesCabecera.setOpaque(false);
+        accionesCabecera.add(nueva);
+        accionesCabecera.add(actualizar);
+        accionesCabecera.add(adjuntos);
+        encabezado.add(accionesCabecera, BorderLayout.EAST);
         fondo.add(encabezado, BorderLayout.NORTH);
 
         JPanel tarjeta = new JPanel(new BorderLayout(0, 12));
@@ -101,7 +108,10 @@ public class MESATRABAJO extends javax.swing.JFrame {
         filtrosYResumen.add(crearResumen(), BorderLayout.SOUTH);
         tarjeta.add(filtrosYResumen, BorderLayout.NORTH);
         configurarTabla();
-        tarjeta.add(new JScrollPane(tabla), BorderLayout.CENTER);
+        JScrollPane desplazamientoTabla = new JScrollPane(tabla);
+        desplazamientoTabla.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        desplazamientoTabla.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        tarjeta.add(desplazamientoTabla, BorderLayout.CENTER);
         JPanel pie = new JPanel(new BorderLayout());
         pie.setOpaque(false);
         totalRegistros.setForeground(AZUL);
@@ -115,16 +125,16 @@ public class MESATRABAJO extends javax.swing.JFrame {
     private JPanel crearResumen() {
         JPanel resumen = new JPanel(new GridLayout(1, 4, 10, 0));
         resumen.setOpaque(false);
-        resumen.add(crearTarjetaResumen("TOTAL DE TAREAS", totalTareas, new Color(225, 239, 255), AZUL));
-        resumen.add(crearTarjetaResumen("PENDIENTES", pendientesTareas, new Color(255, 242, 211), new Color(170, 115, 0)));
-        resumen.add(crearTarjetaResumen("EN PROCESO", procesoTareas, new Color(225, 239, 255), AZUL));
-        resumen.add(crearTarjetaResumen("COMPLETADAS", completadasTareas, new Color(224, 246, 231), new Color(0, 125, 70)));
+        resumen.add(crearTarjetaResumen("TOTAL DE TAREAS", totalTareas, AZUL));
+        resumen.add(crearTarjetaResumen("PENDIENTES", pendientesTareas, new Color(170, 115, 0)));
+        resumen.add(crearTarjetaResumen("EN PROCESO", procesoTareas, AZUL));
+        resumen.add(crearTarjetaResumen("COMPLETADAS", completadasTareas, new Color(0, 125, 70)));
         return resumen;
     }
 
-    private JPanel crearTarjetaResumen(String titulo, JLabel valor, Color fondo, Color colorTexto) {
+    private JPanel crearTarjetaResumen(String titulo, JLabel valor, Color colorTexto) {
         JPanel tarjeta = new JPanel(new BorderLayout(0, 4));
-        tarjeta.setBackground(fondo);
+        tarjeta.setBackground(Color.WHITE);
         tarjeta.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(198, 210, 225)),
                 BorderFactory.createEmptyBorder(9, 14, 9, 14)));
@@ -170,9 +180,14 @@ public class MESATRABAJO extends javax.swing.JFrame {
         tabla.setGridColor(new Color(225, 232, 241));
         tabla.setSelectionBackground(new Color(225, 238, 250));
         tabla.setSelectionForeground(AZUL);
-        tabla.getColumnModel().getColumn(0).setPreferredWidth(72);
-        tabla.getColumnModel().getColumn(1).setPreferredWidth(220);
-        tabla.getColumnModel().getColumn(8).setPreferredWidth(150);
+        int[] anchosColumnas = {58, 175, 82, 88, 82, 105, 120, 150, 150};
+        int[] anchosMinimos = {50, 120, 65, 70, 65, 80, 95, 105, 135};
+        for (int columna = 0; columna < anchosColumnas.length; columna++) {
+            TableColumn tableColumn = tabla.getColumnModel().getColumn(columna);
+            tableColumn.setPreferredWidth(anchosColumnas[columna]);
+            tableColumn.setMinWidth(anchosMinimos[columna]);
+        }
+        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         tabla.getColumnModel().getColumn(2).setCellRenderer(new BadgeRenderer());
         tabla.getColumnModel().getColumn(3).setCellRenderer(new BadgeRenderer());
         tabla.getColumnModel().getColumn(4).setCellRenderer(new BadgeRenderer());

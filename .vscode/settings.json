@@ -3,6 +3,11 @@
     "java.configuration.updateBuildConfiguration": "automatic",
     "java.import.maven.wrapper.enabled": true,
     "java.import.maven.enabled": true,
+    "java.project.sourcePaths": [
+        "src/main/java",
+        "src/test/java"
+    ],
+    "java.project.outputPath": "target/classes",
     "java.autobuild.enabled": true,
     "maven.executable.path": "${workspaceFolder}\\mvnw.cmd",
     "java.configuration.runtimes": [

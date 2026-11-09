@@ -70,8 +70,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private static final java.awt.Color COLOR_AZUL_PALIDO = new java.awt.Color(240, 246, 253);
     private static final java.awt.Color COLOR_AMARILLO_PALIDO = new java.awt.Color(255, 242, 211);
     private static final java.awt.Color COLOR_VERDE_PALIDO = new java.awt.Color(224, 246, 231);
-    private static final java.awt.Color COLOR_ENCABEZADO_TABLA = new java.awt.Color(232, 238, 247);
-    private static final java.awt.Color COLOR_FILA_TABLA = new java.awt.Color(248, 250, 253);
     private static final String FAMILIA_TIPOGRAFICA = "Segoe UI";
     private static final java.awt.Font FUENTE_TITULO = new java.awt.Font(FAMILIA_TIPOGRAFICA,
             java.awt.Font.BOLD, 20);
@@ -80,10 +78,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private static final java.awt.Font FUENTE_BOTON = new java.awt.Font(FAMILIA_TIPOGRAFICA,
             java.awt.Font.BOLD, 11);
     private static final java.awt.Font FUENTE_ETIQUETA = new java.awt.Font(FAMILIA_TIPOGRAFICA,
-            java.awt.Font.BOLD, 10);
-    private static final java.awt.Font FUENTE_TABLA = new java.awt.Font(FAMILIA_TIPOGRAFICA,
-            java.awt.Font.PLAIN, 11);
-    private static final java.awt.Font FUENTE_TABLA_ENCABEZADO = new java.awt.Font(FAMILIA_TIPOGRAFICA,
             java.awt.Font.BOLD, 10);
 
     // ===================== Campos de la interfaz =====================

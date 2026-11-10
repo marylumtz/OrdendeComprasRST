@@ -18,6 +18,8 @@ C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\service\SesionAct
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\service\TerminosService.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\service\UsuarioService.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\ADJUNTOS.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\ALTAPRODUCTO.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\ENTRADAINVENTARIO.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\INICIARSESION.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\INVENTARIOS.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\MESATRABAJO.java
@@ -25,6 +27,7 @@ C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\NUEVATAREA.jav
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\ORDENCOMPRA.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\PRINCIPAL.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\PROVEEDORES.java
+C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\SALIDAINVENTARIO.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\SOLICITUDAYUDA.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\TERMINOS.java
 C:\OCXRST\OrdendeComprasRST\src\main\java\com\mycompany\ocxrst\ui\USUARIOS.java

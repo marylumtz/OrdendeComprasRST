@@ -16,7 +16,7 @@ public class InventarioRepository {
 
     public static final String[] ENCABEZADOS = {
         "CODIGO", "DESCRIPCION", "UNIDAD", "PRECIO_UNITARIO", "CANTIDAD", "ACTIVO",
-        "CATEGORIA", "MARCA", "STOCK_MINIMO", "OBSERVACIONES", "IMAGEN_RUTA"
+        "CATEGORIA", "MARCA", "STOCK_MINIMO", "OBSERVACIONES", "IMAGEN_RUTA", "SKU"
     };
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
 
@@ -112,5 +112,45 @@ public class InventarioRepository {
     public void escribirCelda(Row fila, int columna, String valor) {
         Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
         celda.setCellValue(valor == null ? "" : valor.trim());
+    }
+
+    public void guardarProducto(String codigo, String descripcion, String unidad,
+            String precioUnitario, String cantidad, String categoria, String marca,
+            String stockMinimo, String observaciones, String imagenRuta, String sku) throws IOException {
+        String codigoNormalizado = codigo == null ? "" : codigo.trim();
+        if (codigoNormalizado.isBlank()) {
+            throw new IllegalArgumentException("El código del producto es obligatorio.");
+        }
+        try (Workbook libro = cargarLibro(obtenerArchivoInventarios())) {
+            Sheet hoja = obtenerHojaInventarios(libro);
+            asegurarEncabezados(hoja);
+            int filaDestino = -1;
+            for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                if (codigoNormalizado.equalsIgnoreCase(leerCelda(hoja.getRow(indice), 0))) {
+                    filaDestino = indice;
+                    break;
+                }
+            }
+            if (filaDestino < 0) {
+                filaDestino = hoja.getLastRowNum() + 1;
+            }
+            Row fila = hoja.getRow(filaDestino);
+            if (fila == null) {
+                fila = hoja.createRow(filaDestino);
+            }
+            escribirCelda(fila, 0, codigoNormalizado);
+            escribirCelda(fila, 1, descripcion);
+            escribirCelda(fila, 2, unidad);
+            escribirCelda(fila, 3, precioUnitario);
+            escribirCelda(fila, 4, cantidad);
+            escribirCelda(fila, 5, "1");
+            escribirCelda(fila, 6, categoria);
+            escribirCelda(fila, 7, marca);
+            escribirCelda(fila, 8, stockMinimo);
+            escribirCelda(fila, 9, observaciones);
+            escribirCelda(fila, 10, imagenRuta);
+            escribirCelda(fila, 11, sku);
+            guardarLibro(libro, obtenerArchivoInventarios());
+        }
     }
 }

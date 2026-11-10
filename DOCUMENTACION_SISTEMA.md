@@ -233,9 +233,14 @@ Control del catálogo de productos disponibles para crear órdenes.
 - Control de disponibilidad
 - Actualización de precios
 - Caché en memoria para autocompletado rápido
+- Las entradas y salidas manuales permiten buscar productos por código, descripción o SKU.
+  Al repetir un producto se incrementa su cantidad; con Suprimir se elimina el renglón seleccionado.
+- Una salida descuenta existencias y se bloquea por completo si algún producto no tiene stock suficiente.
+- Cada movimiento confirmado aparece en el historial del producto y en la actividad reciente del tablero.
 
 ### Persistencia:
-Todos los datos se guardan en `INVENTARIOS.xlsx`
+El catálogo y las existencias se guardan en `INVENTARIOS.xlsx`; los movimientos manuales en
+`MOVIMIENTOSINVENTARIO.xlsx` y la actividad del tablero en `ACTIVIDADES.xlsx`.
 
 ---
 

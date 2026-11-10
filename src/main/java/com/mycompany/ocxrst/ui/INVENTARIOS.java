@@ -6,6 +6,7 @@ package com.mycompany.ocxrst.ui;
 
 import com.mycompany.ocxrst.util.IconoVentanaUtil;
 import com.mycompany.ocxrst.util.EstiloAplicacion;
+import com.mycompany.ocxrst.config.AppConfig;
 import com.mycompany.ocxrst.repository.InventarioRepository;
 import com.mycompany.ocxrst.repository.ProductoProveedorRepository;
 import com.mycompany.ocxrst.repository.ProveedorRepository;
@@ -13,6 +14,8 @@ import com.mycompany.ocxrst.service.InventarioService;
 import com.mycompany.ocxrst.validation.InventarioValidator;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JOptionPane;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -35,26 +38,11 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private final InventarioRepository inventarioRepository = new InventarioRepository();
     private final ProveedorRepository proveedorRepository = new ProveedorRepository();
     private final ProductoProveedorRepository productoProveedorRepository = new ProductoProveedorRepository();
-    private int filaInventarioActual = -1;
-    private String rutaImagenActual = "";
-    private final java.util.List<String[]> filasProveedorProducto = new java.util.ArrayList<>();
-    private static final File CARPETA_FOTOS_PRODUCTO = new File("C:\\OCXRST\\FOTOSPRODUCT");
-    private String rutaImagenAutomaticaActual = "";
 
     // Caché de productos existentes (código | descripción) para el autocompletado del campo CÓDIGO.
-    private final java.util.List<String[]> cacheProductos = new java.util.ArrayList<>();
-    private final javax.swing.JPopupMenu popupProductos = new javax.swing.JPopupMenu();
-    private boolean seleccionandoProducto = false;
+    
 
-    private static final String[] UNIDADES_PRESET = {"PZA", "KG", "LT", "MT", "CAJA", "PAQUETE", "SERVICIO"};
-    private static final String[] CATEGORIAS_PRESET = {
-        "General", "Electr\u00f3nica", "Ferreter\u00eda", "Oficina", "Limpieza", "Consumibles", "Herramientas", "Refacciones"
-    };
-    private static final String[] MARCAS_PRESET = {"Gen\u00e9rico", "Sin marca"};
 
-    private static final int COL_PREDETERMINADO = 5;
-    private static final int COL_EDITAR = 6;
-    private static final int COL_ELIMINAR = 7;
 
     // ===================== Paleta de colores (misma que PROVEEDORES) =====================
     private static final java.awt.Color COLOR_AZUL_OSCURO = new java.awt.Color(28, 82, 132);
@@ -82,27 +70,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
 
     // ===================== Campos de la interfaz =====================
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton botonGuardar;
-    private javax.swing.JButton botonLimpiar;
-    private javax.swing.JButton botonAgregarProveedor;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField5;
-    private javax.swing.JTextField jTextField6;
-    private javax.swing.JComboBox<String> comboUnidad;
-    private javax.swing.JComboBox<String> comboCategoria;
-    private javax.swing.JComboBox<String> comboMarca;
-    private javax.swing.JTextField campoStockMinimo;
-    private javax.swing.JTextArea areaObservaciones;
-    private javax.swing.JComboBox<String> comboEstado;
-    private javax.swing.JLabel etiquetaId;
-    private javax.swing.JLabel etiquetaImagen;
-    private javax.swing.JTable tablaProveedoresProducto;
-    private javax.swing.table.DefaultTableModel modeloProveedoresProducto;
     private javax.swing.JPanel panelDashboard;
-    private javax.swing.JPanel panelFormularioInventario;
     private javax.swing.table.DefaultTableModel modeloInventarioDashboard;
     private javax.swing.JTable tablaInventarioDashboard;
     private javax.swing.JTextField filtroInventario;
@@ -129,12 +97,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
         setResizable(false);
         setLocationRelativeTo(null);
         asegurarArchivoInventarios();
-        configurarEventos();
-        configurarAutocompletadoCodigo();
-        cargarCacheProductos();
         EstiloAplicacion.aplicarEstiloBotones(jPanel1);
         EstiloAplicacion.aplicarTipografia(jPanel1);
-        EstiloAplicacion.aplicarEstiloCamposTexto(jPanel1);
     }
 
     private void initComponents() {
@@ -142,45 +106,14 @@ public class INVENTARIOS extends javax.swing.JFrame {
         setTitle("INVENTARIOS");
 
         jPanel1 = new javax.swing.JPanel();
-        jButton3 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
-        botonGuardar = new javax.swing.JButton();
-        botonLimpiar = new javax.swing.JButton();
-        botonAgregarProveedor = new javax.swing.JButton();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
-        jTextField5 = new javax.swing.JTextField();
-        jTextField6 = new javax.swing.JTextField();
-        comboUnidad = new javax.swing.JComboBox<>(UNIDADES_PRESET);
-        comboCategoria = new javax.swing.JComboBox<>(CATEGORIAS_PRESET);
-        comboMarca = new javax.swing.JComboBox<>(MARCAS_PRESET);
-        campoStockMinimo = new javax.swing.JTextField();
-        areaObservaciones = new javax.swing.JTextArea();
-        comboEstado = new javax.swing.JComboBox<>(new String[]{"\u25cf Activo", "\u25cf Inactivo"});
-        etiquetaId = new javax.swing.JLabel("ID: ---");
-        etiquetaImagen = new javax.swing.JLabel("+ Agregar imagen");
-        comboUnidad.setEditable(true);
-        comboCategoria.setEditable(true);
-        comboMarca.setEditable(true);
 
         getContentPane().setLayout(new java.awt.BorderLayout());
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
 
-        jButton6.addActionListener(this::jButton6ActionPerformed);
 
         pack();
     }
 
-    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {
-        // Regresa al menu principal.
-        PRINCIPAL ventana = new PRINCIPAL();
-        ventana.setVisible(true);
-        this.dispose();
-    }
-
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
@@ -200,25 +133,12 @@ public class INVENTARIOS extends javax.swing.JFrame {
     // Diseño visual y eventos del inventario
     // =====================================================================
 
-    private void configurarEventos() {
-        jButton3.addActionListener(e -> alternarEstadoProducto());
-        botonGuardar.addActionListener(e -> guardarProducto());
-        botonLimpiar.addActionListener(e -> limpiarFormulario(false));
-        botonAgregarProveedor.addActionListener(e -> mostrarDialogoProveedor(null));
-        comboEstado.addActionListener(e -> actualizarBotonEstadoProducto());
-        restablecerIndicadorEstado();
-    }//configurarEventos
-
     // ===================== Diseño visual =====================
     private void configurarDisenoVisual() {
         jPanel1.setLayout(new java.awt.BorderLayout());
         jPanel1.setBackground(COLOR_FONDO);
         jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 24, 18, 24));
 
-        panelFormularioInventario = new javax.swing.JPanel(new java.awt.BorderLayout());
-        panelFormularioInventario.setOpaque(false);
-        panelFormularioInventario.add(crearPanelCuerpo(), java.awt.BorderLayout.CENTER);
-        panelFormularioInventario.add(crearBarraInferior(), java.awt.BorderLayout.SOUTH);
         panelDashboard = crearDashboardInventario();
         EstiloAplicacion.aplicarEstiloBotones(panelDashboard);
         EstiloAplicacion.aplicarTipografia(panelDashboard);
@@ -235,6 +155,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
         dimensionarBotonDashboard(exportar, 142, 40);
         dimensionarBotonDashboard(actualizar, 142, 40);
         dimensionarBotonDashboard(limpiar, 150, 34);
+        dimensionarBotonDashboard(buscarBotonDashboard("ENTRADA DE INVENTARIO"), 240, 40);
+        dimensionarBotonDashboard(buscarBotonDashboard("SALIDA DE INVENTARIO"), 240, 40);
     }
 
     private javax.swing.JButton buscarBotonDashboard(String texto) {
@@ -286,7 +208,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
         nuevo.setBackground(COLOR_AZUL);
         nuevo.setForeground(java.awt.Color.WHITE);
         nuevo.setFont(FUENTE_BOTON);
-        nuevo.addActionListener(e -> mostrarFormularioNuevo());
+        nuevo.addActionListener(e -> abrirAltaProducto());
         javax.swing.JButton exportar = new javax.swing.JButton("  EXPORTAR", iconoGuardar(COLOR_AZUL_OSCURO));
         exportar.setForeground(COLOR_AZUL_OSCURO);
         exportar.setFont(FUENTE_BOTON);
@@ -318,6 +240,26 @@ public class INVENTARIOS extends javax.swing.JFrame {
         tarjetas.add(crearTarjetaResumenInventario("Valor del inventario", valorInventarioDashboard,
                 new java.awt.Color(0, 125, 70), COLOR_VERDE_PALIDO));
 
+        javax.swing.JPanel accionesMovimiento = new javax.swing.JPanel(
+                new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 8, 0));
+        accionesMovimiento.setOpaque(false);
+        javax.swing.JButton entrada = new javax.swing.JButton("  ENTRADA DE INVENTARIO",
+                iconoCamion(COLOR_AZUL));
+        entrada.setForeground(COLOR_AZUL_OSCURO);
+        entrada.setFont(FUENTE_BOTON);
+        entrada.setBackground(java.awt.Color.WHITE);
+        entrada.setToolTipText("Consultar entradas de inventario");
+        entrada.addActionListener(e -> mostrarFormularioEntradaInventario());
+        javax.swing.JButton salida = new javax.swing.JButton("  SALIDA DE INVENTARIO",
+                iconoBasura(COLOR_AZUL));
+        salida.setForeground(COLOR_AZUL_OSCURO);
+        salida.setFont(FUENTE_BOTON);
+        salida.setBackground(java.awt.Color.WHITE);
+        salida.setToolTipText("Registrar salida de inventario");
+        salida.addActionListener(e -> mostrarFormularioSalidaInventario());
+        accionesMovimiento.add(entrada);
+        accionesMovimiento.add(salida);
+
         javax.swing.JPanel filtros = new javax.swing.JPanel(new java.awt.GridBagLayout());
         filtros.setOpaque(false);
         filtroInventario = new javax.swing.JTextField();
@@ -328,9 +270,10 @@ public class INVENTARIOS extends javax.swing.JFrame {
         filtroCategoriaInventario = new javax.swing.JComboBox<>(new String[]{"Todas"});
         filtroMarcaInventario = new javax.swing.JComboBox<>(new String[]{"Todas"});
         filtroEstadoInventario = new javax.swing.JComboBox<>(new String[]{"Todos", "Disponible", "Stock bajo", "Agotado"});
-        filtroCategoriaInventario.setFont(FUENTE_SUBTITULO);
-        filtroMarcaInventario.setFont(FUENTE_SUBTITULO);
-        filtroEstadoInventario.setFont(FUENTE_SUBTITULO);
+        EstiloAplicacion.aplicarEstiloCamposTexto(filtroInventario);
+        EstiloAplicacion.aplicarEstiloCamposTexto(filtroCategoriaInventario);
+        EstiloAplicacion.aplicarEstiloCamposTexto(filtroMarcaInventario);
+        EstiloAplicacion.aplicarEstiloCamposTexto(filtroEstadoInventario);
         agregarFiltroInventario(filtros, "Buscar por código, descripción o marca", filtroInventario, 0, 1.8);
         agregarFiltroInventario(filtros, "Categoría", filtroCategoriaInventario, 1, 0.8);
         agregarFiltroInventario(filtros, "Marca", filtroMarcaInventario, 2, 0.8);
@@ -344,6 +287,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
         });
         limpiar.setFont(FUENTE_BOTON);
         limpiar.setBackground(java.awt.Color.WHITE);
+        limpiar.setPreferredSize(new java.awt.Dimension(0, 30));
         java.awt.GridBagConstraints limpiarGbc = new java.awt.GridBagConstraints();
         limpiarGbc.gridx = 4; limpiarGbc.gridy = 0; limpiarGbc.weightx = 0.7;
         limpiarGbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
@@ -357,6 +301,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
         superior.add(javax.swing.Box.createVerticalStrut(10));
         superior.add(tarjetas);
         superior.add(javax.swing.Box.createVerticalStrut(8));
+        superior.add(accionesMovimiento);
+        superior.add(javax.swing.Box.createVerticalStrut(8));
         superior.add(filtros);
         dashboard.remove(encabezado);
         dashboard.add(superior, java.awt.BorderLayout.NORTH);
@@ -366,7 +312,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
                     "UNIDAD", "EXISTENCIA", "STOCK MÍN.", "PRECIO UNIT.", "ESTADO", "ACCIONES"}, 0) {
             @Override public boolean isCellEditable(int fila, int columna) { return false; }
         };
-        tablaInventarioDashboard = new javax.swing.JTable(modeloInventarioDashboard) {
+            tablaInventarioDashboard = new javax.swing.JTable(modeloInventarioDashboard) {
             @Override
             public String getToolTipText(java.awt.event.MouseEvent evento) {
                 int fila = rowAtPoint(evento.getPoint());
@@ -381,7 +327,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
                 return super.getToolTipText(evento);
             }
         };
-        EstiloAplicacion.aplicarEstiloTabla(tablaInventarioDashboard);
+            EstiloAplicacion.aplicarEstiloTabla(tablaInventarioDashboard);
         javax.swing.table.TableRowSorter<javax.swing.table.TableModel> ordenInventario =
                 new javax.swing.table.TableRowSorter<>(modeloInventarioDashboard);
         java.util.Comparator<Object> comparadorNumerico = (primero, segundo) ->
@@ -390,7 +336,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
         ordenInventario.setComparator(6, comparadorNumerico);
         ordenInventario.setComparator(7, comparadorNumerico);
         tablaInventarioDashboard.setRowSorter(ordenInventario);
-        tablaInventarioDashboard.getColumnModel().getColumn(9).setPreferredWidth(120);
+        tablaInventarioDashboard.getColumnModel().getColumn(9).setMinWidth(132);
+        tablaInventarioDashboard.getColumnModel().getColumn(9).setPreferredWidth(144);
         tablaInventarioDashboard.getColumnModel().getColumn(8).setCellRenderer(
                 (tabla, valor, seleccionado, foco, fila, columna) -> {
                     String estado = String.valueOf(valor);
@@ -420,14 +367,18 @@ public class INVENTARIOS extends javax.swing.JFrame {
         tablaInventarioDashboard.getColumnModel().getColumn(9).setCellRenderer(
                 (tabla, valor, seleccionado, foco, fila, columna) -> {
                     javax.swing.JPanel botonesAccion = new javax.swing.JPanel(
-                            new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 7, 7));
+                            new java.awt.GridLayout(1, 3, 8, 0));
                     botonesAccion.setOpaque(true);
                     botonesAccion.setBackground(seleccionado ? COLOR_AZUL_CLARO : java.awt.Color.WHITE);
+                    botonesAccion.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 6, 5, 6));
                     javax.swing.JLabel ver = new javax.swing.JLabel(iconoOjo(COLOR_AZUL));
+                    ver.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
                     ver.setToolTipText("Visualizar producto");
                     javax.swing.JLabel editar = new javax.swing.JLabel(iconoEditar(COLOR_AZUL));
+                    editar.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
                     editar.setToolTipText("Editar producto");
                     javax.swing.JLabel eliminar = new javax.swing.JLabel(iconoBasura(COLOR_ROJO));
+                    eliminar.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
                     eliminar.setToolTipText("Desactivar producto");
                     botonesAccion.add(ver);
                     botonesAccion.add(editar);
@@ -440,15 +391,15 @@ public class INVENTARIOS extends javax.swing.JFrame {
                 if (fila >= 0 && tablaInventarioDashboard.columnAtPoint(e.getPoint()) == 9) {
                     int filaModelo = tablaInventarioDashboard.convertRowIndexToModel(fila);
                     String codigo = String.valueOf(modeloInventarioDashboard.getValueAt(filaModelo, 0));
-                    int posicion = e.getX() - tablaInventarioDashboard.getCellRect(fila, 9, true).x;
-                    if (posicion < 38) {
+                    java.awt.Rectangle celdaAcciones = tablaInventarioDashboard.getCellRect(fila, 9, true);
+                    int posicion = e.getX() - celdaAcciones.x;
+                    int anchoBoton = Math.max(1, celdaAcciones.width / 3);
+                    if (posicion < anchoBoton) {
                         verProductoDashboard(codigo);
-                    } else if (posicion < 76) {
-                        cargarProductoPorCodigo(codigo);
-                        mostrarFormularioInventario();
+                    } else if (posicion < anchoBoton * 2) {
+                        mostrarFormularioProducto(codigo);
                     } else {
-                        cargarProductoPorCodigo(codigo);
-                        alternarEstadoProducto();
+                        desactivarProducto(codigo);
                         mostrarDashboardInventario();
                     }
                 }
@@ -509,7 +460,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
         envoltura.setOpaque(false);
         javax.swing.JLabel etiqueta = new javax.swing.JLabel(texto);
         etiqueta.setForeground(COLOR_AZUL_OSCURO);
-        etiqueta.setFont(FUENTE_ETIQUETA);
+        etiqueta.setFont(new java.awt.Font(FAMILIA_TIPOGRAFICA, java.awt.Font.BOLD, 11));
         envoltura.add(etiqueta, java.awt.BorderLayout.NORTH);
         envoltura.add(campo, java.awt.BorderLayout.CENTER);
         java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
@@ -526,14 +477,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
                 Row fila = obtenerHojaInventarios(libro).getRow(buscarFilaPorCodigo(
                         obtenerHojaInventarios(libro), codigo));
                 if (fila != null) {
-                    JOptionPane.showMessageDialog(this,
-                            "<html><b>" + leerCelda(fila, 0) + " - " + leerCelda(fila, 1)
-                            + "</b><br>Categoría: " + leerCelda(fila, 6)
-                            + "<br>Marca: " + leerCelda(fila, 7)
-                            + "<br>Existencia: " + leerCelda(fila, 4)
-                            + "<br>Stock mínimo: " + leerCelda(fila, 8)
-                            + "<br>Precio unitario: $ " + leerCelda(fila, 3) + "</html>",
-                            "Detalle del producto", JOptionPane.INFORMATION_MESSAGE);
+                    mostrarMovimientosProducto(codigo, leerCelda(fila, 1));
                 }
             }
         } catch (IOException ex) {
@@ -541,16 +485,234 @@ public class INVENTARIOS extends javax.swing.JFrame {
         }
     }
 
-    private void mostrarFormularioInventario() {
+    private void mostrarMovimientosProducto(String codigo, String descripcion) {
+        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(
+                new String[]{"Fecha", "Tipo", "Documento", "Proveedor / Cliente",
+                    "Cantidad", "Usuario", "Observaciones"}, 0) {
+            @Override public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+        try {
+            agregarMovimientosRecepcion(modelo, codigo);
+            agregarMovimientosEntradaManual(modelo, codigo);
+            agregarMovimientosArchivo(modelo, AppConfig.resolveBaseFile("REGISTRODEVOLUCIONES.xlsx"),
+                    codigo, "Salida", new String[]{"FECHA", "ORDENCOMPRA", "CANTIDAD",
+                        "REGISTRADO_POR", "MOTIVO"});
+            agregarMovimientosArchivo(modelo, AppConfig.resolveBaseFile("REGISTROINCIDENCIAS.xlsx"),
+                    codigo, "Ajuste", new String[]{"FECHA", "ORDENCOMPRA", "CANTIDAD",
+                        "REGISTRADO_POR", "DESCRIPCION"});
+
+            if (modelo.getRowCount() == 0) {
+                JOptionPane.showMessageDialog(this,
+                        "No hay movimientos registrados para " + codigo + ".",
+                        "Historial del producto", JOptionPane.PLAIN_MESSAGE);
+                return;
+            }
+            javax.swing.JTable tabla = new javax.swing.JTable(modelo);
+            EstiloAplicacion.aplicarEstiloTabla(tabla);
+            tabla.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
+            javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tabla);
+            scroll.setPreferredSize(new java.awt.Dimension(850, 260));
+            JOptionPane.showMessageDialog(this, scroll,
+                    "Movimientos de " + codigo + " - " + descripcion,
+                    JOptionPane.PLAIN_MESSAGE);
+        } catch (IOException ex) {
+            mostrarError("No se pudo cargar el historial del producto.", ex);
+        }
+    }
+
+    private void mostrarMovimientosInventario(String tipoMovimiento) {
+        javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(
+                new String[]{"Fecha", "Tipo", "Documento", "Proveedor / Cliente",
+                    "Cantidad", "Usuario", "Observaciones"}, 0) {
+            @Override public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+        try {
+            agregarMovimientosRecepcion(modelo, null);
+            agregarMovimientosEntradaManual(modelo, null);
+            agregarMovimientosArchivo(modelo, AppConfig.resolveBaseFile("REGISTRODEVOLUCIONES.xlsx"),
+                    null, "Salida", new String[]{"FECHA", "ORDENCOMPRA", "CANTIDAD",
+                        "REGISTRADO_POR", "MOTIVO"});
+            agregarMovimientosArchivo(modelo, AppConfig.resolveBaseFile("REGISTROINCIDENCIAS.xlsx"),
+                    null, "Ajuste", new String[]{"FECHA", "ORDENCOMPRA", "CANTIDAD",
+                        "REGISTRADO_POR", "DESCRIPCION"});
+            for (int indice = modelo.getRowCount() - 1; indice >= 0; indice--) {
+                if (!tipoMovimiento.equals(modelo.getValueAt(indice, 1))) {
+                    modelo.removeRow(indice);
+                }
+            }
+            if (modelo.getRowCount() == 0) {
+                JOptionPane.showMessageDialog(this,
+                        "No hay movimientos de tipo " + tipoMovimiento + " registrados.",
+                        "Historial del inventario", JOptionPane.PLAIN_MESSAGE);
+                return;
+            }
+            javax.swing.JTable tabla = new javax.swing.JTable(modelo);
+            EstiloAplicacion.aplicarEstiloTabla(tabla);
+            javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tabla);
+            scroll.setPreferredSize(new java.awt.Dimension(850, 260));
+            JOptionPane.showMessageDialog(this, scroll,
+                    tipoMovimiento + " de inventario", JOptionPane.PLAIN_MESSAGE);
+        } catch (IOException ex) {
+            mostrarError("No se pudo cargar el historial del inventario.", ex);
+        }
+    }
+
+    private void mostrarFormularioEntradaInventario() {
+        ENTRADAINVENTARIO formulario = new ENTRADAINVENTARIO(this::mostrarDashboardInventario);
         jPanel1.removeAll();
-        jPanel1.add(panelFormularioInventario, java.awt.BorderLayout.CENTER);
+        jPanel1.add(formulario, java.awt.BorderLayout.CENTER);
         jPanel1.revalidate();
         jPanel1.repaint();
     }
 
-    private void mostrarFormularioNuevo() {
-        limpiarFormulario(false);
-        mostrarFormularioInventario();
+    private void mostrarFormularioSalidaInventario() {
+        SALIDAINVENTARIO formulario = new SALIDAINVENTARIO(this::mostrarDashboardInventario);
+        jPanel1.removeAll();
+        jPanel1.add(formulario, java.awt.BorderLayout.CENTER);
+        jPanel1.revalidate();
+        jPanel1.repaint();
+    }
+
+    private void agregarMovimientosRecepcion(javax.swing.table.DefaultTableModel modelo,
+            String codigo) throws IOException {
+        File archivo = AppConfig.resolveBaseFile("REGISTRORECIBIR.xlsx");
+        if (!archivo.exists()) {
+            return;
+        }
+        try (Workbook libro = cargarLibro(archivo)) {
+            Sheet hoja = obtenerHojaInventarios(libro);
+            for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                Row fila = hoja.getRow(indice);
+                if (codigo == null || codigo.equalsIgnoreCase(leerCelda(fila, 6))) {
+                    modelo.addRow(new Object[]{leerCelda(fila, 2), "Entrada",
+                        leerCelda(fila, 0), valorONa(leerCelda(fila, 1)), leerCelda(fila, 7),
+                        valorONa(leerCelda(fila, 5), "Usuario no identificado"),
+                        "Recepción de mercancía"});
+                }
+            }
+        }
+    }
+
+    private void agregarMovimientosEntradaManual(javax.swing.table.DefaultTableModel modelo,
+            String codigo) throws IOException {
+        agregarMovimientosManuales(modelo, codigo, AppConfig.resolveBaseFile("MOVIMIENTOSINVENTARIO.xlsx"),
+                inventarioRepository);
+    }
+
+    static void agregarMovimientosManuales(javax.swing.table.DefaultTableModel modelo,
+            String codigo, File archivo, InventarioRepository repository) throws IOException {
+        agregarMovimientosManuales(modelo, codigo, archivo, repository, AppConfig.actividadesFile());
+    }
+
+    static void agregarMovimientosManuales(javax.swing.table.DefaultTableModel modelo,
+            String codigo, File archivo, InventarioRepository repository, File archivoActividades)
+            throws IOException {
+        if (!archivo.exists()) {
+            return;
+        }
+        Map<String, String> usuariosPorFolio = cargarUsuariosMovimientos(archivoActividades, repository);
+        try (Workbook libro = repository.cargarLibro(archivo)) {
+            Sheet hoja = repository.obtenerHojaInventarios(libro);
+            for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                Row fila = hoja.getRow(indice);
+                if (fila == null || (codigo != null
+                        && !codigo.equalsIgnoreCase(repository.leerCelda(fila, 2)))) {
+                    continue;
+                }
+                String folio = repository.leerCelda(fila, 0);
+                boolean salida = folio.startsWith("SI");
+                String usuario = repository.leerCelda(fila, 6);
+                if (usuario.isBlank()) {
+                    usuario = usuariosPorFolio.getOrDefault(folio, "Usuario no identificado");
+                }
+                modelo.addRow(new Object[]{repository.leerCelda(fila, 1), salida ? "Salida" : "Entrada",
+                    folio, "N/A", repository.leerCelda(fila, 4), usuario,
+                    salida ? "Salida manual de inventario" : "Entrada manual de inventario"});
+            }
+        }
+    }
+
+    private static Map<String, String> cargarUsuariosMovimientos(File archivoActividades,
+            InventarioRepository repository) throws IOException {
+        Map<String, String> usuariosPorFolio = new HashMap<>();
+        if (!archivoActividades.exists()) {
+            return usuariosPorFolio;
+        }
+        try (Workbook libro = repository.cargarLibro(archivoActividades)) {
+            Sheet hoja = repository.obtenerHojaInventarios(libro);
+            for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                Row fila = hoja.getRow(indice);
+                if (!"Inventarios".equalsIgnoreCase(repository.leerCelda(fila, 1))) {
+                    continue;
+                }
+                String folio = repository.leerCelda(fila, 3);
+                String usuario = repository.leerCelda(fila, 4);
+                if (!folio.isBlank() && !usuario.isBlank()) {
+                    usuariosPorFolio.put(folio, usuario);
+                }
+            }
+        }
+        return usuariosPorFolio;
+    }
+
+    private void agregarMovimientosArchivo(javax.swing.table.DefaultTableModel modelo,
+            File archivo, String codigo, String tipo, String[] columnas) throws IOException {
+        if (!archivo.exists()) {
+            return;
+        }
+        try (Workbook libro = cargarLibro(archivo)) {
+            Sheet hoja = obtenerHojaInventarios(libro);
+            for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                Row fila = hoja.getRow(indice);
+                if (codigo == null || codigo.equalsIgnoreCase(leerCelda(fila, 2))) {
+                    modelo.addRow(new Object[]{leerCelda(fila, indiceColumna(hoja, columnas[0])),
+                        tipo, leerCelda(fila, indiceColumna(hoja, columnas[1])), "N/A",
+                        leerCelda(fila, indiceColumna(hoja, columnas[2])),
+                        valorONa(leerCelda(fila, indiceColumna(hoja, columnas[3])),
+                                "Usuario no identificado"),
+                        leerCelda(fila, indiceColumna(hoja, columnas[4]))});
+                }
+            }
+        }
+    }
+
+    private static String valorONa(String valor) {
+        return valorONa(valor, "N/A");
+    }
+
+    private static String valorONa(String valor, String valorAlternativo) {
+        return valor == null || valor.isBlank() ? valorAlternativo : valor;
+    }
+
+    private int indiceColumna(Sheet hoja, String encabezado) {
+        Row fila = hoja.getRow(0);
+        for (int indice = 0; indice < fila.getLastCellNum(); indice++) {
+            if (encabezado.equalsIgnoreCase(leerCelda(fila, indice))) {
+                return indice;
+            }
+        }
+        return -1;
+    }
+
+    private void abrirAltaProducto() {
+        mostrarFormularioProducto(null);
+    }
+
+    private void mostrarFormularioProducto() {
+        mostrarFormularioProducto(null);
+    }
+
+    private void mostrarFormularioProducto(String codigoExistente) {
+        ALTAPRODUCTO formulario = new ALTAPRODUCTO(this::mostrarDashboardInventario,
+                codigoExistente);
+        jPanel1.removeAll();
+        jPanel1.add(formulario, java.awt.BorderLayout.CENTER);
+        jPanel1.revalidate();
+        jPanel1.repaint();
     }
 
     private void mostrarDashboardInventario() {
@@ -708,585 +870,29 @@ public class INVENTARIOS extends javax.swing.JFrame {
         }
     }
 
-    private javax.swing.JPanel crearPanelCuerpo() {
-        javax.swing.JPanel panelCuerpo = new javax.swing.JPanel(new java.awt.GridBagLayout());
-        panelCuerpo.setOpaque(false);
-        java.awt.GridBagConstraints gc = new java.awt.GridBagConstraints();
-        gc.gridy = 0;
-        gc.fill = java.awt.GridBagConstraints.BOTH;
-        gc.weighty = 1;
-
-        gc.gridx = 0;
-        gc.weightx = 0.52;
-        gc.insets = new java.awt.Insets(0, 0, 0, 10);
-        panelCuerpo.add(crearTarjetaProducto(), gc);
-
-        gc.gridx = 1;
-        gc.weightx = 0.48;
-        gc.insets = new java.awt.Insets(0, 10, 0, 0);
-        panelCuerpo.add(crearTarjetaProveedores(), gc);
-
-        return panelCuerpo;
-    }//crearPanelCuerpo
-
-    private javax.swing.JPanel crearTarjetaProducto() {
-        RoundedPanel tarjeta = new RoundedPanel(14, java.awt.Color.WHITE);
-        tarjeta.setLayout(new java.awt.BorderLayout(0, 14));
-        tarjeta.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
-                javax.swing.BorderFactory.createEmptyBorder(18, 20, 18, 20)));
-
-        tarjeta.add(crearTituloTarjeta("Informaci\u00f3n del Producto", iconoCaja(java.awt.Color.WHITE), COLOR_AZUL),
-                java.awt.BorderLayout.NORTH);
-
-        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
-        formulario.setOpaque(false);
-        java.awt.GridBagConstraints gc = new java.awt.GridBagConstraints();
-        gc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gc.insets = new java.awt.Insets(6, 0, 6, 10);
-        gc.weightx = 1;
-
-        estilizarCampoTexto(jTextField1);
-        estilizarCampoTexto(jTextField2);
-        estilizarCampoCombo(comboUnidad);
-        estilizarCampoTexto(jTextField5);
-        estilizarCampoTexto(jTextField6);
-        estilizarCampoCombo(comboCategoria);
-        estilizarCampoCombo(comboMarca);
-        estilizarCampoTexto(campoStockMinimo);
-
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.gridwidth = 1;
-        formulario.add(crearCampoVertical("* C\u00d3DIGO", jTextField1, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-
-        gc.gridx = 1;
-        gc.gridy = 0;
-        gc.gridwidth = 1;
-        gc.insets = new java.awt.Insets(6, 0, 6, 0);
-        formulario.add(crearRecuadroImagen(), gc);
-        gc.insets = new java.awt.Insets(6, 0, 6, 10);
-
-        gc.gridx = 0;
-        gc.gridy = 1;
-        gc.gridwidth = 2;
-        formulario.add(crearCampoVertical("* DESCRIPCI\u00d3N", jTextField2, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-        gc.gridwidth = 1;
-
-        gc.gridx = 0;
-        gc.gridy = 2;
-        formulario.add(crearCampoVertical("* CATEGOR\u00cdA", comboCategoria, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-        gc.gridx = 1;
-        formulario.add(crearCampoVertical("* MARCA", comboMarca, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-
-        gc.gridx = 0;
-        gc.gridy = 3;
-        formulario.add(crearCampoVertical("* UNIDAD", comboUnidad, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-        gc.gridx = 1;
-        formulario.add(crearCampoVertical("* PRECIO UNITARIO", jTextField5, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-
-        gc.gridx = 0;
-        gc.gridy = 4;
-        formulario.add(crearCampoVertical("* CANTIDAD EN INVENTARIO", jTextField6, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-        gc.gridx = 1;
-        formulario.add(crearCampoVertical("* STOCK M\u00cdNIMO", campoStockMinimo, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-
-        areaObservaciones.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        areaObservaciones.setRows(3);
-        areaObservaciones.setLineWrap(true);
-        areaObservaciones.setWrapStyleWord(true);
-        areaObservaciones.setBorder(javax.swing.BorderFactory.createEmptyBorder(6, 8, 6, 8));
-        javax.swing.JScrollPane scrollObservaciones = new javax.swing.JScrollPane(areaObservaciones);
-        scrollObservaciones.setBorder(new BordeRedondeado(9, COLOR_BORDE_CAMPO, 1.2f));
-        scrollObservaciones.setPreferredSize(new java.awt.Dimension(120, 70));
-
-        gc.gridx = 0;
-        gc.gridy = 5;
-        gc.gridwidth = 2;
-        gc.fill = java.awt.GridBagConstraints.BOTH;
-        gc.weighty = 1;
-        formulario.add(crearCampoVertical("OBSERVACIONES", scrollObservaciones, iconoCampo(COLOR_AZUL_OSCURO)), gc);
-
-        tarjeta.add(formulario, java.awt.BorderLayout.CENTER);
-        return tarjeta;
-    }//crearTarjetaProducto
-
-    private javax.swing.JPanel crearRecuadroImagen() {
-        etiquetaImagen.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        etiquetaImagen.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
-        etiquetaImagen.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
-        etiquetaImagen.setForeground(COLOR_AZUL);
-        etiquetaImagen.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        etiquetaImagen.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        etiquetaImagen.setOpaque(true);
-        etiquetaImagen.setBackground(COLOR_AZUL_PALIDO);
-        etiquetaImagen.setBorder(new BordeRedondeado(10, COLOR_BORDE_CAMPO, 1.2f));
-        etiquetaImagen.setPreferredSize(new java.awt.Dimension(160, 100));
-        etiquetaImagen.setMinimumSize(new java.awt.Dimension(160, 100));
-        etiquetaImagen.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-        etiquetaImagen.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                seleccionarImagen();
-            }
-        });
-
-        javax.swing.JPanel contenedor = new javax.swing.JPanel(new java.awt.BorderLayout());
-        contenedor.setOpaque(false);
-        contenedor.add(etiquetaImagen, java.awt.BorderLayout.CENTER);
-        return contenedor;
-    }//crearRecuadroImagen
-
-    private javax.swing.JPanel crearTarjetaProveedores() {
-        RoundedPanel tarjeta = new RoundedPanel(14, java.awt.Color.WHITE);
-        tarjeta.setLayout(new java.awt.BorderLayout(0, 12));
-        tarjeta.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
-                javax.swing.BorderFactory.createEmptyBorder(18, 20, 18, 20)));
-
-        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout());
-        encabezado.setOpaque(false);
-        encabezado.add(crearTituloTarjeta("Proveedores del Producto", iconoCamion(java.awt.Color.WHITE), COLOR_AZUL),
-                java.awt.BorderLayout.WEST);
-        prepararBoton(botonAgregarProveedor, "AGREGAR PROVEEDOR",
-                iconoMas(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
-        javax.swing.JPanel contenedorBoton = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
-        contenedorBoton.setOpaque(false);
-        contenedorBoton.add(botonAgregarProveedor);
-        encabezado.add(contenedorBoton, java.awt.BorderLayout.EAST);
-        tarjeta.add(encabezado, java.awt.BorderLayout.NORTH);
-
-        modeloProveedoresProducto = new javax.swing.table.DefaultTableModel(
-                new Object[]{"PROVEEDOR", "C\u00d3DIGO PROV.", "PRECIO", "TIEMPO ENTREGA",
-                    "\u00dALTIMA COMPRA", "PRED.", "", ""}, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        tablaProveedoresProducto = new javax.swing.JTable(modeloProveedoresProducto);
-        tablaProveedoresProducto.setRowHeight(30);
-        tablaProveedoresProducto.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        tablaProveedoresProducto.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
-        tablaProveedoresProducto.getTableHeader().setForeground(COLOR_AZUL_OSCURO);
-        tablaProveedoresProducto.setSelectionBackground(COLOR_AZUL_CLARO);
-        tablaProveedoresProducto.setGridColor(COLOR_BORDE_CAMPO);
-        tablaProveedoresProducto.setShowVerticalLines(false);
-
-        tablaProveedoresProducto.getColumnModel().getColumn(4).setMinWidth(92);
-        tablaProveedoresProducto.getColumnModel().getColumn(4).setPreferredWidth(105);
-        tablaProveedoresProducto.getColumnModel().getColumn(4).setMaxWidth(120);
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_PREDETERMINADO).setPreferredWidth(46);
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_PREDETERMINADO).setMaxWidth(50);
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_EDITAR).setPreferredWidth(34);
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_EDITAR).setMaxWidth(36);
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_ELIMINAR).setPreferredWidth(34);
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_ELIMINAR).setMaxWidth(36);
-
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_PREDETERMINADO).setCellRenderer(
-                (t, valor, seleccionado, foco, fila, columna) -> {
-                    boolean predeterminado = Boolean.TRUE.equals(valor);
-                    javax.swing.JLabel etiqueta = new javax.swing.JLabel(iconoRadio(predeterminado));
-                    etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-                    etiqueta.setOpaque(true);
-                    etiqueta.setBackground(seleccionado ? COLOR_AZUL_CLARO : java.awt.Color.WHITE);
-                    return etiqueta;
-                });
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_EDITAR).setCellRenderer(
-                (t, valor, seleccionado, foco, fila, columna) -> {
-                    javax.swing.JLabel etiqueta = new javax.swing.JLabel(iconoEditar(COLOR_AZUL));
-                    etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-                    etiqueta.setOpaque(true);
-                    etiqueta.setBackground(seleccionado ? COLOR_AZUL_CLARO : java.awt.Color.WHITE);
-                    return etiqueta;
-                });
-        tablaProveedoresProducto.getColumnModel().getColumn(COL_ELIMINAR).setCellRenderer(
-                (t, valor, seleccionado, foco, fila, columna) -> {
-                    javax.swing.JLabel etiqueta = new javax.swing.JLabel(iconoBasura(COLOR_ROJO));
-                    etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-                    etiqueta.setOpaque(true);
-                    etiqueta.setBackground(seleccionado ? COLOR_AZUL_CLARO : java.awt.Color.WHITE);
-                    return etiqueta;
-                });
-
-        tablaProveedoresProducto.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                manejarClicTablaProveedores(evt);
-            }
-        });
-
-        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tablaProveedoresProducto);
-        scroll.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO));
-        tarjeta.add(scroll, java.awt.BorderLayout.CENTER);
-
-        return tarjeta;
-    }//crearTarjetaProveedores
-
-    private void manejarClicTablaProveedores(java.awt.event.MouseEvent evt) {
-        int fila = tablaProveedoresProducto.rowAtPoint(evt.getPoint());
-        int columna = tablaProveedoresProducto.columnAtPoint(evt.getPoint());
-        if (fila < 0 || columna < 0 || fila >= filasProveedorProducto.size()) {
-            return;
-        }
-        if (columna == COL_PREDETERMINADO) {
-            marcarProveedorPredeterminado(fila);
-        } else if (columna == COL_EDITAR) {
-            mostrarDialogoProveedor(fila);
-        } else if (columna == COL_ELIMINAR) {
-            eliminarProveedorFila(fila);
-        }
-    }//manejarClicTablaProveedores
-
-    private javax.swing.JPanel crearBarraInferior() {
-        javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout());
-        barra.setOpaque(false);
-        barra.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 0, 0, 0));
-
-        prepararBoton(botonLimpiar, "LIMPIAR", iconoLimpiar(COLOR_AZUL_OSCURO), java.awt.Color.WHITE, COLOR_AZUL_OSCURO, COLOR_BORDE_CAMPO);
-        prepararBoton(botonGuardar, "GUARDAR", iconoGuardar(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
-        actualizarBotonEstadoProducto();
-
-        javax.swing.JPanel panelDerecha = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 12, 0));
-        panelDerecha.setOpaque(false);
-        javax.swing.JButton volver = new javax.swing.JButton("VOLVER AL LISTADO");
-        volver.addActionListener(e -> mostrarDashboardInventario());
-        panelDerecha.add(volver);
-        panelDerecha.add(botonLimpiar);
-        panelDerecha.add(botonGuardar);
-        panelDerecha.add(jButton3);
-        barra.add(panelDerecha, java.awt.BorderLayout.EAST);
-
-        return barra;
-    }//crearBarraInferior
-
-    private javax.swing.JPanel crearTituloTarjeta(String texto, javax.swing.Icon icono, java.awt.Color colorFondo) {
-        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
-        panel.setOpaque(false);
-        panel.add(crearInsigniaCuadrada(icono, colorFondo, 34, 9), java.awt.BorderLayout.WEST);
-        javax.swing.JLabel etiqueta = new javax.swing.JLabel(texto);
-        etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 15));
-        etiqueta.setForeground(COLOR_AZUL_OSCURO);
-        panel.add(etiqueta, java.awt.BorderLayout.CENTER);
-        return panel;
-    }//crearTituloTarjeta
-
-    private javax.swing.JPanel crearCampoVertical(String etiqueta, javax.swing.JComponent campo, javax.swing.Icon icono) {
-        javax.swing.JPanel contenedor = new javax.swing.JPanel(new java.awt.BorderLayout(0, 4));
-        contenedor.setOpaque(false);
-        javax.swing.JLabel label = new javax.swing.JLabel(etiqueta, icono, javax.swing.SwingConstants.LEFT);
-        label.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
-        label.setForeground(COLOR_AZUL_OSCURO);
-        label.setIconTextGap(6);
-        contenedor.add(label, java.awt.BorderLayout.NORTH);
-        contenedor.add(campo, java.awt.BorderLayout.CENTER);
-        return contenedor;
-    }//crearCampoVertical
-
-    private void estilizarCampoTexto(javax.swing.JTextField campo) {
-        campo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        campo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                new BordeRedondeado(9, COLOR_BORDE_CAMPO, 1.2f),
-                javax.swing.BorderFactory.createEmptyBorder(6, 10, 6, 10)));
-        campo.setPreferredSize(new java.awt.Dimension(120, 32));
-    }//estilizarCampoTexto
-
-    private void estilizarCampoCombo(javax.swing.JComboBox<String> combo) {
-        combo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        combo.setPreferredSize(new java.awt.Dimension(120, 32));
-    }//estilizarCampoCombo
-
-    // ===================== Imagen del producto =====================
-    private void seleccionarImagen() {
-        java.awt.FileDialog selector = new java.awt.FileDialog(
-                this, "Abrir imagen del producto", java.awt.FileDialog.LOAD);
-        selector.setFilenameFilter((directorio, nombre) -> {
-            String nombreMinusculas = nombre.toLowerCase(java.util.Locale.ROOT);
-            return nombreMinusculas.endsWith(".png")
-                    || nombreMinusculas.endsWith(".jpg")
-                    || nombreMinusculas.endsWith(".jpeg");
-        });
-        selector.setVisible(true);
-        if (selector.getFile() != null && selector.getDirectory() != null) {
-            rutaImagenActual = new File(selector.getDirectory(), selector.getFile()).getAbsolutePath();
-            rutaImagenAutomaticaActual = "";
-            actualizarPreviewImagen();
-        }
-    }//seleccionarImagen
-
-    private void actualizarImagenPorCodigo() {
-        String codigo = jTextField1.getText().trim();
-        File imagenEncontrada = buscarImagenPorCodigo(codigo);
-        if (imagenEncontrada != null) {
-            rutaImagenActual = imagenEncontrada.getAbsolutePath();
-            rutaImagenAutomaticaActual = rutaImagenActual;
-            actualizarPreviewImagen();
-        } else if (rutaImagenActual.equals(rutaImagenAutomaticaActual)) {
-            rutaImagenActual = "";
-            rutaImagenAutomaticaActual = "";
-            actualizarPreviewImagen();
-        }
-    }//actualizarImagenPorCodigo
-
-    private File buscarImagenPorCodigo(String codigo) {
-        if (codigo.isEmpty() || !CARPETA_FOTOS_PRODUCTO.isDirectory()) {
-            return null;
-        }
-        File[] archivos = CARPETA_FOTOS_PRODUCTO.listFiles((directorio, nombre) -> {
-            String nombreMinusculas = nombre.toLowerCase(java.util.Locale.ROOT);
-            return nombreMinusculas.endsWith(".png")
-                    || nombreMinusculas.endsWith(".jpg")
-                    || nombreMinusculas.endsWith(".jpeg");
-        });
-        if (archivos == null) {
-            return null;
-        }
-        for (File archivo : archivos) {
-            String nombre = archivo.getName();
-            int punto = nombre.lastIndexOf('.');
-            String nombreSinExtension = punto > 0 ? nombre.substring(0, punto) : nombre;
-            if (nombreSinExtension.equalsIgnoreCase(codigo)) {
-                return archivo;
-            }
-        }
-        return null;
-    }//buscarImagenPorCodigo
-
-    private void actualizarPreviewImagen() {
-        if (rutaImagenActual == null || rutaImagenActual.isBlank()) {
-            etiquetaImagen.setIcon(null);
-            etiquetaImagen.setText("+ Agregar imagen");
-            return;
-        }
-        File archivoImagen = new File(rutaImagenActual);
-        if (!archivoImagen.exists()) {
-            etiquetaImagen.setIcon(null);
-            etiquetaImagen.setText("Imagen no disponible");
-            return;
-        }
-        try {
-            java.awt.image.BufferedImage imagen = javax.imageio.ImageIO.read(archivoImagen);
-            if (imagen == null) {
-                throw new IOException("Formato de imagen no soportado.");
-            }
-            java.awt.Image escalada = imagen.getScaledInstance(96, 72, java.awt.Image.SCALE_SMOOTH);
-            etiquetaImagen.setIcon(new javax.swing.ImageIcon(escalada));
-            etiquetaImagen.setText(null);
-        } catch (IOException ex) {
-            logger.log(java.util.logging.Level.WARNING, "No se pudo cargar la imagen del producto", ex);
-            etiquetaImagen.setIcon(null);
-            etiquetaImagen.setText("Imagen no disponible");
-        }
-    }//actualizarPreviewImagen
-
-    // ===================== Proveedores del producto =====================
-    private void refrescarTablaProveedoresProducto(String codigoProducto) {
-        modeloProveedoresProducto.setRowCount(0);
-        filasProveedorProducto.clear();
-        if (codigoProducto == null || codigoProducto.isBlank()) {
-            return;
-        }
-        java.util.Map<String, String> ultimasCompras = cargarUltimasComprasPorProveedor();
-        java.util.List<String[]> filas = productoProveedorRepository.obtenerProveedoresDeProducto(codigoProducto);
-        for (String[] datos : filas) {
-            String idProveedor = datos[1];
-            String nombreProveedor = proveedorRepository.obtenerNombrePorId(idProveedor);
-            boolean predeterminado = "SI".equalsIgnoreCase(datos[5]);
-            modeloProveedoresProducto.addRow(new Object[]{
-                nombreProveedor, datos[2], datos[3], datos[4],
-                ultimasCompras.getOrDefault(idProveedor.toUpperCase(java.util.Locale.ROOT), "SIN COMPRAS"),
-                predeterminado, "", ""
-            });
-            filasProveedorProducto.add(datos);
-        }
-    }//refrescarTablaProveedoresProducto
-
-    private java.util.Map<String, String> cargarUltimasComprasPorProveedor() {
-        java.util.Map<String, java.time.LocalDate> fechas = new java.util.HashMap<>();
-        File archivoOrdenes = com.mycompany.ocxrst.config.AppConfig.registroCFile();
-        if (!archivoOrdenes.exists() || archivoOrdenes.length() == 0) {
-            return new java.util.HashMap<>();
-        }
-        try (java.io.FileInputStream fis = new java.io.FileInputStream(archivoOrdenes);
-             Workbook libro = new XSSFWorkbook(fis)) {
-            Sheet hoja = libro.getSheetAt(0);
-            for (Row fila : hoja) {
-                if (fila.getRowNum() == 0) {
-                    continue;
-                }
-                String idProveedor = leerCelda(fila, 4).toUpperCase(java.util.Locale.ROOT);
-                java.time.LocalDate fecha = leerFechaOrden(fila.getCell(1));
-                if (idProveedor.isEmpty() || fecha == null) {
-                    continue;
-                }
-                java.time.LocalDate fechaAnterior = fechas.get(idProveedor);
-                if (fechaAnterior == null || fecha.isAfter(fechaAnterior)) {
-                    fechas.put(idProveedor, fecha);
-                }
-            }
-        } catch (IOException ex) {
-            logger.log(java.util.logging.Level.WARNING,
-                    "No se pudieron cargar las últimas compras por proveedor.", ex);
-            return new java.util.HashMap<>();
-        }
-
-        java.util.Map<String, String> resultado = new java.util.HashMap<>();
-        java.time.format.DateTimeFormatter formato = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        for (java.util.Map.Entry<String, java.time.LocalDate> entrada : fechas.entrySet()) {
-            resultado.put(entrada.getKey(), entrada.getValue().format(formato));
-        }
-        return resultado;
-    }//cargarUltimasComprasPorProveedor
-
-    private java.time.LocalDate leerFechaOrden(Cell celda) {
-        if (celda == null) {
-            return null;
-        }
-        if (DateUtil.isCellDateFormatted(celda)) {
-            return celda.getDateCellValue().toInstant()
-                    .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-        }
-        String texto = new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(celda).trim();
-        for (String patron : new String[]{"dd/MM/yyyy", "d/M/yyyy"}) {
-            try {
-                return java.time.LocalDate.parse(texto,
-                        java.time.format.DateTimeFormatter.ofPattern(patron));
-            } catch (java.time.format.DateTimeParseException ex) {
-                // Intenta el siguiente formato admitido.
-            }
-        }
-        return null;
-    }//leerFechaOrden
-
-    private void marcarProveedorPredeterminado(int filaModelo) {
-        String[] datos = filasProveedorProducto.get(filaModelo);
-        int numeroFilaExcel = Integer.parseInt(datos[0]);
-        String codigoProducto = jTextField1.getText().trim();
-        productoProveedorRepository.marcarProveedorPredeterminado(numeroFilaExcel, codigoProducto);
-        refrescarTablaProveedoresProducto(codigoProducto);
-    }//marcarProveedorPredeterminado
-
-    private void eliminarProveedorFila(int filaModelo) {
+    private void desactivarProducto(String codigo) {
         int confirmacion = JOptionPane.showConfirmDialog(this,
-                "\u00bfEliminar este proveedor del producto?", "Confirmar",
-                JOptionPane.YES_NO_OPTION);
+                "¿Deseas desactivar el producto " + codigo + "?",
+                "Confirmar cambio de estado", JOptionPane.YES_NO_OPTION);
         if (confirmacion != JOptionPane.YES_OPTION) {
             return;
         }
-        String[] datos = filasProveedorProducto.get(filaModelo);
-        productoProveedorRepository.eliminarProveedorDeProducto(Integer.parseInt(datos[0]));
-        refrescarTablaProveedoresProducto(jTextField1.getText().trim());
-    }//eliminarProveedorFila
-
-    private void mostrarDialogoProveedor(Integer filaModeloParaEditar) {
-        String codigoProducto = jTextField1.getText().trim();
-        if (codigoProducto.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Captura y guarda el C\u00d3DIGO del producto antes de asociar proveedores.");
-            return;
-        }
-
-        java.util.List<String[]> proveedoresActivos = proveedorRepository.obtenerProveedoresActivos();
-        if (proveedoresActivos.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No hay proveedores activos registrados. Registra uno en la pantalla de PROVEEDORES.");
-            return;
-        }
-
-        javax.swing.JDialog dialogo = new javax.swing.JDialog(this,
-                filaModeloParaEditar == null ? "Agregar Proveedor" : "Editar Proveedor", true);
-        dialogo.setLayout(new java.awt.GridBagLayout());
-        java.awt.GridBagConstraints gc = new java.awt.GridBagConstraints();
-        gc.insets = new java.awt.Insets(8, 12, 8, 12);
-        gc.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gc.gridx = 0;
-        gc.gridy = 0;
-        gc.gridwidth = 2;
-
-        String[] opcionesProveedor = new String[proveedoresActivos.size()];
-        for (int i = 0; i < proveedoresActivos.size(); i++) {
-            opcionesProveedor[i] = proveedoresActivos.get(i)[0] + " - " + proveedoresActivos.get(i)[1];
-        }
-        javax.swing.JComboBox<String> comboProveedor = new javax.swing.JComboBox<>(opcionesProveedor);
-        javax.swing.JTextField campoCodigoProveedor = new javax.swing.JTextField();
-        javax.swing.JTextField campoPrecio = new javax.swing.JTextField();
-        javax.swing.JTextField campoTiempo = new javax.swing.JTextField();
-        javax.swing.JCheckBox checkPredeterminado = new javax.swing.JCheckBox("Marcar como predeterminado");
-
-        String[] datosExistentes = filaModeloParaEditar == null ? null : filasProveedorProducto.get(filaModeloParaEditar);
-        if (datosExistentes != null) {
-            for (int i = 0; i < proveedoresActivos.size(); i++) {
-                if (proveedoresActivos.get(i)[0].equalsIgnoreCase(datosExistentes[1])) {
-                    comboProveedor.setSelectedIndex(i);
-                    break;
+        try {
+            File archivo = obtenerArchivoInventarios();
+            try (Workbook libro = cargarLibro(archivo)) {
+                Sheet hoja = obtenerHojaInventarios(libro);
+                int filaIndice = buscarFilaPorCodigo(hoja, codigo);
+                if (filaIndice < 0) {
+                    throw new IOException("El producto ya no existe.");
                 }
+                escribirCelda(hoja.getRow(filaIndice), 5, "0");
+                guardarLibro(libro, archivo);
             }
-            campoCodigoProveedor.setText(datosExistentes[2]);
-            campoPrecio.setText(datosExistentes[3]);
-            campoTiempo.setText(datosExistentes[4]);
-            checkPredeterminado.setSelected("SI".equalsIgnoreCase(datosExistentes[5]));
+            JOptionPane.showMessageDialog(this, "Producto desactivado correctamente.");
+        } catch (IOException ex) {
+            mostrarError("No se pudo desactivar el producto.", ex);
         }
-
-        dialogo.add(new javax.swing.JLabel("Proveedor:"), gc);
-        gc.gridy++;
-        dialogo.add(comboProveedor, gc);
-        gc.gridy++;
-        dialogo.add(new javax.swing.JLabel("C\u00f3digo del Proveedor:"), gc);
-        gc.gridy++;
-        dialogo.add(campoCodigoProveedor, gc);
-        gc.gridy++;
-        dialogo.add(new javax.swing.JLabel("Precio:"), gc);
-        gc.gridy++;
-        dialogo.add(campoPrecio, gc);
-        gc.gridy++;
-        dialogo.add(new javax.swing.JLabel("Tiempo de entrega:"), gc);
-        gc.gridy++;
-        dialogo.add(campoTiempo, gc);
-        gc.gridy++;
-        dialogo.add(checkPredeterminado, gc);
-        gc.gridy++;
-
-        javax.swing.JButton botonGuardarDialogo = new javax.swing.JButton("Guardar");
-        javax.swing.JButton botonCancelarDialogo = new javax.swing.JButton("Cancelar");
-        javax.swing.JPanel panelBotones = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
-        panelBotones.add(botonCancelarDialogo);
-        panelBotones.add(botonGuardarDialogo);
-        dialogo.add(panelBotones, gc);
-        EstiloAplicacion.aplicarEstiloBotones(panelBotones);
-        EstiloAplicacion.aplicarTipografia(panelBotones);
-        EstiloAplicacion.aplicarEstiloCamposTexto(panelBotones);
-
-        botonCancelarDialogo.addActionListener(e -> dialogo.dispose());
-        botonGuardarDialogo.addActionListener(e -> {
-            if (campoCodigoProveedor.getText().trim().isEmpty() || campoPrecio.getText().trim().isEmpty()
-                    || campoTiempo.getText().trim().isEmpty()) {
-                JOptionPane.showMessageDialog(dialogo, "Todos los campos son obligatorios.");
-                return;
-            }
-            String seleccion = (String) comboProveedor.getSelectedItem();
-            String idProveedor = seleccion.split(" - ", 2)[0].trim();
-            String codigoProv = campoCodigoProveedor.getText().trim();
-            String precio = campoPrecio.getText().trim();
-            String tiempo = campoTiempo.getText().trim();
-            boolean predeterminado = checkPredeterminado.isSelected();
-
-            if (filaModeloParaEditar == null) {
-                productoProveedorRepository.agregarProveedorAProducto(codigoProducto, idProveedor, codigoProv, precio, tiempo, predeterminado);
-            } else {
-                int numeroFilaExcel = Integer.parseInt(datosExistentes[0]);
-                productoProveedorRepository.actualizarProveedorDeProducto(numeroFilaExcel, codigoProducto, idProveedor, codigoProv, precio, tiempo, predeterminado);
-            }
-            refrescarTablaProveedoresProducto(codigoProducto);
-            dialogo.dispose();
-        });
-
-        dialogo.pack();
-        dialogo.setLocationRelativeTo(this);
-        dialogo.setVisible(true);
-    }//mostrarDialogoProveedor
-
-    // ===================== Persistencia del producto =====================
-    // =====================================================================
-    // Operaciones de productos y proveedores
-    // =====================================================================
+    }
 
     private void asegurarArchivoInventarios() {
         try {
@@ -1295,307 +901,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
             mostrarError("No se pudo preparar el archivo de inventarios.", ex);
         }
     }//asegurarArchivoInventarios
-
-    private void guardarProducto() {
-        if (!validarCamposBase()) {
-            return;
-        }
-
-        String codigo = jTextField1.getText().trim();
-
-        try {
-            File archivo = obtenerArchivoInventarios();
-            try (Workbook libro = cargarLibro(archivo)) {
-                Sheet hoja = obtenerHojaInventarios(libro);
-                asegurarEncabezados(hoja);
-
-                int filaExistente = buscarFilaPorCodigo(hoja, codigo);
-                boolean esEdicion = filaExistente >= 0;
-                int filaDestino;
-
-                if (esEdicion) {
-                    filaDestino = filaExistente;
-                } else {
-                    filaDestino = primeraFilaDisponible(hoja);
-                }
-
-                Row fila = hoja.getRow(filaDestino);
-                if (fila == null) {
-                    fila = hoja.createRow(filaDestino);
-                }
-
-                guardarDatosEnFila(fila);
-                guardarLibro(libro, archivo);
-                filaInventarioActual = filaDestino;
-                etiquetaId.setText("ID: " + codigo);
-
-                JOptionPane.showMessageDialog(this, esEdicion
-                        ? "Producto actualizado correctamente."
-                        : "Producto creado.\nC\u00d3DIGO: " + codigo);
-            }
-            refrescarTablaProveedoresProducto(codigo);
-        } catch (IOException ex) {
-            mostrarError("No se pudo guardar el producto.", ex);
-        }
-        cargarCacheProductos();
-    }//guardarProducto
-
-    private void alternarEstadoProducto() {
-        String codigo = jTextField1.getText().trim();
-        if (codigo.isEmpty() || filaInventarioActual < 0) {
-            JOptionPane.showMessageDialog(this, "Selecciona un producto de la lista para cambiar su estado.");
-            return;
-        }
-
-        String estadoActual = "1".equals(normalizarEstado(
-                comboEstado.getSelectedIndex() == 0 ? "1" : "0")) ? "1" : "0";
-        String estadoNuevo = "1".equals(estadoActual) ? "0" : "1";
-        String accion = "1".equals(estadoNuevo) ? "activar" : "desactivar";
-        int confirmacion = JOptionPane.showConfirmDialog(this,
-                "\u00bfDeseas " + accion + " el producto " + codigo + "?",
-                "Confirmar cambio de estado", JOptionPane.YES_NO_OPTION);
-        if (confirmacion != JOptionPane.YES_OPTION) {
-            return;
-        }
-
-        try {
-            File archivo = obtenerArchivoInventarios();
-            try (Workbook libro = cargarLibro(archivo)) {
-                Sheet hoja = obtenerHojaInventarios(libro);
-                int filaIndex = buscarFilaPorCodigo(hoja, codigo);
-                if (filaIndex < 0) {
-                    JOptionPane.showMessageDialog(this, "El producto ya no existe.");
-                    return;
-                }
-                Row fila = hoja.getRow(filaIndex);
-                if (fila == null) {
-                    JOptionPane.showMessageDialog(this, "El registro encontrado está vacío.");
-                    return;
-                }
-                escribirCelda(fila, 5, estadoNuevo);
-                guardarLibro(libro, archivo);
-            }
-            comboEstado.setSelectedIndex("1".equals(estadoNuevo) ? 0 : 1);
-            actualizarBotonEstadoProducto();
-            JOptionPane.showMessageDialog(this, "Producto " + ("1".equals(estadoNuevo)
-                    ? "activado" : "desactivado") + " correctamente.");
-            cargarCacheProductos();
-        } catch (IOException ex) {
-            mostrarError("No se pudo cambiar el estado del producto.", ex);
-        }
-    }//alternarEstadoProducto
-
-    // ===================== Autocompletado del campo C\u00d3DIGO =====================
-    private void configurarAutocompletadoCodigo() {
-        jTextField1.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                filtrarProductos();
-                actualizarImagenPorCodigo();
-            }
-
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                filtrarProductos();
-                actualizarImagenPorCodigo();
-            }
-
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                filtrarProductos();
-                actualizarImagenPorCodigo();
-            }
-        });
-
-        jTextField1.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
-                if (!e.isTemporary()) {
-                    ocultarListaProductos();
-                }
-            }
-        });
-    }//configurarAutocompletadoCodigo
-
-    // =====================================================================
-    // Autocompletado, busqueda y persistencia en Excel
-    // =====================================================================
-
-    private void cargarCacheProductos() {
-        cacheProductos.clear();
-        try {
-            File archivo = obtenerArchivoInventarios();
-            try (Workbook libro = cargarLibro(archivo)) {
-                Sheet hoja = obtenerHojaInventarios(libro);
-                for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
-                    Row row = hoja.getRow(fila);
-                    if (row == null) {
-                        continue;
-                    }
-                    String codigo = leerCelda(row, 0);
-                    if (!codigo.isEmpty()) {
-                        cacheProductos.add(new String[]{codigo, leerCelda(row, 1)});
-                    }
-                }
-            }
-        } catch (IOException ex) {
-            logger.log(java.util.logging.Level.WARNING, "No se pudo cargar el cach\u00e9 de productos", ex);
-        }
-    }//cargarCacheProductos
-
-    private void filtrarProductos() {
-        if (seleccionandoProducto) {
-            return;
-        }
-        String texto = jTextField1.getText().trim().toLowerCase();
-        ocultarListaProductos();
-        if (texto.isEmpty()) {
-            return;
-        }
-
-        int contador = 0;
-        for (String[] producto : cacheProductos) {
-            if (producto[0].toLowerCase().contains(texto) || producto[1].toLowerCase().contains(texto)) {
-                String etiqueta = producto[0] + "  |  " + producto[1];
-                javax.swing.JMenuItem item = new javax.swing.JMenuItem(etiqueta);
-                final String codigoSeleccionado = producto[0];
-                item.addActionListener(ev -> seleccionarProductoDesdeLista(codigoSeleccionado));
-                popupProductos.add(item);
-                if (++contador == 10) {
-                    break; // m\u00e1ximo 10 sugerencias
-                }
-            }
-        }
-        if (contador > 0) {
-            popupProductos.show(jTextField1, 0, jTextField1.getHeight());
-            jTextField1.requestFocusInWindow();
-        }
-    }//filtrarProductos
-
-    private void seleccionarProductoDesdeLista(String codigo) {
-        seleccionandoProducto = true;
-        try {
-            jTextField1.setText(codigo);
-            cargarProductoPorCodigo(codigo);
-        } finally {
-            ocultarListaProductos();
-            seleccionandoProducto = false;
-        }
-        javax.swing.SwingUtilities.invokeLater(this::ocultarListaProductos);
-    }//seleccionarProductoDesdeLista
-
-    private void ocultarListaProductos() {
-        popupProductos.setVisible(false);
-        popupProductos.removeAll();
-    }
-
-    private void cargarProductoPorCodigo(String codigo) {
-        try {
-            File archivo = obtenerArchivoInventarios();
-            try (Workbook libro = cargarLibro(archivo)) {
-                Sheet hoja = obtenerHojaInventarios(libro);
-                int filaIndex = buscarFilaPorCodigo(hoja, codigo);
-                if (filaIndex < 0) {
-                    return;
-                }
-                Row fila = hoja.getRow(filaIndex);
-                if (fila == null) {
-                    return;
-                }
-                cargarFilaEnFormulario(fila);
-                actualizarImagenPorCodigo();
-                filaInventarioActual = filaIndex;
-                etiquetaId.setText("ID: " + codigo);
-                refrescarTablaProveedoresProducto(codigo);
-            }
-        } catch (IOException ex) {
-            mostrarError("No se pudo cargar el producto seleccionado.", ex);
-        }
-    }//cargarProductoPorCodigo
-
-    private boolean validarCamposBase() {
-        String error = InventarioValidator.validar(jTextField1.getText(), jTextField2.getText());
-        if (error == null) {
-            return true;
-        }
-        JOptionPane.showMessageDialog(this, error);
-        return false;
-    }//validarCamposBase
-
-    private void guardarDatosEnFila(Row fila) {
-        escribirCelda(fila, 0, jTextField1.getText().trim());
-        escribirCelda(fila, 1, jTextField2.getText().trim());
-        escribirCelda(fila, 2, obtenerTextoCombo(comboUnidad));
-        escribirCelda(fila, 3, jTextField5.getText().trim());
-        escribirCelda(fila, 4, jTextField6.getText().trim());
-        escribirCelda(fila, 5, comboEstado.getSelectedIndex() == 0 ? "1" : "0");
-        escribirCelda(fila, 6, obtenerTextoCombo(comboCategoria));
-        escribirCelda(fila, 7, obtenerTextoCombo(comboMarca));
-        escribirCelda(fila, 8, campoStockMinimo.getText().trim());
-        escribirCelda(fila, 9, areaObservaciones.getText().trim());
-        escribirCelda(fila, 10, rutaImagenActual == null ? "" : rutaImagenActual.trim());
-    }//guardarDatosEnFila
-
-    private String obtenerTextoCombo(javax.swing.JComboBox<String> combo) {
-        Object seleccionado = combo.getEditor().getItem();
-        return seleccionado == null ? "" : seleccionado.toString().trim();
-    }//obtenerTextoCombo
-
-    private void cargarFilaEnFormulario(Row fila) {
-        jTextField1.setText(leerCelda(fila, 0));
-        jTextField2.setText(leerCelda(fila, 1));
-        asignarValorCombo(comboUnidad, leerCelda(fila, 2));
-        jTextField5.setText(leerCelda(fila, 3));
-        jTextField6.setText(leerCelda(fila, 4));
-        String estado = normalizarEstado(leerCelda(fila, 5));
-        comboEstado.setSelectedIndex("1".equals(estado) ? 0 : 1);
-        actualizarBotonEstadoProducto();
-        asignarValorCombo(comboCategoria, leerCelda(fila, 6));
-        asignarValorCombo(comboMarca, leerCelda(fila, 7));
-        campoStockMinimo.setText(leerCelda(fila, 8));
-        areaObservaciones.setText(leerCelda(fila, 9));
-        rutaImagenActual = leerCelda(fila, 10);
-        rutaImagenAutomaticaActual = "";
-        actualizarPreviewImagen();
-    }//cargarFilaEnFormulario
-
-    private void asignarValorCombo(javax.swing.JComboBox<String> combo, String valor) {
-        if (valor == null || valor.isBlank()) {
-            combo.setSelectedItem("");
-            return;
-        }
-        for (int i = 0; i < combo.getItemCount(); i++) {
-            if (valor.equalsIgnoreCase(combo.getItemAt(i))) {
-                combo.setSelectedIndex(i);
-                return;
-            }
-        }
-        combo.insertItemAt(valor, 0);
-        combo.setSelectedIndex(0);
-    }//asignarValorCombo
-
-    private void limpiarFormulario(boolean conservarCodigo) {
-        if (!conservarCodigo) {
-            jTextField1.setText("");
-        }
-        jTextField2.setText("");
-        comboUnidad.setSelectedItem("");
-        jTextField5.setText("");
-        jTextField6.setText("");
-        comboCategoria.setSelectedItem("");
-        comboMarca.setSelectedItem("");
-        campoStockMinimo.setText("");
-        areaObservaciones.setText("");
-        rutaImagenActual = "";
-        rutaImagenAutomaticaActual = "";
-        actualizarPreviewImagen();
-        comboEstado.setSelectedIndex(0);
-        filaInventarioActual = -1;
-        etiquetaId.setText("ID: ---");
-        modeloProveedoresProducto.setRowCount(0);
-        filasProveedorProducto.clear();
-        restablecerIndicadorEstado();
-    }//limpiarFormulario
 
     private int buscarFilaPorCodigo(Sheet hoja, String codigo) {
         for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
@@ -1651,26 +956,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private String normalizarEstado(String valor) {
         return InventarioService.normalizarEstado(valor);
     }//normalizarEstado
-
-    private void restablecerIndicadorEstado() {
-        etiquetaId.setText("ID: ---");
-        comboEstado.setSelectedIndex(0);
-        actualizarBotonEstadoProducto();
-    }
-
-    private void actualizarBotonEstadoProducto() {
-        boolean seleccionado = filaInventarioActual >= 0
-                && jTextField1 != null
-                && !jTextField1.getText().trim().isEmpty();
-        boolean activo = seleccionado && comboEstado != null && comboEstado.getSelectedIndex() == 0;
-        prepararBoton(jButton3, seleccionado
-                ? (activo ? "DESACTIVAR" : "ACTIVAR")
-                : "ACTIVAR/DESACTIVAR",
-                iconoPower(java.awt.Color.WHITE),
-                seleccionado ? (activo ? COLOR_ROJO : COLOR_VERDE) : new java.awt.Color(120, 120, 120),
-                java.awt.Color.WHITE, null);
-        jButton3.setEnabled(seleccionado);
-    }//restablecerIndicadorEstado
 
     private void mostrarError(String mensajeUsuario, Exception ex) {
         logger.log(java.util.logging.Level.SEVERE, mensajeUsuario, ex);
@@ -1852,7 +1137,7 @@ public class INVENTARIOS extends javax.swing.JFrame {
                 super.paintComponent(g);
             }
         };
-        insignia.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+            insignia.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         insignia.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
         insignia.setPreferredSize(new java.awt.Dimension(tamano, tamano));
         insignia.setOpaque(false);

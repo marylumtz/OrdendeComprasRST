@@ -18,6 +18,11 @@ public final class EstiloAplicacion {
 
     private static final String FAMILIA_TIPOGRAFICA = "Segoe UI";
     private static final String BOTON_ESTILO_EXENTO = "estiloAplicacion.botonExento";
+    private static final String[] ESTADOS_FLECHA_COMBO = {
+        "Enabled", "MouseOver", "Disabled", "Pressed", "Selected"
+    };
+    private static final javax.swing.Painter<JComponent> PINTOR_FLECHA_COMBO_VACIO
+            = (graphics, componente, ancho, alto) -> { };
     public static final Color FONDO_PANTALLA = new Color(240, 246, 253);
     private static final Font FUENTE_BASE = fuente(Font.PLAIN, 12);
     private static final Locale LOCALE_ES = Locale.forLanguageTag("es-MX");
@@ -112,6 +117,7 @@ public final class EstiloAplicacion {
             return;
         }
         if (raiz instanceof javax.swing.JComboBox<?> combo) {
+            anularPintoresFlechaCombo(UIManager.getDefaults());
             combo.setFont(fuente(Font.PLAIN, 14));
             javax.swing.border.Border bordeOriginal = combo.getBorder();
             combo.setBorder(new javax.swing.border.CompoundBorder(
@@ -120,9 +126,7 @@ public final class EstiloAplicacion {
                 if (hijo instanceof JComponent componenteSwing
                         && "ComboBox.arrowButton".equals(componenteSwing.getName())) {
                     javax.swing.UIDefaults overrides = new javax.swing.UIDefaults();
-                    overrides.put(
-                            "ComboBox:\"ComboBox.arrowButton\"[Enabled].foregroundPainter",
-                            (javax.swing.Painter<JComponent>) (graphics, componente, ancho, alto) -> { });
+                    anularPintoresFlechaCombo(overrides);
                     componenteSwing.putClientProperty("Nimbus.Overrides", overrides);
                     componenteSwing.putClientProperty("Nimbus.Overrides.InheritDefaults", Boolean.TRUE);
                     componenteSwing.updateUI();
@@ -150,6 +154,14 @@ public final class EstiloAplicacion {
             for (Component hijo : contenedor.getComponents()) {
                 aplicarEstiloCamposTexto(hijo);
             }
+        }
+    }
+
+    private static void anularPintoresFlechaCombo(javax.swing.UIDefaults defaults) {
+        for (String estado : ESTADOS_FLECHA_COMBO) {
+            defaults.put(
+                    "ComboBox:\"ComboBox.arrowButton\"[" + estado + "].foregroundPainter",
+                    PINTOR_FLECHA_COMBO_VACIO);
         }
     }
 
@@ -511,6 +523,7 @@ public final class EstiloAplicacion {
     }
 
     public static void aplicarTipografiaGlobal() {
+        aplicarLookAndFeelNimbus();
         Locale.setDefault(LOCALE_ES);
         UIManager.getDefaults().setDefaultLocale(LOCALE_ES);
         UIManager.put("OptionPane.yesButtonText", "Sí");
@@ -543,6 +556,24 @@ public final class EstiloAplicacion {
             UIManager.put(componente + ".font", FUENTE_BASE);
         }
         configurarEstiloCamposTextoGlobal();
+    }
+
+    private static void aplicarLookAndFeelNimbus() {
+        if (UIManager.getLookAndFeel() != null
+                && "Nimbus".equals(UIManager.getLookAndFeel().getName())) {
+            return;
+        }
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    return;
+                }
+            }
+        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(EstiloAplicacion.class.getName())
+                    .log(java.util.logging.Level.SEVERE, "No se pudo aplicar Nimbus", ex);
+        }
     }
 
     private static void configurarEstiloCamposTextoGlobal() {

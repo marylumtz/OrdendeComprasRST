@@ -65,6 +65,7 @@ public class ALTAPRODUCTO extends JPanel {
         setLayout(new BorderLayout());
         add(crearContenido(), BorderLayout.CENTER);
         EstiloAplicacion.aplicarTipografia(this);
+        EstiloAplicacion.aplicarEstiloBotones(this);
         EstiloAplicacion.aplicarEstiloCamposTexto(this);
         if (codigoInicial != null && !codigoInicial.isBlank()) {
             codigo.setEditable(false);

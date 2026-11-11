@@ -217,6 +217,7 @@ public class INICIARSESION extends javax.swing.JFrame {
         salir.setContentAreaFilled(false);
         salir.setFocusPainted(false);
         salir.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        EstiloAplicacion.excluirBotonDelEstiloComun(salir);
         salir.addActionListener(this::salirActionPerformed);
         getContentPane().add(salir, new org.netbeans.lib.awtextra.AbsoluteConstraints(514, 12, 24, 24));
 

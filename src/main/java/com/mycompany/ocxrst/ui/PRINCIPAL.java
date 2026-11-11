@@ -66,6 +66,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         initComponents();
         configurarMenuSesion();
         actualizarBotonNotificaciones();
+        EstiloAplicacion.aplicarEstiloBotones(getContentPane());
         iniciarReloj();
         IconoVentanaUtil.aplicar(this);
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -151,6 +152,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         boton.setContentAreaFilled(false);
         boton.setOpaque(false);
         boton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        EstiloAplicacion.excluirBotonDelEstiloComun(boton);
         boton.addActionListener(e -> {
             marcarBotonActivo(boton);
             accion.actionPerformed(e);
@@ -312,6 +314,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         botonCerrar.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 2));
         botonCerrar.setFocusPainted(false);
         botonCerrar.setToolTipText("Cerrar");
+        EstiloAplicacion.excluirBotonDelEstiloComun(botonCerrar);
         botonCerrar.addActionListener(e -> confirmarSalida());
         acciones.add(jButtonNotificaciones);
         acciones.add(jButtonMenu);
@@ -364,6 +367,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         cuerpoTablero.add(resumen);
         cuerpoTablero.revalidate();
         cuerpoTablero.repaint();
+        EstiloAplicacion.aplicarEstiloBotones(cuerpoTablero);
     }
 
     private JPanel crearPaginaConstruccion() {
@@ -818,6 +822,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         totalNotificaciones = PROVEEDORES.contarAlertasEntregasPendientes();
         jButtonNotificaciones.setText("NOTIFICACIONES (" + totalNotificaciones + ")");
         jButtonNotificaciones.setBackground(totalNotificaciones > 0 ? new Color(190, 45, 55) : new Color(55, 105, 175));
+        EstiloAplicacion.aplicarEstiloBoton(jButtonNotificaciones);
     }
 
     private void iniciarReloj() {

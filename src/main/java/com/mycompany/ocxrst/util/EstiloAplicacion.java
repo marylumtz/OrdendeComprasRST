@@ -12,13 +12,12 @@ import javax.swing.JFileChooser;
 import javax.swing.UIManager;
 import javax.swing.border.AbstractBorder;
 import javax.swing.JComponent;
-import javax.swing.ButtonModel;
-import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.text.JTextComponent;
 
 public final class EstiloAplicacion {
 
     private static final String FAMILIA_TIPOGRAFICA = "Segoe UI";
+    private static final String BOTON_ESTILO_EXENTO = "estiloAplicacion.botonExento";
     public static final Color FONDO_PANTALLA = new Color(240, 246, 253);
     private static final Font FUENTE_BASE = fuente(Font.PLAIN, 12);
     private static final Locale LOCALE_ES = Locale.forLanguageTag("es-MX");
@@ -117,6 +116,18 @@ public final class EstiloAplicacion {
             javax.swing.border.Border bordeOriginal = combo.getBorder();
             combo.setBorder(new javax.swing.border.CompoundBorder(
                     bordeOriginal, new TrianguloComboBorder()));
+            for (Component hijo : combo.getComponents()) {
+                if (hijo instanceof JComponent componenteSwing
+                        && "ComboBox.arrowButton".equals(componenteSwing.getName())) {
+                    javax.swing.UIDefaults overrides = new javax.swing.UIDefaults();
+                    overrides.put(
+                            "ComboBox:\"ComboBox.arrowButton\"[Enabled].foregroundPainter",
+                            (javax.swing.Painter<JComponent>) (graphics, componente, ancho, alto) -> { });
+                    componenteSwing.putClientProperty("Nimbus.Overrides", overrides);
+                    componenteSwing.putClientProperty("Nimbus.Overrides.InheritDefaults", Boolean.TRUE);
+                    componenteSwing.updateUI();
+                }
+            }
             java.awt.Dimension preferido = combo.getPreferredSize();
             combo.setPreferredSize(new java.awt.Dimension(preferido.width, 30));
             combo.setMinimumSize(new java.awt.Dimension(0, 30));
@@ -559,75 +570,56 @@ public final class EstiloAplicacion {
         return selector;
     }
 
-    /**
-     * Applies the shared button language used throughout the application.
-     * Existing non-white backgrounds identify primary actions; all other
-     * buttons use the outlined secondary variant.
-     */
+    /** Applies a shared rounded shape while preserving each button's color role. */
     public static void aplicarEstiloBotones(Container raiz) {
+        if (raiz == null) {
+            return;
+        }
+        if (raiz instanceof JButton boton) {
+            aplicarEstiloBoton(boton);
+        }
         for (Component componente : raiz.getComponents()) {
             if (componente instanceof JButton boton) {
-                estilizarBoton(boton);
-            }
-            if (componente instanceof Container contenedor) {
+                aplicarEstiloBoton(boton);
+            } else if (componente instanceof Container contenedor) {
                 aplicarEstiloBotones(contenedor);
             }
         }
     }
 
+    public static void aplicarEstiloBoton(AbstractButton boton) {
+        if (boton != null
+                && !Boolean.TRUE.equals(boton.getClientProperty(BOTON_ESTILO_EXENTO))) {
+            estilizarBoton(boton);
+        }
+    }
+
+    public static void excluirBotonDelEstiloComun(AbstractButton boton) {
+        if (boton != null) {
+            boton.putClientProperty(BOTON_ESTILO_EXENTO, Boolean.TRUE);
+        }
+    }
+
     private static void estilizarBoton(AbstractButton boton) {
         Color fondoOriginal = boton.getBackground();
-        boolean peligro = fondoOriginal != null
-                && fondoOriginal.getRed() > fondoOriginal.getBlue() + 35
-                && fondoOriginal.getRed() > fondoOriginal.getGreen() + 20;
-        boolean primario = fondoOriginal != null
-                && fondoOriginal.getAlpha() > 0
-                && !esClaro(fondoOriginal)
-                && !peligro;
+        Color fondoPredeterminado = UIManager.getColor("Button.background");
+        boolean esPredeterminado = fondoOriginal == null
+                || fondoOriginal.equals(fondoPredeterminado);
         Color azul = new Color(31, 112, 184);
-        Color fondo = peligro ? new Color(211, 65, 72) : (primario ? azul : Color.WHITE);
-        Color texto = primario || peligro ? Color.WHITE : azul;
+        Color fondo = esPredeterminado ? Color.WHITE : fondoOriginal;
+        Color texto = esPredeterminado || esClaro(fondo) ? azul : Color.WHITE;
 
-        boton.setUI(new BotonRedondeadoUI());
-        boton.setOpaque(false);
-        boton.setContentAreaFilled(false);
         boton.setFocusPainted(false);
         boton.setRolloverEnabled(true);
         boton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         boton.setFont(fuente(Font.BOLD, 11));
         boton.setForeground(texto);
         boton.setBackground(fondo);
-        boton.setBorder(new BordeBoton(9, peligro ? fondo : azul, 1.4f));
-        boton.setMargin(new java.awt.Insets(9, 16, 9, 16));
+        boton.setBorder(javax.swing.BorderFactory.createEmptyBorder(7, 12, 7, 12));
     }
 
     private static boolean esClaro(Color color) {
         return color.getRed() > 220 && color.getGreen() > 220 && color.getBlue() > 220;
-    }
-
-    private static final class BordeBoton extends AbstractBorder {
-        private final int radio;
-        private final Color color;
-        private final float grosor;
-
-        private BordeBoton(int radio, Color color, float grosor) {
-            this.radio = radio;
-            this.color = color;
-            this.grosor = grosor;
-        }
-
-        @Override
-        public void paintBorder(Component componente, java.awt.Graphics graphics,
-                int x, int y, int width, int height) {
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
-            try {
-                g2.setColor(color);
-                g2.setStroke(new java.awt.BasicStroke(grosor));
-                g2.drawRoundRect(x + 1, y + 1, width - 3, height - 3, radio, radio);
-            } finally {
-                g2.dispose();
-            }
-        }
     }
 
     private static final class CampoTextoBorder extends AbstractBorder {
@@ -676,36 +668,4 @@ public final class EstiloAplicacion {
         }
     }
 
-    private static final class BotonRedondeadoUI extends BasicButtonUI {
-        @Override
-        public void paint(java.awt.Graphics graphics, JComponent componente) {
-            AbstractButton boton = (AbstractButton) componente;
-            ButtonModel modelo = boton.getModel();
-            Color fondo = boton.getBackground();
-            if (modelo.isPressed()) {
-                fondo = mezclar(fondo, Color.BLACK, 0.16f);
-            } else if (modelo.isRollover()) {
-                fondo = mezclar(fondo, Color.BLACK, 0.07f);
-            }
-
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
-            try {
-                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(fondo);
-                g2.fillRoundRect(0, 0, componente.getWidth() - 1,
-                        componente.getHeight() - 1, 9, 9);
-            } finally {
-                g2.dispose();
-            }
-            super.paint(graphics, componente);
-        }
-    }
-
-    private static Color mezclar(Color base, Color destino, float proporcion) {
-        return new Color(
-                base.getRed() + Math.round((destino.getRed() - base.getRed()) * proporcion),
-                base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion),
-                base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion));
-    }
 }

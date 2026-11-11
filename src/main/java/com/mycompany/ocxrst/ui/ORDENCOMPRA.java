@@ -418,12 +418,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     private void posicionarBotonesCabecera(int anchoPanel) {
         int y = 4;
-        jButton2.setBounds(300, y, 100, 30);
-        jButton3.setBounds(408, y, 100, 30);
-        jButtonEditar.setBounds(516, y, 100, 30);
-        jButtonDesactivar.setBounds(624, y, 100, 30);
-        jButton1.setBounds(732, y, 92, 30);
-        panelNavegacionOrdenes.setBounds(832, y, 108, 30);
+        jButton2.setBounds(22, y, 100, 30);
+        jButton3.setBounds(130, y, 100, 30);
+        jButtonEditar.setBounds(238, y, 100, 30);
+        jButtonDesactivar.setBounds(346, y, 100, 30);
+        jButton1.setBounds(454, y, 92, 30);
+        panelNavegacionOrdenes.setBounds(554, y, 108, 30);
+        jButton6.setBounds(Math.max(22, anchoPanel - 122), y, 100, 30);
     }
 
     private void crearNavegacionOrdenes() {
@@ -524,7 +525,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jButton6.setVisible(true);
         jButton6.setText("ATRÁS");
         prepararBotonCabecera(jButton6, "ATRÁS", new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
-        posicionar(jButton6, 22, 28, 100, 30);
+        posicionar(jButton6, 22, 4, 100, 30);
         posicionar(jLabel5, 430, 64, 100, 22);
         posicionar(jLabel1, 280, 78, 400, 38);
         posicionar(jLabel9, 62, 140, 105, 22);

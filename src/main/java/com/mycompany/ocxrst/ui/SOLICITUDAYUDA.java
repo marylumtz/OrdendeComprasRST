@@ -70,6 +70,7 @@ public class SOLICITUDAYUDA extends JFrame {
         setSize(980, 720);
         setMinimumSize(new Dimension(850, 620));
         setLocationRelativeTo(null);
+        EstiloAplicacion.aplicarEstiloBotones(getContentPane());
         EstiloAplicacion.aplicarTipografia(getContentPane());
         EstiloAplicacion.aplicarEstiloCamposTexto(getContentPane());
         cargarUsuario();

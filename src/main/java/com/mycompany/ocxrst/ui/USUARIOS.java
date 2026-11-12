@@ -21,6 +21,7 @@ import org.apache.poi.ss.usermodel.Workbook;
  */
 public class USUARIOS extends javax.swing.JFrame {
 
+    private static final long MAX_FIRMA_BYTES = 2L * 1024L * 1024L;
     // =====================================================================
     // Repositorio y configuracion de usuarios
     // =====================================================================
@@ -31,6 +32,17 @@ public class USUARIOS extends javax.swing.JFrame {
     private javax.swing.JPanel configuracionVistas;
     private javax.swing.JButton navegacionDatos;
     private javax.swing.JButton navegacionPermisos;
+    private final javax.swing.JPasswordField campoContrasena = new javax.swing.JPasswordField();
+    private final javax.swing.JPasswordField campoConfirmarContrasena = new javax.swing.JPasswordField();
+    private final javax.swing.JCheckBox permitirSesiones = new javax.swing.JCheckBox("Permitir múltiples sesiones");
+    private final javax.swing.JCheckBox cambioContrasena = new javax.swing.JCheckBox("Solicitar cambio de contraseña");
+    private final javax.swing.JCheckBox bloquearIntentos = new javax.swing.JCheckBox("Bloquear usuario por intentos fallidos");
+    private final javax.swing.JSpinner cierreInactividad = new javax.swing.JSpinner(new javax.swing.SpinnerNumberModel(30, 1, 999, 1));
+    private final javax.swing.JSpinner intentosPermitidos = new javax.swing.JSpinner(new javax.swing.SpinnerNumberModel(3, 1, 99, 1));
+    private final javax.swing.JCheckBox estadoActivo = new javax.swing.JCheckBox("Activo", true);
+    private final javax.swing.DefaultListModel<String> sugerenciasUsuarios = new javax.swing.DefaultListModel<>();
+    private final javax.swing.JList<String> listaSugerenciasUsuarios = new javax.swing.JList<>(sugerenciasUsuarios);
+    private final javax.swing.JPopupMenu popupSugerenciasUsuarios = new javax.swing.JPopupMenu();
 
     /** Inicializa el formulario y prepara el archivo de usuarios. */
     public USUARIOS() {
@@ -42,6 +54,8 @@ public class USUARIOS extends javax.swing.JFrame {
         setResizable(false);
         setLocationRelativeTo(null);
         asegurarArchivoUsuarios();
+        jTextField1.setToolTipText("Escribe el ID del usuario y presiona Enter para buscar");
+        configurarBusquedaUsuarios();
         EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(jPanel1);
         EstiloAplicacion.aplicarTipografia(jPanel1);
         EstiloAplicacion.aplicarEstiloCamposTexto(jPanel1);
@@ -87,28 +101,21 @@ public class USUARIOS extends javax.swing.JFrame {
         cuerpo.add(crearNavegacion(), java.awt.BorderLayout.WEST);
 
         TarjetaPanel tarjeta = new TarjetaPanel();
-        tarjeta.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 20, 16, 20));
-        tarjeta.setLayout(new java.awt.BorderLayout(0, 12));
-        javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout(8, 0));
-        barra.setBackground(new java.awt.Color(232, 242, 255));
-        barra.setBorder(javax.swing.BorderFactory.createEmptyBorder(9, 12, 9, 12));
-        javax.swing.JLabel registro = new javax.swing.JLabel("Configuración");
-        registro.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
-        registro.setForeground(COLOR_AZUL_OSCURO);
-        barra.add(registro, java.awt.BorderLayout.WEST);
-        javax.swing.JLabel aviso = new javax.swing.JLabel("Complete los datos del usuario para continuar");
-        aviso.setForeground(COLOR_AZUL_OSCURO);
-        barra.add(aviso, java.awt.BorderLayout.EAST);
-        tarjeta.add(barra, java.awt.BorderLayout.NORTH);
+        tarjeta.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 20, 16, 20));
+        tarjeta.setLayout(new java.awt.BorderLayout());
 
-        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.BorderLayout(12, 12));
         formulario.setOpaque(false);
-        agregarCampo(formulario, 0, jLabel6, jTextField1, iconoId(COLOR_AZUL_OSCURO));
-        agregarCampo(formulario, 1, jLabel2, jTextField2, iconoContacto(COLOR_AZUL_OSCURO));
-        agregarCampo(formulario, 2, jLabel3, jTextField3, iconoEdificio(COLOR_AZUL_OSCURO, 18));
-        agregarCampo(formulario, 3, jLabel4, jTextField4, iconoDocumento(COLOR_AZUL_OSCURO));
-        agregarCampo(formulario, 4, jLabel5, jTextField5, iconoCorreo(COLOR_AZUL_OSCURO));
-        agregarCampo(formulario, 5, jLabel7, jTextField6, iconoDocumento(COLOR_AZUL_OSCURO));
+        javax.swing.JPanel datosBasicos = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        datosBasicos.setOpaque(false);
+        agregarCampo(datosBasicos, 0, jLabel6, jTextField1, iconoId(COLOR_AZUL_OSCURO));
+        agregarCampo(datosBasicos, 1, jLabel2, jTextField2, iconoContacto(COLOR_AZUL_OSCURO));
+        agregarCampo(datosBasicos, 2, jLabel3, jTextField3, iconoEdificio(COLOR_AZUL_OSCURO, 18));
+        agregarCampo(datosBasicos, 3, jLabel4, jTextField4, iconoDocumento(COLOR_AZUL_OSCURO));
+        agregarCampo(datosBasicos, 4, jLabel5, jTextField5, iconoCorreo(COLOR_AZUL_OSCURO));
+        agregarCampo(datosBasicos, 5, jLabel7, crearSelectorFirma(), iconoDocumento(COLOR_AZUL_OSCURO));
+        formulario.add(datosBasicos, java.awt.BorderLayout.NORTH);
+        formulario.add(crearPanelAcceso(), java.awt.BorderLayout.CENTER);
         tarjeta.add(formulario, java.awt.BorderLayout.CENTER);
         configuracionVistasLayout = new java.awt.CardLayout();
         configuracionVistas = new javax.swing.JPanel(configuracionVistasLayout);
@@ -124,6 +131,47 @@ public class USUARIOS extends javax.swing.JFrame {
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
         getContentPane().revalidate();
         getContentPane().repaint();
+    }
+
+    private javax.swing.JPanel crearSelectorFirma() {
+        javax.swing.JPanel selector = new javax.swing.JPanel(new java.awt.BorderLayout(6, 0));
+        selector.setOpaque(false);
+        selector.setPreferredSize(new java.awt.Dimension(400, 32));
+        jTextField6.setToolTipText("Selecciona una firma JPG, JPEG o PNG de máximo 2 MB");
+        selector.add(jTextField6, java.awt.BorderLayout.CENTER);
+        javax.swing.JButton seleccionar = new javax.swing.JButton("Adjuntar");
+        seleccionar.setBackground(java.awt.Color.WHITE);
+        seleccionar.setForeground(COLOR_AZUL);
+        seleccionar.setPreferredSize(new java.awt.Dimension(95, 30));
+        EstiloAplicacion.aplicarEstiloBoton(seleccionar);
+        seleccionar.addActionListener(e -> seleccionarArchivoFirma());
+        selector.add(seleccionar, java.awt.BorderLayout.EAST);
+        return selector;
+    }
+
+    private void seleccionarArchivoFirma() {
+        javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
+        selector.setDialogTitle("Seleccionar firma");
+        selector.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Imágenes de firma (JPG, JPEG, PNG)", "jpg", "jpeg", "png"));
+        if (selector.showOpenDialog(this) != javax.swing.JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+        File archivo = selector.getSelectedFile();
+        String nombre = archivo.getName().toLowerCase(java.util.Locale.ROOT);
+        boolean extensionValida = nombre.endsWith(".jpg")
+                || nombre.endsWith(".jpeg") || nombre.endsWith(".png");
+        if (!extensionValida) {
+            JOptionPane.showMessageDialog(this, "La firma debe ser un archivo JPG, JPEG o PNG.");
+            return;
+        }
+        if (archivo.length() > MAX_FIRMA_BYTES) {
+            JOptionPane.showMessageDialog(this,
+                    "La firma no puede superar 2 MB (2,097,152 bytes).",
+                    "Archivo demasiado grande", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        jTextField6.setText(archivo.getAbsolutePath());
     }
 
     private javax.swing.JPanel crearNavegacion() {
@@ -153,6 +201,70 @@ public class USUARIOS extends javax.swing.JFrame {
         boton.setBorder(javax.swing.BorderFactory.createEmptyBorder(7, 3, 7, 3));
         boton.setFocusPainted(false);
         return boton;
+    }
+
+    private javax.swing.JPanel crearPanelAcceso() {
+        javax.swing.JPanel acceso = new javax.swing.JPanel(new java.awt.GridLayout(1, 2, 10, 0));
+        acceso.setOpaque(false);
+        javax.swing.JPanel credenciales = crearSeccion("⚙  Credenciales de Acceso");
+        javax.swing.JPanel credencialesCampos = new javax.swing.JPanel();
+        credencialesCampos.setOpaque(false);
+        credencialesCampos.setLayout(new javax.swing.BoxLayout(credencialesCampos, javax.swing.BoxLayout.Y_AXIS));
+        campoContrasena.setPreferredSize(new java.awt.Dimension(220, 30));
+        campoConfirmarContrasena.setPreferredSize(new java.awt.Dimension(220, 30));
+        credencialesCampos.add(crearFilaCampo("Contraseña:", campoContrasena));
+        credencialesCampos.add(crearFilaCampo("Confirmar contraseña:", campoConfirmarContrasena));
+        credencialesCampos.add(crearFilaCampo("Estado:", estadoActivo));
+        credenciales.add(credencialesCampos, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel opciones = crearSeccion("▣  Opciones de Acceso");
+        javax.swing.JPanel opcionesCampos = new javax.swing.JPanel();
+        opcionesCampos.setOpaque(false);
+        opcionesCampos.setLayout(new javax.swing.BoxLayout(opcionesCampos, javax.swing.BoxLayout.Y_AXIS));
+        cierreInactividad.setPreferredSize(new java.awt.Dimension(52, 24));
+        intentosPermitidos.setPreferredSize(new java.awt.Dimension(52, 24));
+        opcionesCampos.add(permitirSesiones);
+        opcionesCampos.add(crearFilaOpcion("Cerrar sesión por inactividad (min):", cierreInactividad));
+        opcionesCampos.add(cambioContrasena);
+        opcionesCampos.add(bloquearIntentos);
+        opcionesCampos.add(crearFilaOpcion("Intentos permitidos:", intentosPermitidos));
+        opciones.add(opcionesCampos, java.awt.BorderLayout.CENTER);
+        acceso.add(credenciales);
+        acceso.add(opciones);
+        return acceso;
+    }
+
+    private javax.swing.JPanel crearFilaCampo(String texto, javax.swing.JComponent control) {
+        javax.swing.JPanel fila = new javax.swing.JPanel(new java.awt.FlowLayout(
+                java.awt.FlowLayout.LEFT, 4, 4));
+        fila.setOpaque(false);
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel(texto);
+        etiqueta.setPreferredSize(new java.awt.Dimension(150, 25));
+        fila.add(etiqueta);
+        fila.add(control);
+        return fila;
+    }
+
+    private javax.swing.JPanel crearSeccion(String titulo) {
+        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout(6, 8));
+        panel.setBackground(new java.awt.Color(239, 247, 255));
+        panel.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(190, 214, 242)),
+                javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        javax.swing.JLabel encabezado = new javax.swing.JLabel(titulo);
+        encabezado.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        encabezado.setForeground(COLOR_AZUL_OSCURO);
+        panel.add(encabezado, java.awt.BorderLayout.NORTH);
+        return panel;
+    }
+
+    private javax.swing.JPanel crearFilaOpcion(String texto, javax.swing.JComponent control) {
+        javax.swing.JPanel fila = new javax.swing.JPanel(new java.awt.BorderLayout(6, 0));
+        fila.setOpaque(false);
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel("<html>" + texto + "</html>");
+        fila.add(etiqueta, java.awt.BorderLayout.CENTER);
+        fila.add(control, java.awt.BorderLayout.EAST);
+        return fila;
     }
 
     private void mostrarVistaConfiguracion(String vista) {
@@ -232,7 +344,8 @@ public class USUARIOS extends javax.swing.JFrame {
             {"    Clientes", "✓", "✓", "✓", "✓"},
             {"    Facturación", "✓", "✓", "✓", "✓"},
             {"    Reportes", "", "", "", ""},
-            {"Reportes Generales", "✓", "✓", "✓", "✓"}
+            {"Reportes Generales", "", "", "", ""},
+            {"    Reportes", "✓", "✓", "✓", "✓"}
         };
         javax.swing.JPanel tabla = new javax.swing.JPanel(new java.awt.GridLayout(filas.length + 1, columnas.length));
         tabla.setBackground(java.awt.Color.WHITE);
@@ -273,12 +386,14 @@ public class USUARIOS extends javax.swing.JFrame {
     }
 
     private void agregarCampo(javax.swing.JPanel formulario, int fila,
-            javax.swing.JLabel etiqueta, javax.swing.JTextField campo, javax.swing.Icon icono) {
+            javax.swing.JLabel etiqueta, javax.swing.JComponent campo, javax.swing.Icon icono) {
         etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
         etiqueta.setForeground(COLOR_AZUL_OSCURO);
         etiqueta.setText("<html>" + etiqueta.getText() + " <font color='#d92323'>*</font></html>");
-        campo.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE));
+        if (campo instanceof javax.swing.JTextField texto) {
+            texto.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_BORDE));
+        }
         campo.setPreferredSize(new java.awt.Dimension(400, 32));
         java.awt.GridBagConstraints gc = new java.awt.GridBagConstraints();
         gc.gridy = fila;
@@ -294,6 +409,85 @@ public class USUARIOS extends javax.swing.JFrame {
         gc.weightx = 1;
         gc.insets = new java.awt.Insets(4, 0, 4, 0);
         formulario.add(campo, gc);
+    }
+
+    private void configurarBusquedaUsuarios() {
+        listaSugerenciasUsuarios.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        listaSugerenciasUsuarios.setVisibleRowCount(6);
+        listaSugerenciasUsuarios.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        listaSugerenciasUsuarios.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evento) {
+                if (evento.getClickCount() == 2) {
+                    seleccionarSugerenciaUsuario();
+                }
+            }
+        });
+        popupSugerenciasUsuarios.add(new javax.swing.JScrollPane(listaSugerenciasUsuarios));
+        jTextField1.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void actualizar() {
+                actualizarSugerenciasUsuarios();
+            }
+
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent evento) { actualizar(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent evento) { actualizar(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent evento) { actualizar(); }
+        });
+        jTextField1.addActionListener(e -> seleccionarSugerenciaUsuario());
+        javax.swing.InputMap mapa = jTextField1.getInputMap(javax.swing.JComponent.WHEN_FOCUSED);
+        javax.swing.ActionMap acciones = jTextField1.getActionMap();
+        mapa.put(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_TAB, 0), "seleccionarUsuario");
+        acciones.put("seleccionarUsuario", new javax.swing.AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evento) {
+                seleccionarSugerenciaUsuario();
+                jTextField2.requestFocusInWindow();
+            }
+        });
+    }
+
+    private void actualizarSugerenciasUsuarios() {
+        String filtro = jTextField1.getText().trim().toLowerCase(java.util.Locale.ROOT);
+        sugerenciasUsuarios.clear();
+        if (filtro.isEmpty()) {
+            popupSugerenciasUsuarios.setVisible(false);
+            return;
+        }
+        try (Workbook libro = cargarLibro(obtenerArchivoUsuarios())) {
+            Sheet hoja = obtenerHojaUsuarios(libro);
+            for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
+                Row registro = hoja.getRow(fila);
+                String id = leerCelda(registro, 0);
+                String nombre = leerCelda(registro, 2);
+                if (!id.isBlank() && (id.toLowerCase(java.util.Locale.ROOT).contains(filtro)
+                        || nombre.toLowerCase(java.util.Locale.ROOT).contains(filtro))) {
+                    sugerenciasUsuarios.addElement(id + "  -  " + nombre);
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudieron cargar sugerencias de usuarios.", ex);
+            popupSugerenciasUsuarios.setVisible(false);
+            return;
+        }
+        if (sugerenciasUsuarios.isEmpty()) {
+            popupSugerenciasUsuarios.setVisible(false);
+            return;
+        }
+        listaSugerenciasUsuarios.setSelectedIndex(0);
+        popupSugerenciasUsuarios.setPopupSize(Math.max(jTextField1.getWidth(), 300), 130);
+        if (!popupSugerenciasUsuarios.isVisible()) {
+            popupSugerenciasUsuarios.show(jTextField1, 0, jTextField1.getHeight());
+        }
+    }
+
+    private void seleccionarSugerenciaUsuario() {
+        if (popupSugerenciasUsuarios.isVisible() && listaSugerenciasUsuarios.getSelectedValue() != null) {
+            String seleccion = listaSugerenciasUsuarios.getSelectedValue();
+            int separador = seleccion.indexOf("  -  ");
+            jTextField1.setText(separador >= 0 ? seleccion.substring(0, separador) : seleccion);
+        }
+        popupSugerenciasUsuarios.setVisible(false);
+        buscarUsuario();
     }
 
     @FunctionalInterface
@@ -839,6 +1033,15 @@ public class USUARIOS extends javax.swing.JFrame {
     }//buscarUsuario
 
     private boolean validarCamposBase() {
+        if (!validarFirma()) {
+            return false;
+        }
+        String contrasena = new String(campoContrasena.getPassword());
+        String confirmacion = new String(campoConfirmarContrasena.getPassword());
+        if (!contrasena.equals(confirmacion)) {
+            JOptionPane.showMessageDialog(this, "La contraseña y su confirmación deben coincidir.");
+            return false;
+        }
         String error = UsuarioValidator.validar(
                 jTextField1.getText(),
                 jTextField2.getText(),
@@ -851,21 +1054,55 @@ public class USUARIOS extends javax.swing.JFrame {
         return false;
     }//validarCamposBase
 
+    private boolean validarFirma() {
+        String ruta = jTextField6.getText().trim();
+        if (ruta.isEmpty()) {
+            return true;
+        }
+        File archivo = new File(ruta);
+        String nombre = archivo.getName().toLowerCase(java.util.Locale.ROOT);
+        boolean extensionValida = nombre.endsWith(".jpg")
+                || nombre.endsWith(".jpeg") || nombre.endsWith(".png");
+        if (!extensionValida) {
+            JOptionPane.showMessageDialog(this, "La firma debe ser un archivo JPG, JPEG o PNG.");
+            return false;
+        }
+        if (!archivo.isFile()) {
+            JOptionPane.showMessageDialog(this, "El archivo de firma seleccionado no existe.");
+            return false;
+        }
+        if (archivo.length() > MAX_FIRMA_BYTES) {
+            JOptionPane.showMessageDialog(this,
+                    "La firma no puede superar 2 MB (2,097,152 bytes).",
+                    "Archivo demasiado grande", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
     private void guardarDatosFormularioEnFila(Row fila, boolean esNuevo) {
         String idUsuario = jTextField1.getText().trim();
         String contrasenaActual = leerCelda(fila, 1);
 
         escribirCelda(fila, 0, idUsuario);
         if (esNuevo || contrasenaActual.isEmpty()) {
-            escribirCelda(fila, 1, idUsuario);
+            escribirCelda(fila, 1, new String(campoContrasena.getPassword()).isBlank()
+                    ? idUsuario : new String(campoContrasena.getPassword()));
         } else {
-            escribirCelda(fila, 1, contrasenaActual);
+            String nuevaContrasena = new String(campoContrasena.getPassword());
+            escribirCelda(fila, 1, nuevaContrasena.isBlank() ? contrasenaActual : nuevaContrasena);
         }
         escribirCelda(fila, 2, jTextField2.getText().trim());
         escribirCelda(fila, 3, jTextField3.getText().trim());
         escribirCelda(fila, 4, jTextField4.getText().trim());
         escribirCelda(fila, 5, jTextField5.getText().trim());
         escribirCelda(fila, 6, jTextField6.getText().trim());
+        escribirCelda(fila, 7, estadoActivo.isSelected() ? "Activo" : "Inactivo");
+        escribirCelda(fila, 8, Boolean.toString(permitirSesiones.isSelected()));
+        escribirCelda(fila, 9, String.valueOf(cierreInactividad.getValue()));
+        escribirCelda(fila, 10, Boolean.toString(cambioContrasena.isSelected()));
+        escribirCelda(fila, 11, Boolean.toString(bloquearIntentos.isSelected()));
+        escribirCelda(fila, 12, String.valueOf(intentosPermitidos.getValue()));
     }//guardarDatosFormularioEnFila
 
     private void cargarFilaEnFormulario(Row fila) {
@@ -875,6 +1112,14 @@ public class USUARIOS extends javax.swing.JFrame {
         jTextField4.setText(leerCelda(fila, 4));
         jTextField5.setText(leerCelda(fila, 5));
         jTextField6.setText(leerCelda(fila, 6));
+        campoContrasena.setText(leerCelda(fila, 1));
+        campoConfirmarContrasena.setText(leerCelda(fila, 1));
+        estadoActivo.setSelected(!"Inactivo".equalsIgnoreCase(leerCelda(fila, 7)));
+        permitirSesiones.setSelected(Boolean.parseBoolean(leerCelda(fila, 8)));
+        seleccionarNumero(cierreInactividad, leerCelda(fila, 9), 30);
+        cambioContrasena.setSelected(Boolean.parseBoolean(leerCelda(fila, 10)));
+        bloquearIntentos.setSelected(Boolean.parseBoolean(leerCelda(fila, 11)));
+        seleccionarNumero(intentosPermitidos, leerCelda(fila, 12), 3);
     }//cargarFilaEnFormulario
 
     private void limpiarFormulario(boolean conservarId) {
@@ -886,7 +1131,23 @@ public class USUARIOS extends javax.swing.JFrame {
         jTextField4.setText("");
         jTextField5.setText("");
         jTextField6.setText("");
+        campoContrasena.setText("");
+        campoConfirmarContrasena.setText("");
+        estadoActivo.setSelected(true);
+        permitirSesiones.setSelected(false);
+        cierreInactividad.setValue(30);
+        cambioContrasena.setSelected(false);
+        bloquearIntentos.setSelected(false);
+        intentosPermitidos.setValue(3);
     }//limpiarFormulario
+
+    private void seleccionarNumero(javax.swing.JSpinner spinner, String valor, int predeterminado) {
+        try {
+            spinner.setValue(valor.isBlank() ? predeterminado : Integer.parseInt(valor));
+        } catch (NumberFormatException ex) {
+            spinner.setValue(predeterminado);
+        }
+    }
 
     private int buscarFilaUsuario(Sheet hoja, String idUsuario) {
         for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {

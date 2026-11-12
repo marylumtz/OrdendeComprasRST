@@ -14,7 +14,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class UsuarioRepository {
 
-    public static final String[] ENCABEZADOS = {"USUARIO", "CONTRASENA", "NOMBRE", "AREA", "PUESTO", "CORREO", "FIRMA"};
+    public static final String[] ENCABEZADOS = {"USUARIO", "CONTRASENA", "NOMBRE", "AREA", "PUESTO", "CORREO", "FIRMA",
+        "ESTADO", "MULTIPLES_SESIONES", "CIERRE_INACTIVIDAD_MIN", "CAMBIO_CONTRASENA", "BLOQUEADO_INTENTOS",
+        "INTENTOS_PERMITIDOS"};
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
 
     public File obtenerArchivoUsuarios() {

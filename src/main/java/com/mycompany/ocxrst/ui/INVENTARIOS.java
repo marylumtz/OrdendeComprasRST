@@ -428,10 +428,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
                 javax.swing.BorderFactory.createLineBorder(COLOR_BORDE_CAMPO),
                 javax.swing.BorderFactory.createEmptyBorder(10, 14, 10, 14)));
         javax.swing.JLabel etiqueta = new javax.swing.JLabel(titulo);
-        etiqueta.setIcon("Total de productos".equals(titulo) ? iconoCaja(color)
-                : "Stock bajo".equals(titulo) ? iconoAdvertencia(color)
-                : "Sin existencias".equals(titulo) ? iconoBasura(color) : iconoMonedas(color));
-        etiqueta.setIconTextGap(8);
         etiqueta.setForeground(COLOR_TEXTO_SECUNDARIO);
         etiqueta.setFont(FUENTE_SUBTITULO);
         valor.setForeground(color);
@@ -439,7 +435,9 @@ public class INVENTARIOS extends javax.swing.JFrame {
         javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
         contenido.setOpaque(false);
         javax.swing.JLabel icono = new javax.swing.JLabel();
-        icono.setIcon(etiqueta.getIcon());
+        icono.setIcon("Total de productos".equals(titulo) ? iconoCaja(color)
+                : "Stock bajo".equals(titulo) ? iconoAdvertencia(color)
+                : "Sin existencias".equals(titulo) ? iconoBasura(color) : iconoMonedas(color));
         icono.setOpaque(true);
         icono.setBackground(fondoIcono);
         icono.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);

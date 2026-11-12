@@ -37,12 +37,14 @@ com\mycompany\ocxrst\ui\MESATRABAJO$ActionRenderer.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$1.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$16.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$4.class
+com\mycompany\ocxrst\ui\USUARIOS$3.class
 com\mycompany\ocxrst\validation\UsuarioValidator.class
 com\mycompany\ocxrst\ui\ENTRADAINVENTARIO$2.class
 com\mycompany\ocxrst\ui\PROVEEDORES$15.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$6.class
 com\mycompany\ocxrst\repository\ProductoProveedorRepository.class
 com\mycompany\ocxrst\ui\MESATRABAJO.class
+com\mycompany\ocxrst\ui\USUARIOS$1.class
 com\mycompany\ocxrst\ui\PROVEEDORES$6.class
 com\mycompany\ocxrst\ui\INVENTARIOS$RoundedPanel.class
 com\mycompany\ocxrst\util\IconoVentanaUtil.class
@@ -55,6 +57,7 @@ com\mycompany\ocxrst\ui\MESATRABAJO$3.class
 com\mycompany\ocxrst\service\ProveedorService.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$14.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$5.class
+com\mycompany\ocxrst\ui\USUARIOS$2.class
 com\mycompany\ocxrst\repository\InventarioRepository.class
 com\mycompany\ocxrst\ui\NUEVATAREA$IconoTarea.class
 com\mycompany\ocxrst\ui\PROVEEDORES$5.class

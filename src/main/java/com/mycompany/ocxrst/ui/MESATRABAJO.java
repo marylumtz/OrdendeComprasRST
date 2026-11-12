@@ -351,86 +351,17 @@ public class MESATRABAJO extends javax.swing.JFrame {
         JButton b = new JButton(principal ? texto.toUpperCase(Locale.ROOT) : texto);
         b.setIcon(new IconoBoton(tipoIcono));
         b.setIconTextGap(principal ? 8 : 7);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        b.setPreferredSize(new Dimension(principal ? 145 : 130, 38));
-        b.setFocusPainted(false);
-        b.setUI(new BotonPlanoUI());
-        b.setContentAreaFilled(false);
-        b.setOpaque(false);
-        b.setRolloverEnabled(true);
-        b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        b.setPreferredSize(new Dimension(principal ? 175 : 142, 40));
         if (principal) {
-            b.setBackground(AZUL_CLARO);
-            b.setForeground(Color.WHITE);
-            b.setBorder(BorderFactory.createCompoundBorder(
-                    new BordeRedondeado(9, null, 1.4f),
-                    BorderFactory.createEmptyBorder(9, 16, 9, 16)));
+            b.setBackground(new Color(31, 112, 184));
         } else {
             b.setBackground(Color.WHITE);
-            b.setForeground(AZUL_CLARO);
-            b.setBorder(BorderFactory.createCompoundBorder(
-                    new BordeRedondeado(9, AZUL_CLARO, 1.4f),
-                    BorderFactory.createEmptyBorder(9, 16, 9, 16)));
         }
+        EstiloAplicacion.aplicarEstiloBotones(b);
         b.addActionListener(accion);
         return b;
     }
-    private static final class BordeRedondeado extends javax.swing.border.AbstractBorder {
-        private final Color color;
-        private final int radio;
-        private final float grosor;
 
-        private BordeRedondeado(int radio, Color color, float grosor) {
-            this.radio = radio;
-            this.color = color;
-            this.grosor = grosor;
-        }
-
-        @Override public void paintBorder(Component componente, Graphics graphics, int x, int y, int width, int height) {
-            if (color == null) return;
-            Graphics2D g = (Graphics2D) graphics.create();
-            try {
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setColor(color);
-                g.setStroke(new BasicStroke(grosor));
-                g.drawRoundRect(x + 1, y + 1, width - 3, height - 3, radio, radio);
-            } finally {
-                g.dispose();
-            }
-        }
-
-        @Override public Insets getBorderInsets(Component componente) {
-            return new Insets(2, 2, 2, 2);
-        }
-
-        @Override public boolean isBorderOpaque() {
-            return false;
-        }
-    }
-    private static final class BotonPlanoUI extends javax.swing.plaf.basic.BasicButtonUI {
-        @Override public void paint(Graphics graphics, JComponent componente) {
-            AbstractButton boton = (AbstractButton) componente;
-            ButtonModel modelo = boton.getModel();
-            Color fondo = boton.getBackground();
-            if (modelo.isPressed()) fondo = mezclarColor(fondo, Color.BLACK, 0.16f);
-            else if (modelo.isRollover()) fondo = mezclarColor(fondo, Color.BLACK, 0.07f);
-            Graphics2D g = (Graphics2D) graphics.create();
-            try {
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setColor(fondo);
-                g.fillRoundRect(0, 0, componente.getWidth() - 1, componente.getHeight() - 1, 9, 9);
-            } finally {
-                g.dispose();
-            }
-            super.paint(graphics, componente);
-        }
-    }
-    private static Color mezclarColor(Color base, Color destino, float proporcion) {
-        return new Color(
-                base.getRed() + Math.round((destino.getRed() - base.getRed()) * proporcion),
-                base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion),
-                base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion));
-    }
     private static final class IconoBoton implements Icon {
         private final String tipo;
 
@@ -485,22 +416,19 @@ public class MESATRABAJO extends javax.swing.JFrame {
                 boolean tieneFoco, int fila, int columna) {
             removeAll();
             setBackground(seleccionado ? new Color(225, 238, 250) : Color.WHITE);
-            add(botonAccion(new IconoAccion("ver"), Color.WHITE, AZUL));
-            add(botonAccion(new IconoAccion("editar"), AZUL_CLARO, Color.WHITE));
-            add(botonAccion(new IconoAccion("eliminar"), new Color(247, 78, 78), Color.WHITE));
+            add(botonAccion(new IconoAccion("ver")));
+            add(botonAccion(new IconoAccion("editar")));
+            add(botonAccion(new IconoAccion("eliminar")));
             return this;
         }
 
-        private JButton botonAccion(Icon icono, Color fondo, Color texto) {
+        private JButton botonAccion(Icon icono) {
             JButton boton = new JButton(icono);
             boton.setPreferredSize(new Dimension(38, 30));
-            boton.setBackground(fondo);
-            boton.setForeground(texto);
-            boton.setBorder(BorderFactory.createLineBorder(
-                    fondo.equals(Color.WHITE) ? new Color(198, 210, 225) : fondo));
+            boton.setBackground(Color.WHITE);
+            boton.setForeground(AZUL);
             boton.setFocusPainted(false);
-            boton.setContentAreaFilled(true);
-            boton.setOpaque(true);
+            EstiloAplicacion.aplicarEstiloBotones(boton);
             return boton;
         }
     }

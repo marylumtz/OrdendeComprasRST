@@ -27,6 +27,10 @@ public class USUARIOS extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(USUARIOS.class.getName());
     private final UsuarioRepository usuarioRepository = new UsuarioRepository();
+    private java.awt.CardLayout configuracionVistasLayout;
+    private javax.swing.JPanel configuracionVistas;
+    private javax.swing.JButton navegacionDatos;
+    private javax.swing.JButton navegacionPermisos;
 
     /** Inicializa el formulario y prepara el archivo de usuarios. */
     public USUARIOS() {
@@ -34,11 +38,11 @@ public class USUARIOS extends javax.swing.JFrame {
         initComponents();
         configurarDisenoVisual();
         IconoVentanaUtil.aplicar(this);
-        setSize(800, 520);
+        setSize(1050, 650);
         setResizable(false);
         setLocationRelativeTo(null);
         asegurarArchivoUsuarios();
-        EstiloAplicacion.aplicarEstiloBotones(jPanel1);
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(jPanel1);
         EstiloAplicacion.aplicarTipografia(jPanel1);
         EstiloAplicacion.aplicarEstiloCamposTexto(jPanel1);
     }
@@ -50,40 +54,51 @@ public class USUARIOS extends javax.swing.JFrame {
 
     private void configurarDisenoVisual() {
         jPanel1.removeAll();
-        jPanel1.setOpaque(true);
+        jPanel1.setOpaque(false);
         jPanel1.setBackground(COLOR_FONDO);
-        jPanel1.setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 20, 18, 20));
         jPanel1.setLayout(new java.awt.BorderLayout(0, 14));
 
-        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
-        encabezado.setOpaque(false);
-        javax.swing.JPanel titulo = new javax.swing.JPanel();
-        titulo.setOpaque(false);
-        titulo.setLayout(new javax.swing.BoxLayout(titulo, javax.swing.BoxLayout.Y_AXIS));
-        jLabel1.setText("USUARIOS");
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel1.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 26));
-        jLabel1.setForeground(COLOR_AZUL_OSCURO);
-        javax.swing.JLabel subtitulo = new javax.swing.JLabel("Administra los usuarios del sistema");
-        subtitulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        subtitulo.setForeground(COLOR_AZUL_OSCURO);
-        titulo.add(jLabel1);
-        titulo.add(subtitulo);
-        encabezado.add(titulo, java.awt.BorderLayout.WEST);
-        javax.swing.JLabel lema = new javax.swing.JLabel("<html><div style='text-align:right'>SOLUCIONES HOY<br>CONEXIONES MAÑANA</div></html>");
-        lema.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 9));
-        lema.setForeground(new java.awt.Color(133, 157, 185));
-        encabezado.add(lema, java.awt.BorderLayout.EAST);
-        TarjetaPanel tarjeta = new TarjetaPanel();
-        tarjeta.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 22, 16, 22));
-        tarjeta.setLayout(new java.awt.BorderLayout(0, 12));
+        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(12, 12));
+        contenido.setOpaque(false);
+        contenido.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 8, 8, 8));
 
-        javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout());
-        barra.setOpaque(false);
-        javax.swing.JLabel registro = new javax.swing.JLabel("REGISTRO DE USUARIO");
-        registro.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        javax.swing.JPanel acciones = new javax.swing.JPanel(new java.awt.FlowLayout(
+                java.awt.FlowLayout.RIGHT, 10, 8));
+        acciones.setOpaque(false);
+        estilizarBoton(jButton1, "NUEVO USUARIO", COLOR_AZUL, java.awt.Color.WHITE, 165);
+        jButton1.setIcon(iconoMas(java.awt.Color.WHITE));
+        estilizarBoton(jButton2, "GUARDAR", java.awt.Color.WHITE, COLOR_AZUL, 130);
+        jButton2.setIcon(iconoGuardar(COLOR_AZUL));
+        estilizarBoton(jButton3, "ELIMINAR", java.awt.Color.WHITE, COLOR_AZUL, 135);
+        jButton3.setIcon(iconoEliminar(COLOR_AZUL));
+        estilizarBoton(jButton4, "ACTUALIZAR", java.awt.Color.WHITE, COLOR_AZUL, 145);
+        jButton4.setIcon(iconoActualizar(COLOR_AZUL));
+        acciones.add(jButton1);
+        acciones.add(jButton2);
+        acciones.add(jButton3);
+        javax.swing.JSeparator separador = new javax.swing.JSeparator(javax.swing.SwingConstants.VERTICAL);
+        separador.setPreferredSize(new java.awt.Dimension(1, 28));
+        acciones.add(separador);
+        acciones.add(jButton4);
+        contenido.add(acciones, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel cuerpo = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        cuerpo.setOpaque(false);
+        cuerpo.add(crearNavegacion(), java.awt.BorderLayout.WEST);
+
+        TarjetaPanel tarjeta = new TarjetaPanel();
+        tarjeta.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 20, 16, 20));
+        tarjeta.setLayout(new java.awt.BorderLayout(0, 12));
+        javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout(8, 0));
+        barra.setBackground(new java.awt.Color(232, 242, 255));
+        barra.setBorder(javax.swing.BorderFactory.createEmptyBorder(9, 12, 9, 12));
+        javax.swing.JLabel registro = new javax.swing.JLabel("Configuración");
+        registro.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
         registro.setForeground(COLOR_AZUL_OSCURO);
-        barra.add(registro, java.awt.BorderLayout.EAST);
+        barra.add(registro, java.awt.BorderLayout.WEST);
+        javax.swing.JLabel aviso = new javax.swing.JLabel("Complete los datos del usuario para continuar");
+        aviso.setForeground(COLOR_AZUL_OSCURO);
+        barra.add(aviso, java.awt.BorderLayout.EAST);
         tarjeta.add(barra, java.awt.BorderLayout.NORTH);
 
         javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
@@ -95,26 +110,166 @@ public class USUARIOS extends javax.swing.JFrame {
         agregarCampo(formulario, 4, jLabel5, jTextField5, iconoCorreo(COLOR_AZUL_OSCURO));
         agregarCampo(formulario, 5, jLabel7, jTextField6, iconoDocumento(COLOR_AZUL_OSCURO));
         tarjeta.add(formulario, java.awt.BorderLayout.CENTER);
-
-        javax.swing.JPanel acciones = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 10, 0));
-        acciones.setOpaque(false);
-        estilizarBoton(jButton4, "BUSCAR", java.awt.Color.WHITE, COLOR_AZUL);
-        estilizarBoton(jButton1, "CREAR", COLOR_AZUL, java.awt.Color.WHITE);
-        estilizarBoton(jButton2, "EDITAR", COLOR_AZUL, java.awt.Color.WHITE);
-        estilizarBoton(jButton3, "ELIMINAR", java.awt.Color.WHITE, new java.awt.Color(150, 55, 55));
-        acciones.add(jButton4);
-        acciones.add(jButton1);
-        acciones.add(jButton2);
-        acciones.add(jButton3);
-        tarjeta.add(acciones, java.awt.BorderLayout.SOUTH);
-
-        jPanel1.add(tarjeta, java.awt.BorderLayout.CENTER);
+        configuracionVistasLayout = new java.awt.CardLayout();
+        configuracionVistas = new javax.swing.JPanel(configuracionVistasLayout);
+        configuracionVistas.setOpaque(false);
+        configuracionVistas.add(tarjeta, "DATOS");
+        configuracionVistas.add(crearPanelPermisos(), "PERMISOS");
+        cuerpo.add(configuracionVistas, java.awt.BorderLayout.CENTER);
+        contenido.add(cuerpo, java.awt.BorderLayout.CENTER);
+        jPanel1.add(contenido, java.awt.BorderLayout.CENTER);
         getContentPane().setBackground(COLOR_FONDO);
         getContentPane().removeAll();
         getContentPane().setLayout(new java.awt.BorderLayout());
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
         getContentPane().revalidate();
         getContentPane().repaint();
+    }
+
+    private javax.swing.JPanel crearNavegacion() {
+        javax.swing.JPanel navegacion = new javax.swing.JPanel();
+        navegacion.setPreferredSize(new java.awt.Dimension(98, 0));
+        navegacion.setBackground(new java.awt.Color(239, 247, 255));
+        navegacion.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 6, 8, 6));
+        navegacion.setLayout(new java.awt.GridLayout(4, 1, 0, 8));
+        navegacionDatos = crearElementoNavegacion("Datos", iconoContacto(java.awt.Color.WHITE), true);
+        navegacionPermisos = crearElementoNavegacion("Permisos", iconoDocumento(COLOR_AZUL), false);
+        navegacionDatos.addActionListener(e -> mostrarVistaConfiguracion("DATOS"));
+        navegacionPermisos.addActionListener(e -> mostrarVistaConfiguracion("PERMISOS"));
+        navegacion.add(navegacionDatos);
+        navegacion.add(navegacionPermisos);
+        navegacion.add(crearElementoNavegacion("Accesos", iconoId(COLOR_AZUL), false));
+        navegacion.add(crearElementoNavegacion("Historial", iconoDocumento(COLOR_AZUL), false));
+        return navegacion;
+    }
+
+    private javax.swing.JButton crearElementoNavegacion(String texto, javax.swing.Icon icono, boolean activo) {
+        javax.swing.JButton boton = new javax.swing.JButton("<html><center>" + texto + "</center></html>", icono);
+        boton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        boton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        boton.setIconTextGap(5);
+        boton.setBackground(activo ? COLOR_AZUL : java.awt.Color.WHITE);
+        boton.setForeground(activo ? java.awt.Color.WHITE : COLOR_AZUL_OSCURO);
+        boton.setBorder(javax.swing.BorderFactory.createEmptyBorder(7, 3, 7, 3));
+        boton.setFocusPainted(false);
+        return boton;
+    }
+
+    private void mostrarVistaConfiguracion(String vista) {
+        configuracionVistasLayout.show(configuracionVistas, vista);
+        boolean permisos = "PERMISOS".equals(vista);
+        actualizarNavegacion(navegacionDatos, !permisos, iconoContacto(!permisos
+                ? java.awt.Color.WHITE : COLOR_AZUL));
+        actualizarNavegacion(navegacionPermisos, permisos, iconoDocumento(permisos
+                ? java.awt.Color.WHITE : COLOR_AZUL));
+    }
+
+    private void actualizarNavegacion(javax.swing.JButton boton, boolean activo, javax.swing.Icon icono) {
+        boton.setBackground(activo ? COLOR_AZUL : java.awt.Color.WHITE);
+        boton.setForeground(activo ? java.awt.Color.WHITE : COLOR_AZUL_OSCURO);
+        boton.setIcon(icono);
+    }
+
+    private javax.swing.JPanel crearPanelPermisos() {
+        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout(12, 12));
+        panel.setOpaque(false);
+        panel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
+
+        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout());
+        encabezado.setBackground(new java.awt.Color(232, 242, 255));
+        encabezado.setBorder(javax.swing.BorderFactory.createEmptyBorder(9, 12, 9, 12));
+        javax.swing.JLabel titulo = new javax.swing.JLabel("Permisos del Usuario");
+        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+        titulo.setForeground(COLOR_AZUL_OSCURO);
+        encabezado.add(titulo, java.awt.BorderLayout.WEST);
+        javax.swing.JLabel ayuda = new javax.swing.JLabel("Seleccione los módulos y acciones que podrá utilizar el usuario");
+        ayuda.setForeground(COLOR_AZUL_OSCURO);
+        encabezado.add(ayuda, java.awt.BorderLayout.EAST);
+        panel.add(encabezado, java.awt.BorderLayout.NORTH);
+
+        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        contenido.setOpaque(false);
+        javax.swing.JPanel tabla = crearTablaPermisos();
+        contenido.add(tabla, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel descripcion = new javax.swing.JPanel(new java.awt.BorderLayout(0, 14));
+        descripcion.setBackground(new java.awt.Color(239, 247, 255));
+        descripcion.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(198, 218, 243)),
+                javax.swing.BorderFactory.createEmptyBorder(12, 12, 12, 12)));
+        javax.swing.JLabel tituloDescripcion = new javax.swing.JLabel("ⓘ  Descripción");
+        tituloDescripcion.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        tituloDescripcion.setForeground(COLOR_AZUL_OSCURO);
+        javax.swing.JLabel texto = new javax.swing.JLabel(
+                "<html><div style='text-align:center'>Otorga los permisos<br>necesarios para que el usuario<br>pueda acceder y utilizar las<br>funciones del sistema.</div></html>",
+                javax.swing.SwingConstants.CENTER);
+        texto.setForeground(COLOR_AZUL_OSCURO);
+        descripcion.add(tituloDescripcion, java.awt.BorderLayout.NORTH);
+        descripcion.add(texto, java.awt.BorderLayout.CENTER);
+        descripcion.setPreferredSize(new java.awt.Dimension(205, 0));
+        contenido.add(descripcion, java.awt.BorderLayout.EAST);
+        panel.add(contenido, java.awt.BorderLayout.CENTER);
+        return panel;
+    }
+
+    private javax.swing.JPanel crearTablaPermisos() {
+        String[] columnas = {"Módulo / Opción", "Consultar", "Crear", "Editar", "Eliminar"};
+        String[][] filas = {
+            {"Sistema", "", "", "", ""},
+            {"    Usuarios", "✓", "✓", "✓", "✓"},
+            {"    Permisos", "✓", "✓", "✓", "✓"},
+            {"    Configuración", "", "", "", ""},
+            {"Inventarios", "", "", "", ""},
+            {"    Productos", "✓", "✓", "✓", "✓"},
+            {"    Entradas", "✓", "✓", "✓", "✓"},
+            {"    Salidas", "✓", "✓", "✓", "✓"},
+            {"    Reportes", "✓", "✓", "✓", "✓"},
+            {"Compras", "", "", "", ""},
+            {"    Proveedores", "✓", "✓", "✓", "✓"},
+            {"    Órdenes de Compra", "✓", "✓", "✓", "✓"},
+            {"    Reportes", "", "", "", ""},
+            {"Ventas", "", "", "", ""},
+            {"    Clientes", "✓", "✓", "✓", "✓"},
+            {"    Facturación", "✓", "✓", "✓", "✓"},
+            {"    Reportes", "", "", "", ""},
+            {"Reportes Generales", "✓", "✓", "✓", "✓"}
+        };
+        javax.swing.JPanel tabla = new javax.swing.JPanel(new java.awt.GridLayout(filas.length + 1, columnas.length));
+        tabla.setBackground(java.awt.Color.WHITE);
+        tabla.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(190, 210, 235)));
+        for (String columna : columnas) {
+            javax.swing.JLabel etiqueta = new javax.swing.JLabel(columna, javax.swing.SwingConstants.CENTER);
+            etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+            etiqueta.setForeground(COLOR_AZUL_OSCURO);
+            etiqueta.setBackground(new java.awt.Color(224, 236, 252));
+            etiqueta.setOpaque(true);
+            etiqueta.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(205, 220, 239)));
+            tabla.add(etiqueta);
+        }
+        for (String[] fila : filas) {
+            boolean modulo = !fila[0].startsWith("    ");
+            for (int indice = 0; indice < fila.length; indice++) {
+                if (indice == 0) {
+                    javax.swing.JLabel etiqueta = new javax.swing.JLabel(fila[indice]);
+                    etiqueta.setFont(new java.awt.Font("Segoe UI", modulo ? java.awt.Font.BOLD : java.awt.Font.PLAIN, 12));
+                    etiqueta.setForeground(COLOR_AZUL_OSCURO);
+                    etiqueta.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 8, 0, 2));
+                    tabla.add(etiqueta);
+                } else if (modulo) {
+                    javax.swing.JLabel espacio = new javax.swing.JLabel();
+                    espacio.setBackground(java.awt.Color.WHITE);
+                    espacio.setOpaque(true);
+                    tabla.add(espacio);
+                } else {
+                    javax.swing.JCheckBox casilla = new javax.swing.JCheckBox();
+                    casilla.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                    casilla.setSelected("✓".equals(fila[indice]));
+                    casilla.setBackground(java.awt.Color.WHITE);
+                    tabla.add(casilla);
+                }
+            }
+        }
+        return tabla;
     }
 
     private void agregarCampo(javax.swing.JPanel formulario, int fila,
@@ -229,44 +384,53 @@ public class USUARIOS extends javax.swing.JFrame {
         });
     }
 
+    private static javax.swing.Icon iconoMas(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawLine(t / 2, 2, t / 2, t - 2);
+            g2.drawLine(2, t / 2, t - 2, t / 2);
+        });
+    }
+
+    private static javax.swing.Icon iconoGuardar(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawRoundRect(2, 1, t - 4, t - 2, 2, 2);
+            g2.drawRect(5, 2, t - 10, 5);
+            g2.drawRect(5, t - 6, t - 10, 4);
+        });
+    }
+
+    private static javax.swing.Icon iconoEliminar(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawRect(5, 5, t - 10, t - 6);
+            g2.drawLine(4, 4, t - 4, 4);
+            g2.drawLine(7, 2, t - 7, 2);
+        });
+    }
+
+    private static javax.swing.Icon iconoActualizar(java.awt.Color color) {
+        return new VectorIcon(18, color, (g2, t) -> {
+            g2.drawArc(2, 2, t - 4, t - 4, 40, 275);
+            g2.drawLine(t - 3, 2, t - 3, 7);
+            g2.drawLine(t - 3, 2, t - 8, 2);
+        });
+    }
+
     private void estilizarBoton(javax.swing.JButton boton, String texto,
-            java.awt.Color fondo, java.awt.Color textoColor) {
+            java.awt.Color fondo, java.awt.Color textoColor, int ancho) {
         boton.setText(texto);
-        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
         boton.setBackground(fondo);
-        boton.setForeground(textoColor);
-        boton.setFocusPainted(false);
-        boton.setUI(new BotonPlanoUI());
-        boton.setContentAreaFilled(false);
-        boton.setOpaque(false);
-        boton.setRolloverEnabled(true);
-        boton.setBorderPainted(false);
-        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                new BordeRedondeado(9, fondo.equals(java.awt.Color.WHITE) ? COLOR_BORDE : fondo, 1.4f),
-                javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
-        boton.setPreferredSize(new java.awt.Dimension(110, 38));
-        boton.setMinimumSize(new java.awt.Dimension(110, 38));
-        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        boton.setPreferredSize(new java.awt.Dimension(ancho, 38));
+        boton.setMinimumSize(new java.awt.Dimension(ancho, 38));
+        EstiloAplicacion.aplicarEstiloBoton(boton);
     }
 
     @SuppressWarnings("unused")
     private void prepararBotonAtras(javax.swing.JButton boton) {
-        boton.setUI(new BotonPlanoUI());
         boton.setText("ATRÁS");
         boton.setIcon(iconoChevronIzquierda(java.awt.Color.WHITE));
         boton.setIconTextGap(8);
-        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
-        boton.setForeground(java.awt.Color.WHITE);
         boton.setBackground(COLOR_AZUL);
-        boton.setFocusPainted(false);
-        boton.setContentAreaFilled(false);
-        boton.setOpaque(false);
-        boton.setRolloverEnabled(true);
-        boton.setBorderPainted(false);
-        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                new BordeRedondeado(9, null, 1.4f),
-                javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
-        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        EstiloAplicacion.aplicarEstiloBoton(boton);
     }
 
     private static javax.swing.Icon iconoChevronIzquierda(java.awt.Color color) {
@@ -274,73 +438,6 @@ public class USUARIOS extends javax.swing.JFrame {
             g2.drawLine(tamano - 3, 1, 2, tamano / 2);
             g2.drawLine(2, tamano / 2, tamano - 3, tamano - 1);
         });
-    }
-
-    private static final class BotonPlanoUI extends javax.swing.plaf.basic.BasicButtonUI {
-        @Override
-        public void paint(java.awt.Graphics graphics, javax.swing.JComponent componente) {
-            javax.swing.AbstractButton boton = (javax.swing.AbstractButton) componente;
-            javax.swing.ButtonModel modelo = boton.getModel();
-            java.awt.Color fondo = boton.getBackground();
-            if (modelo.isPressed()) {
-                fondo = mezclarColor(fondo, java.awt.Color.BLACK, 0.16f);
-            } else if (modelo.isRollover()) {
-                fondo = mezclarColor(fondo, java.awt.Color.BLACK, 0.07f);
-            }
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
-            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(fondo);
-            g2.fillRoundRect(0, 0, componente.getWidth() - 1, componente.getHeight() - 1, 9, 9);
-            g2.dispose();
-            super.paint(graphics, componente);
-        }
-    }
-
-    private static java.awt.Color mezclarColor(java.awt.Color base, java.awt.Color destino, float proporcion) {
-        return new java.awt.Color(
-                base.getRed() + Math.round((destino.getRed() - base.getRed()) * proporcion),
-                base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion),
-                base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion));
-    }
-
-    private static final class BordeRedondeado extends javax.swing.border.AbstractBorder {
-        private final int radio;
-        private final java.awt.Color color;
-        private final float grosor;
-
-        private BordeRedondeado(int radio, java.awt.Color color, float grosor) {
-            this.radio = radio;
-            this.color = color;
-            this.grosor = grosor;
-        }
-
-        @Override
-        public void paintBorder(java.awt.Component componente, java.awt.Graphics graphics, int x, int y, int ancho, int alto) {
-            if (color == null) {
-                return;
-            }
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
-            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(color);
-            g2.setStroke(new java.awt.BasicStroke(grosor));
-            int mitad = Math.round(grosor / 2);
-            int grosorEntero = Math.round(grosor);
-            g2.drawRoundRect(x + mitad, y + mitad, ancho - grosorEntero - 1,
-                    alto - grosorEntero - 1, radio, radio);
-            g2.dispose();
-        }
-
-        @Override
-        public java.awt.Insets getBorderInsets(java.awt.Component componente) {
-            return new java.awt.Insets(2, 2, 2, 2);
-        }
-
-        @Override
-        public boolean isBorderOpaque() {
-            return false;
-        }
     }
 
     private static final class TarjetaPanel extends javax.swing.JPanel {
@@ -392,7 +489,7 @@ public class USUARIOS extends javax.swing.JFrame {
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(0, 95, 131));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("USUARIOS");
+        jLabel1.setText("CONFIGURACIÓN");
 
         jButton1.setText("CREAR");
         jButton1.addActionListener(this::jButton1ActionPerformed);

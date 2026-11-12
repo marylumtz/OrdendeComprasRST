@@ -202,13 +202,11 @@ public final class EstiloAplicacion {
         botonCalendario.setFont(fuente(Font.BOLD, 12));
         botonCalendario.setForeground(Color.WHITE);
         botonCalendario.setBackground(azul);
-        botonCalendario.setOpaque(true);
-        botonCalendario.setContentAreaFilled(true);
-        botonCalendario.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 10, 2, 10));
         botonCalendario.setFocusPainted(false);
         botonCalendario.setPreferredSize(new java.awt.Dimension(40, 30));
         botonCalendario.setMinimumSize(new java.awt.Dimension(40, 30));
         botonCalendario.setMaximumSize(new java.awt.Dimension(40, 30));
+        aplicarEstiloBotones(botonCalendario);
 
         com.toedter.calendar.JCalendar calendario = selector.getJCalendar();
         calendario.setLocale(LOCALE_ES);
@@ -616,6 +614,14 @@ public final class EstiloAplicacion {
                 aplicarEstiloBotones(contenedor);
             }
         }
+    }
+
+    /**
+     * Compatibilidad con pantallas antiguas: todas las pantallas usan ahora
+     * el mismo estilo estándar que Inventarios.
+     */
+    public static void aplicarEstiloBotonesRestoPantallas(Container raiz) {
+        aplicarEstiloBotones(raiz);
     }
 
     public static void aplicarEstiloBoton(AbstractButton boton) {

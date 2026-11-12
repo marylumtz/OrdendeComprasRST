@@ -50,7 +50,7 @@ public class INICIARSESION extends javax.swing.JFrame {
                 "/com/mycompany/ocxrst/IMAGENES/FONDO LOGIN.png", 550, 410));
         IconoVentanaUtil.aplicar(this);
         setLocationRelativeTo(null); 
-        EstiloAplicacion.aplicarEstiloBotones(getContentPane());
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(getContentPane());
         EstiloAplicacion.aplicarTipografia(getContentPane());
         EstiloAplicacion.aplicarEstiloCamposTexto(getContentPane());
         java.awt.EventQueue.invokeLater(() -> jTextField1.requestFocusInWindow());

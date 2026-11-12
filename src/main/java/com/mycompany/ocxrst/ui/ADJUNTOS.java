@@ -37,7 +37,7 @@ public class ADJUNTOS extends JFrame {
         setTitle("ADJUNTOS");
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setContentPane(crearContenido());
-        EstiloAplicacion.aplicarEstiloBotones(getContentPane());
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(getContentPane());
         setSize(760, 520);
         setMinimumSize(new Dimension(620, 420));
         setLocationRelativeTo(null);

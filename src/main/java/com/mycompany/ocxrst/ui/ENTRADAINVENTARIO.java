@@ -110,7 +110,7 @@ public class ENTRADAINVENTARIO extends JPanel {
         setBackground(Color.WHITE);
         modelo = crearModelo();
         construirVista();
-        EstiloAplicacion.aplicarEstiloBotones(this);
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(this);
         cargarProductos();
     }
 

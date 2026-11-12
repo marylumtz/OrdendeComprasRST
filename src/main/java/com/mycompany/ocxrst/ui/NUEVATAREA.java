@@ -51,7 +51,7 @@ public class NUEVATAREA extends JDialog {
         if (original != null) cargarOriginal();
         configurarCamposProtegidos();
         estadoInicial = estadoActual();
-        EstiloAplicacion.aplicarEstiloBotones((Container) getContentPane());
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas((Container) getContentPane());
         EstiloAplicacion.aplicarTipografia(getContentPane());
         EstiloAplicacion.aplicarEstiloCamposTexto(getContentPane());
         EstiloAplicacion.estilizarSelectorFecha(inicio);

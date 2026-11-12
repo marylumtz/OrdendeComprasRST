@@ -433,9 +433,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         botonSiguienteOrden = botonNavegacion(">", () -> navegarOrden(1));
         botonUltimaOrden = botonNavegacion(">|", this::irUltimaOrden);
         panelNavegacionOrdenes = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 2, 0));
-        panelNavegacionOrdenes.setOpaque(true);
-        panelNavegacionOrdenes.setBackground(new java.awt.Color(255, 238, 218));
-        panelNavegacionOrdenes.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(245, 112, 32), 2));
+        panelNavegacionOrdenes.setOpaque(false);
+        panelNavegacionOrdenes.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         panelNavegacionOrdenes.add(botonPrimeraOrden);
         panelNavegacionOrdenes.add(botonAnteriorOrden);
         panelNavegacionOrdenes.add(botonSiguienteOrden);
@@ -450,10 +449,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         boton.setBackground(java.awt.Color.WHITE);
         boton.setFocusPainted(false);
         boton.setBorder(javax.swing.BorderFactory.createEmptyBorder());
-        boton.setContentAreaFilled(false);
-        boton.setOpaque(false);
         boton.setRolloverEnabled(false);
         boton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        EstiloAplicacion.aplicarEstiloBotones(boton);
         boton.addActionListener(e -> accion.run());
         return boton;
     }
@@ -465,10 +463,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         boton.setForeground(textoColor);
         boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
         boton.setFocusPainted(false);
-        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(180, 195, 215)),
-                javax.swing.BorderFactory.createEmptyBorder(4, 8, 4, 8)));
         boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        EstiloAplicacion.aplicarEstiloBotones(boton);
     }
 
     private void prepararValorProveedor(javax.swing.JLabel valor) {
@@ -597,7 +593,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jButtonDesactivar.setEnabled(false);
         prepararBotonCabecera(jButton2, "BUSCAR", new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
         prepararBotonCabecera(jButton3, "NUEVO", new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
-        prepararBotonCabecera(jButtonDesactivar, "DESACTIVAR", new java.awt.Color(170, 178, 188), java.awt.Color.WHITE);
+        prepararBotonCabecera(jButtonDesactivar, "DESACTIVAR",
+                new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
         prepararBotonCabecera(jButton1, "IMPRIMIR", java.awt.Color.WHITE, new java.awt.Color(28, 82, 132));
         ajustarTamanoPanelAlContenido();
         pack();
@@ -1136,56 +1133,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 : crearIconoActualizar(new java.awt.Color(31, 112, 184)));
         boton.setIconTextGap(principal ? 8 : 7);
         boton.setFocusPainted(false);
-        boton.setUI(new BotonPlanoUIOrden());
-        boton.setPreferredSize(new java.awt.Dimension(principal ? 190 : 135, 38));
+        boton.setPreferredSize(new java.awt.Dimension(principal ? 175 : 142, 40));
         boton.setBackground(colorFondo);
         boton.setForeground(principal ? java.awt.Color.WHITE : new java.awt.Color(28, 82, 132));
-        boton.setOpaque(false);
-        boton.setContentAreaFilled(false);
         boton.setRolloverEnabled(true);
         boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-        if (principal) {
-            boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                    new BordeBotonOrden(null, 1.4f, 9),
-                    javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
-        } else {
-            boton.setBorder(new BordeBotonOrden(
-                    new java.awt.Color(31, 112, 184), 1.4f, 9));
-        }
+        EstiloAplicacion.aplicarEstiloBotones(boton);
         return boton;
-    }
-
-    private static final class BotonPlanoUIOrden extends javax.swing.plaf.basic.BasicButtonUI {
-        @Override
-        public void paint(java.awt.Graphics graphics, javax.swing.JComponent componente) {
-            javax.swing.AbstractButton boton = (javax.swing.AbstractButton) componente;
-            javax.swing.ButtonModel modelo = boton.getModel();
-            java.awt.Color fondo = boton.getBackground();
-            if (modelo.isPressed()) {
-                fondo = mezclarColorBoton(fondo, java.awt.Color.BLACK, 0.16f);
-            } else if (modelo.isRollover()) {
-                fondo = mezclarColorBoton(fondo, java.awt.Color.BLACK, 0.07f);
-            }
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
-            try {
-                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(fondo);
-                g2.fillRoundRect(0, 0, componente.getWidth() - 1,
-                        componente.getHeight() - 1, 9, 9);
-            } finally {
-                g2.dispose();
-            }
-            super.paint(graphics, componente);
-        }
-    }
-
-    private static java.awt.Color mezclarColorBoton(java.awt.Color base,
-            java.awt.Color destino, float proporcion) {
-        return new java.awt.Color(
-                base.getRed() + Math.round((destino.getRed() - base.getRed()) * proporcion),
-                base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion),
-                base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion));
     }
 
     private javax.swing.Icon crearIconoMas(java.awt.Color color) {
@@ -1243,34 +1197,6 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 }
             }
         };
-    }
-
-    private static final class BordeBotonOrden extends javax.swing.border.AbstractBorder {
-        private final java.awt.Color color;
-        private final float grosor;
-        private final int radio;
-
-        private BordeBotonOrden(java.awt.Color color, float grosor, int radio) {
-            this.color = color;
-            this.grosor = grosor;
-            this.radio = radio;
-        }
-
-        @Override
-        public void paintBorder(java.awt.Component componente, java.awt.Graphics graphics,
-                int x, int y, int width, int height) {
-            if (color == null) {
-                return;
-            }
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
-            try {
-                g2.setColor(color);
-                g2.setStroke(new java.awt.BasicStroke(grosor));
-                g2.drawRoundRect(x + 1, y + 1, width - 3, height - 3, radio, radio);
-            } finally {
-                g2.dispose();
-            }
-        }
     }
 
     private void prepararCampoBusqueda(javax.swing.JComponent campo) {
@@ -4200,9 +4126,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     private void actualizarBotonBuscar(boolean ordenCargada) {
         jButton2.setText(ordenCargada ? "SALIR" : "BUSCAR");
-        jButton2.setBackground(ordenCargada
-                ? new java.awt.Color(139, 0, 0)
-                : new java.awt.Color(0, 204, 51));
+        jButton2.setBackground(new java.awt.Color(31, 112, 184));
+        jButton2.setForeground(java.awt.Color.WHITE);
     }
 
     private void prepararDuplicado() {

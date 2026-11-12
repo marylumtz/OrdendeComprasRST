@@ -30,7 +30,7 @@ public class TERMINOS extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         cargarTerminos();
         jButton2.addActionListener(this::jButton2ActionPerformed);
-        EstiloAplicacion.aplicarEstiloBotones(getContentPane());
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(getContentPane());
         EstiloAplicacion.aplicarTipografia(getContentPane());
         EstiloAplicacion.aplicarEstiloCamposTexto(getContentPane());
     }

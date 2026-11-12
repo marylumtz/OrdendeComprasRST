@@ -330,7 +330,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         configurarVistasProveedores();
         cargarSolicitantes();
         configurarEventos();
-        EstiloAplicacion.aplicarEstiloBotones(jPanel1);
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(jPanel1);
         EstiloAplicacion.aplicarTipografia(vistasProveedores);
         EstiloAplicacion.aplicarEstiloCamposTexto(vistasProveedores);
     }
@@ -480,15 +480,10 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private javax.swing.JButton botonDirectorio(String texto, javax.swing.Icon icono,
             java.awt.Color fondo, java.awt.Color textoColor) {
         javax.swing.JButton boton = new javax.swing.JButton(texto, icono);
-        EstiloAplicacion.aplicarTipografiaBoton(boton);
-        boton.setForeground(textoColor);
         boton.setBackground(fondo);
-        boton.setFocusPainted(false);
         boton.setPreferredSize(new java.awt.Dimension(130, 38));
-        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                javax.swing.BorderFactory.createLineBorder(COLOR_AZUL),
-                javax.swing.BorderFactory.createEmptyBorder(5, 10, 5, 10)));
         boton.setIconTextGap(7);
+        EstiloAplicacion.aplicarEstiloBoton(boton);
         return boton;
     }
 
@@ -606,6 +601,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jButton6.setBorderPainted(false);
         jButton6.setContentAreaFilled(false);
         jButton6.setFocusPainted(false);
+        jButton6.setBackground(COLOR_AZUL_OSCURO);
         jButton6.setForeground(java.awt.Color.WHITE);
         jButton6.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
         jButton6.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
@@ -962,108 +958,16 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
     private void prepararBoton(javax.swing.JButton boton, String texto, javax.swing.Icon icono,
             java.awt.Color fondo, java.awt.Color textoColor, java.awt.Color colorBorde) {
-        boton.setUI(new BotonPlanoUI());
         boton.setText(texto);
         boton.setIcon(icono);
         boton.setIconTextGap(8);
         boton.setBackground(fondo);
-        boton.setForeground(textoColor);
-        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
-        boton.setFocusPainted(false);
-        boton.setContentAreaFilled(false);
-        boton.setOpaque(false);
-        boton.setRolloverEnabled(true);
-        boton.setBorderPainted(colorBorde != null);
-        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                new BordeRedondeado(9, colorBorde, 1.4f),
-                javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
-        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-    }
-
-    private static java.awt.Color mezclarColor(java.awt.Color base, java.awt.Color destino, float proporcion) {
-        int r = base.getRed() + Math.round((destino.getRed() - base.getRed()) * proporcion);
-        int g = base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion);
-        int b = base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion);
-        return new java.awt.Color(
-                Math.max(0, Math.min(255, r)),
-                Math.max(0, Math.min(255, g)),
-                Math.max(0, Math.min(255, b)));
+        EstiloAplicacion.aplicarEstiloBoton(boton);
     }
 
     // =====================================================================
     // Componentes visuales reutilizables
     // =====================================================================
-
-    /**
-     * ButtonUI plano que sustituye el bisel nativo de Windows (que generaba un
-     * doble contorno al combinarse con nuestro borde personalizado) por un
-     * relleno redondeado propio con retroalimentación sutil de hover/press.
-     */
-    private static final class BotonPlanoUI extends javax.swing.plaf.basic.BasicButtonUI {
-        @Override
-        public void paint(java.awt.Graphics g, javax.swing.JComponent c) {
-            javax.swing.AbstractButton boton = (javax.swing.AbstractButton) c;
-            javax.swing.ButtonModel modelo = boton.getModel();
-            java.awt.Color fondo = boton.getBackground();
-            if (modelo.isPressed()) {
-                fondo = mezclarColor(fondo, java.awt.Color.BLACK, 0.16f);
-            } else if (modelo.isRollover()) {
-                fondo = mezclarColor(fondo, java.awt.Color.BLACK, 0.07f);
-            }
-
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
-            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(fondo);
-            g2.fillRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, 9, 9);
-            g2.dispose();
-
-            super.paint(g, c);
-        }
-    }
-
-    /**
-     * Borde redondeado de una sola línea. Si el color es {@code null} no se
-     * dibuja nada, pero conserva el mismo espaciado interno para que todos
-     * los botones mantengan la misma altura.
-     */
-    private static final class BordeRedondeado extends javax.swing.border.AbstractBorder {
-        private final int radio;
-        private final java.awt.Color color;
-        private final float grosor;
-
-        BordeRedondeado(int radio, java.awt.Color color, float grosor) {
-            this.radio = radio;
-            this.color = color;
-            this.grosor = grosor;
-        }
-
-        @Override
-        public void paintBorder(java.awt.Component c, java.awt.Graphics g, int x, int y, int w, int h) {
-            if (color == null) {
-                return;
-            }
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
-            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(color);
-            g2.setStroke(new java.awt.BasicStroke(grosor));
-            int mitad = Math.round(grosor / 2);
-            int grosorEntero = Math.round(grosor);
-            g2.drawRoundRect(x + mitad, y + mitad, w - grosorEntero - 1, h - grosorEntero - 1, radio, radio);
-            g2.dispose();
-        }
-
-        @Override
-        public java.awt.Insets getBorderInsets(java.awt.Component c) {
-            return new java.awt.Insets(2, 2, 2, 2);
-        }
-
-        @Override
-        public boolean isBorderOpaque() {
-            return false;
-        }
-    }
 
     private static final class RoundedPanel extends javax.swing.JPanel {
         private final int radio;
@@ -3029,21 +2933,52 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }
 
     private void prepararBotonIcono(javax.swing.JButton boton, javax.swing.Icon icono) {
-        boton.setUI(new BotonPlanoUI());
         boton.setText(null);
         boton.setIcon(icono);
         boton.setBackground(java.awt.Color.WHITE);
-        boton.setFocusPainted(false);
-        boton.setContentAreaFilled(false);
-        boton.setOpaque(false);
-        boton.setRolloverEnabled(true);
-        boton.setBorderPainted(true);
-        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                new BordeRedondeado(8, COLOR_BORDE_CAMPO, 1.2f),
-                javax.swing.BorderFactory.createEmptyBorder(6, 6, 6, 6)));
         boton.setPreferredSize(new java.awt.Dimension(32, 32));
-        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        EstiloAplicacion.aplicarEstiloBoton(boton);
     }//prepararBotonIcono
+
+    private static final class BordeRedondeado extends javax.swing.border.AbstractBorder {
+        private final int radio;
+        private final java.awt.Color color;
+        private final float grosor;
+
+        BordeRedondeado(int radio, java.awt.Color color, float grosor) {
+            this.radio = radio;
+            this.color = color;
+            this.grosor = grosor;
+        }
+
+        @Override
+        public void paintBorder(java.awt.Component componente, java.awt.Graphics graphics,
+                int x, int y, int width, int height) {
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
+            try {
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(color);
+                g2.setStroke(new java.awt.BasicStroke(grosor));
+                int mitad = Math.round(grosor / 2);
+                int grosorEntero = Math.round(grosor);
+                g2.drawRoundRect(x + mitad, y + mitad, width - grosorEntero - 1,
+                        height - grosorEntero - 1, radio, radio);
+            } finally {
+                g2.dispose();
+            }
+        }
+
+        @Override
+        public java.awt.Insets getBorderInsets(java.awt.Component componente) {
+            return new java.awt.Insets(2, 2, 2, 2);
+        }
+
+        @Override
+        public boolean isBorderOpaque() {
+            return false;
+        }
+    }
 
     private static TarjetaResumen crearTarjetaResumen(String titulo, String valorInicial,
             javax.swing.Icon icono, java.awt.Color colorFondoIcono) {

@@ -66,7 +66,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         initComponents();
         configurarMenuSesion();
         actualizarBotonNotificaciones();
-        EstiloAplicacion.aplicarEstiloBotones(getContentPane());
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(getContentPane());
         iniciarReloj();
         IconoVentanaUtil.aplicar(this);
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -109,7 +109,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         menu.add(Box.createVerticalStrut(5));
         menu.add(crearBotonMenu("Inventarios", "inventario", e -> abrirInventarios()));
         menu.add(Box.createVerticalStrut(5));
-        menu.add(crearBotonMenu("Usuarios", "usuarios", e -> abrirUsuarios()));
+        menu.add(crearBotonMenu("Configuración", "usuarios", e -> abrirUsuarios()));
         menu.add(Box.createVerticalStrut(5));
         menu.add(crearBotonMenu("Reportes", "reportes", e -> mostrarPaginaConstruccion()));
         menu.add(Box.createVerticalStrut(5));
@@ -126,33 +126,19 @@ public class PRINCIPAL extends javax.swing.JFrame {
     }
 
     private JButton crearBotonMenu(String texto, String tipoIcono, ActionListener accion) {
-        JButton boton = new JButton(texto) {
-            @Override
-            protected void paintComponent(java.awt.Graphics g) {
-                java.awt.Graphics2D grafico = (java.awt.Graphics2D) g.create();
-                grafico.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                grafico.setColor(getBackground());
-                grafico.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
-                grafico.dispose();
-                super.paintComponent(g);
-            }
-        };
+        JButton boton = new JButton(texto);
         boton.setAlignmentX(Component.CENTER_ALIGNMENT);
         boton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         boton.setPreferredSize(new Dimension(167, 38));
         boton.setHorizontalAlignment(SwingConstants.LEFT);
-        boton.setForeground(Color.WHITE);
-        boton.setBackground(new Color(75, 116, 218, 235));
+        boton.setForeground(AZUL);
+        boton.setBackground(Color.WHITE);
         boton.setIcon(new IconoMenu(tipoIcono));
         boton.setIconTextGap(10);
         boton.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        boton.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 4));
         boton.setFocusPainted(false);
-        boton.setContentAreaFilled(false);
-        boton.setOpaque(false);
         boton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        EstiloAplicacion.excluirBotonDelEstiloComun(boton);
+        EstiloAplicacion.aplicarEstiloBoton(boton);
         boton.addActionListener(e -> {
             marcarBotonActivo(boton);
             accion.actionPerformed(e);
@@ -260,12 +246,14 @@ public class PRINCIPAL extends javax.swing.JFrame {
 
     private void marcarBotonActivo(JButton boton) {
         if (botonMenuActivo != null) {
-            botonMenuActivo.setBackground(new Color(75, 116, 218, 235));
-            botonMenuActivo.setForeground(Color.WHITE);
+            botonMenuActivo.setBackground(Color.WHITE);
+            botonMenuActivo.setForeground(AZUL);
+            EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(botonMenuActivo);
         }
         botonMenuActivo = boton;
-        botonMenuActivo.setBackground(new Color(255, 255, 255, 235));
-        botonMenuActivo.setForeground(AZUL);
+        botonMenuActivo.setBackground(new Color(31, 112, 184));
+        botonMenuActivo.setForeground(Color.WHITE);
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(botonMenuActivo);
     }
 
     private JPanel crearContenido() {
@@ -292,6 +280,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         acciones.setOpaque(false);
         acciones.add(etiquetaFechaHora);
         jButtonNotificaciones = new JButton();
+        EstiloAplicacion.excluirBotonDelEstiloComun(jButtonNotificaciones);
         jButtonNotificaciones.setFont(new Font("Segoe UI", Font.BOLD, 12));
         jButtonNotificaciones.setForeground(Color.WHITE);
         jButtonNotificaciones.setFocusPainted(false);
@@ -299,6 +288,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         jButtonNotificaciones.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButtonNotificaciones.addActionListener(e -> PROVEEDORES.mostrarAlertaEntregasPendientes(this));
         jButtonMenu = new JButton(nombreUsuario());
+        EstiloAplicacion.excluirBotonDelEstiloComun(jButtonMenu);
         jButtonMenu.setIcon(new IconoMenu("usuarios"));
         jButtonMenu.setIconTextGap(7);
         jButtonMenu.setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -367,7 +357,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         cuerpoTablero.add(resumen);
         cuerpoTablero.revalidate();
         cuerpoTablero.repaint();
-        EstiloAplicacion.aplicarEstiloBotones(cuerpoTablero);
+        EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(cuerpoTablero);
     }
 
     private JPanel crearPaginaConstruccion() {
@@ -494,7 +484,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
                 new Color(90, 54, 180), e -> abrirProveedores()));
         botones.add(crearAcceso("Inventarios", "inventario", new Color(222, 246, 239),
                 new Color(18, 126, 101), e -> abrirInventarios()));
-        botones.add(crearAcceso("Usuarios", "usuarios", new Color(255, 239, 216),
+        botones.add(crearAcceso("Configuración", "usuarios", new Color(255, 239, 216),
                 new Color(177, 103, 12), e -> abrirUsuarios()));
         panel.add(botones, BorderLayout.CENTER);
         return panel;
@@ -508,14 +498,10 @@ public class PRINCIPAL extends javax.swing.JFrame {
         boton.setVerticalTextPosition(SwingConstants.BOTTOM);
         boton.setIconTextGap(5);
         boton.setForeground(color);
-        boton.setBackground(fondo);
-        EstiloAplicacion.aplicarTipografiaBoton(boton);
-        boton.setFont(EstiloAplicacion.fuente(Font.BOLD, 10));
+        boton.setBackground(Color.WHITE);
         boton.setFocusPainted(false);
-        boton.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(210, 220, 235)),
-                BorderFactory.createEmptyBorder(5, 4, 5, 4)));
         boton.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        EstiloAplicacion.aplicarEstiloBoton(boton);
         boton.addActionListener(accion);
         return boton;
     }
@@ -899,7 +885,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
                 descripcion = "Existencias, entradas, salidas y movimientos de productos.";
                 break;
             case "USUARIOS":
-                titulo = "Usuarios";
+                titulo = "Configuración";
                 descripcion = "Gestión de usuarios, permisos y accesos.";
                 break;
             case "REPORTES":

@@ -857,7 +857,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         actualizarFechaHora();
         reloj = new Timer(1000, e -> actualizarFechaHora());
         reloj.start();
-        actualizadorTablero = new Timer(5000, e -> actualizarTableroSilencioso());
+        actualizadorTablero = new Timer(60000, e -> actualizarTableroSilencioso());
         actualizadorTablero.setRepeats(true);
         actualizadorTablero.start();
         addWindowListener(new java.awt.event.WindowAdapter() {

@@ -72,6 +72,32 @@ class ActividadEntradaInventarioTest {
     }
 
     @Test
+    void entradaConExistenciaVaciaLaTrataComoCero() throws Exception {
+        InventarioRepository inventario = crearInventario();
+        ActividadRepository actividades = crearActividades();
+        ENTRADAINVENTARIO vista = crearVista(inventario, actividades);
+        DefaultTableModel modelo = modelo(vista);
+
+        try (Workbook libro = inventario.cargarLibro(inventario.obtenerArchivoInventarios())) {
+            libro.getSheetAt(0).getRow(1).getCell(4).setCellValue("");
+            inventario.guardarLibro(libro, inventario.obtenerArchivoInventarios());
+        }
+
+        SwingUtilities.invokeAndWait(() -> {
+            modelo.addRow(new Object[]{"COD-1", "Producto 1", "SKU-1", "PZA", "2", "10"});
+            try {
+                vista.guardarEntrada();
+            } catch (IOException ex) {
+                throw new AssertionError(ex);
+            }
+        });
+
+        try (Workbook libro = inventario.cargarLibro(inventario.obtenerArchivoInventarios())) {
+            assertEquals("2", inventario.leerCelda(libro.getSheetAt(0).getRow(1), 4));
+        }
+    }
+
+    @Test
     void entradaVaciaNoRegistraActividad() throws Exception {
         InventarioRepository inventario = crearInventario();
         ActividadRepository actividades = crearActividades();

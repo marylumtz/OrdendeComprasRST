@@ -71,6 +71,7 @@ com\mycompany\ocxrst\ui\PROVEEDORES$DibujoIcono.class
 com\mycompany\ocxrst\ui\MESATRABAJO$IconoBoton.class
 com\mycompany\ocxrst\ui\INVENTARIOS$4.class
 com\mycompany\ocxrst\reporting\PDFALTAProveedor$CuentaBancaria.class
+com\mycompany\ocxrst\ui\ORDENCOMPRA$26.class
 com\mycompany\ocxrst\reporting\PDFALTAProveedor.class
 com\mycompany\ocxrst\ui\SALIDAINVENTARIO.class
 com\mycompany\ocxrst\util\EstiloAplicacion$TrianguloComboBorder.class
@@ -88,6 +89,7 @@ com\mycompany\ocxrst\util\ImagenUtil.class
 com\mycompany\ocxrst\ui\INVENTARIOS$VectorIcon.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$17.class
 com\mycompany\ocxrst\ui\PROVEEDORES$1.class
+com\mycompany\ocxrst\ui\ORDENCOMPRA$27.class
 com\mycompany\ocxrst\reporting\PDFORDENCOMPRA$DatosOrden.class
 com\mycompany\ocxrst\ui\SOLICITUDAYUDA.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$8.class

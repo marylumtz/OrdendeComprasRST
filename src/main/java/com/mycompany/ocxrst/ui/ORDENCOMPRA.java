@@ -120,6 +120,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JButton botonUltimaOrden;
     private javax.swing.JButton jButtonFirmar;
     private javax.swing.JButton jButtonAutorizar;
+    private javax.swing.JButton jButtonAgregarProducto;
     private javax.swing.JScrollPane desplazamientoFormulario;
     private javax.swing.JPanel panelBusquedaOrdenes;
     private java.awt.Container contenedorVista;
@@ -168,6 +169,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jButtonAutorizar = new javax.swing.JButton("AUTORIZAR");
         jButtonAutorizar.addActionListener(e -> autorizarOrden());
         jPanel1.add(jButtonAutorizar);
+        jButtonAgregarProducto = new javax.swing.JButton("Agregar");
+        jButtonAgregarProducto.addActionListener(e -> procesarCodigoProducto());
+        jPanel1.add(jButtonAgregarProducto);
         crearNavegacionOrdenes();
 
         aplicarDisenoReferencia();
@@ -248,6 +252,16 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrarProductos(); }
         public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrarProductos(); }
     });
+    jTextField3.getInputMap(javax.swing.JComponent.WHEN_FOCUSED).put(
+            javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_TAB, 0),
+            "agregarProductoPorTabulador");
+    jTextField3.getActionMap().put("agregarProductoPorTabulador",
+            new javax.swing.AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    procesarCodigoProducto();
+                }
+            });
     
   jComboBox1.addActionListener(e -> {
     String seleccionado = jComboBox1.getSelectedItem().toString();
@@ -267,6 +281,15 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     });
 
     jButton7.addActionListener(e -> eliminarFilaSeleccionada());
+    jTable1.getInputMap(javax.swing.JComponent.WHEN_FOCUSED).put(
+            javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE, 0),
+            "eliminarFilaSeleccionada");
+    jTable1.getActionMap().put("eliminarFilaSeleccionada", new javax.swing.AbstractAction() {
+        @Override
+        public void actionPerformed(java.awt.event.ActionEvent e) {
+            eliminarFilaSeleccionada();
+        }
+    });
     jButton2.addActionListener(e -> buscarOSalirOrden());
     jButton3.addActionListener(e -> {
         if (estadoOrdenCargada != null) {
@@ -688,7 +711,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         posicionar(jLabel16, 70, 478 + EXTRA_ESPACIO_SECCION4, 90, 22);
         posicionar(jTextField3, 164, 478 + EXTRA_ESPACIO_SECCION4, 180, 24);
-        posicionar(jButton7, 352, 478 + EXTRA_ESPACIO_SECCION4, 82, 24);
+        prepararBotonCabecera(jButtonAgregarProducto, "AGREGAR",
+                new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
+        posicionar(jButtonAgregarProducto, 352, 478 + EXTRA_ESPACIO_SECCION4, 82, 24);
+        posicionar(jButton7, 440, 478 + EXTRA_ESPACIO_SECCION4, 82, 24);
         posicionar(jScrollPane1, 60, 508 + EXTRA_ESPACIO_SECCION4, 842, 76 + ALTO_EXTRA_PRODUCTOS);
         posicionar(jLabelObservaciones, 60, 625 + ALTO_EXTRA_PRODUCTOS + EXTRA_ESPACIO_SECCION4, 200, 22);
         jLabelObservaciones.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -2298,7 +2324,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         cacheInventario.clear();
         try {
             for (String[] item : ORDEN_COMPRA_REPOSITORY.cargarCatalogo(
-                    new File(RUTA_INVENTARIOS), 0, 1, 2, 3)) {
+                    new File(RUTA_INVENTARIOS), 0, 1, 2, 3, 11)) {
                 if (!item[0].isEmpty()) {
                     cacheInventario.add(item);
                 }
@@ -2383,7 +2409,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         int count = 0;
         for (String[] prod : cacheInventario) {
-            if (prod[0].toLowerCase().contains(texto) || prod[1].toLowerCase().contains(texto)) {
+            if (prod[0].toLowerCase().contains(texto)
+                    || prod[1].toLowerCase().contains(texto)
+                    || (prod.length > 4 && prod[4].toLowerCase().contains(texto))) {
                 String etiqueta = prod[0] + "  |  " + prod[1];
                 javax.swing.JMenuItem item = new javax.swing.JMenuItem(etiqueta);
                 final String codigo = prod[0];
@@ -2431,8 +2459,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
 
             String codigo = obtenerTextoCelda(row.getCell(0));
+            String sku = obtenerTextoCelda(row.getCell(11));
 
-            if (codigo.equalsIgnoreCase(codigoBuscado.trim())) {
+            if (codigo.equalsIgnoreCase(codigoBuscado.trim())
+                    || sku.equalsIgnoreCase(codigoBuscado.trim())) {
                 String estado = obtenerTextoCelda(row.getCell(5));
                 if (!"1".equals(InventarioService.normalizarEstado(estado))) {
                     ultimoProductoDesactivado = true;
@@ -2484,7 +2514,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     int filaExistente = buscarFilaPorCodigo(modelo, codigo);
     if (filaExistente >= 0) {
-        JOptionPane.showMessageDialog(this, "El codigo ya existe en la tabla.", "Producto duplicado", JOptionPane.INFORMATION_MESSAGE);
+        int cantidadActual = CalculoOrdenService.parseCantidad(modelo.getValueAt(filaExistente, 3));
+        int nuevaCantidad = cantidadActual + 1;
+        double precioExistente = CalculoOrdenService.parseNumero(modelo.getValueAt(filaExistente, 4));
+        modelo.setValueAt(nuevaCantidad, filaExistente, 3);
+        modelo.setValueAt(precioExistente * nuevaCantidad, filaExistente, 5);
+        seleccionarFilaProducto(filaExistente);
+        actualizarTotales();
         return;
     }
 
@@ -2500,6 +2536,15 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     modelo.addRow(fila);
     modelo.fireTableDataChanged();
     actualizarTotales();
+}
+
+    private void seleccionarFilaProducto(int filaModelo) {
+    int filaVista = jTable1.convertRowIndexToView(filaModelo);
+    if (filaVista < 0) {
+        return;
+    }
+    jTable1.setRowSelectionInterval(filaVista, filaVista);
+    jTable1.scrollRectToVisible(jTable1.getCellRect(filaVista, 0, true));
 }
 
     private void eliminarFilaSeleccionada() {
@@ -4874,6 +4919,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (jCheckBoxISR != null) jCheckBoxISR.setEnabled(!soloLectura);
         if (jTextFieldISRPercent != null) jTextFieldISRPercent.setEditable(!soloLectura);
         jTable1.setEnabled(!soloLectura);
+        jButtonAgregarProducto.setEnabled(!soloLectura);
         jButton7.setEnabled(!soloLectura);
         jButton3.setEnabled(true);
         jTextAreaObservaciones.setEditable(!soloLectura);

@@ -8,21 +8,15 @@ import com.mycompany.ocxrst.util.IconoVentanaUtil;
 import com.mycompany.ocxrst.util.EstiloAplicacion;
 import com.mycompany.ocxrst.config.AppConfig;
 import com.mycompany.ocxrst.repository.InventarioRepository;
-import com.mycompany.ocxrst.repository.ProductoProveedorRepository;
-import com.mycompany.ocxrst.repository.ProveedorRepository;
 import com.mycompany.ocxrst.service.InventarioService;
-import com.mycompany.ocxrst.validation.InventarioValidator;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JOptionPane;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  *
@@ -36,8 +30,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(INVENTARIOS.class.getName());
     private final InventarioRepository inventarioRepository = new InventarioRepository();
-    private final ProveedorRepository proveedorRepository = new ProveedorRepository();
-    private final ProductoProveedorRepository productoProveedorRepository = new ProductoProveedorRepository();
 
     // Caché de productos existentes (código | descripción) para el autocompletado del campo CÓDIGO.
     
@@ -55,7 +47,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
     private static final java.awt.Color COLOR_VERDE = new java.awt.Color(0, 130, 60);
     private static final java.awt.Color COLOR_ROJO = new java.awt.Color(190, 0, 0);
     private static final java.awt.Color COLOR_AZUL_CLARO = new java.awt.Color(225, 239, 255);
-    private static final java.awt.Color COLOR_AZUL_PALIDO = new java.awt.Color(240, 246, 253);
     private static final java.awt.Color COLOR_AMARILLO_PALIDO = new java.awt.Color(255, 242, 211);
     private static final java.awt.Color COLOR_VERDE_PALIDO = new java.awt.Color(224, 246, 231);
     private static final String FAMILIA_TIPOGRAFICA = "Segoe UI";
@@ -700,10 +691,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         mostrarFormularioProducto(null);
     }
 
-    private void mostrarFormularioProducto() {
-        mostrarFormularioProducto(null);
-    }
-
     private void mostrarFormularioProducto(String codigoExistente) {
         ALTAPRODUCTO formulario = new ALTAPRODUCTO(this::mostrarDashboardInventario,
                 codigoExistente);
@@ -913,20 +900,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         return -1;
     }//buscarFilaPorCodigo
 
-    private int primeraFilaDisponible(Sheet hoja) {
-        for (int fila = 1; fila <= hoja.getLastRowNum(); fila++) {
-            Row row = hoja.getRow(fila);
-            if (row == null || leerCelda(row, 0).isEmpty()) {
-                return fila;
-            }
-        }
-        return hoja.getLastRowNum() + 1;
-    }//primeraFilaDisponible
-
-    private boolean asegurarEncabezados(Sheet hoja) {
-        return inventarioRepository.asegurarEncabezados(hoja);
-    }//asegurarEncabezados
-
     private Sheet obtenerHojaInventarios(Workbook libro) {
         return inventarioRepository.obtenerHojaInventarios(libro);
     }//obtenerHojaInventarios
@@ -959,67 +932,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         logger.log(java.util.logging.Level.SEVERE, mensajeUsuario, ex);
         JOptionPane.showMessageDialog(this, mensajeUsuario + "\nDetalle t\u00e9cnico: " + ex.getMessage());
     }//mostrarError
-
-    private void prepararBoton(javax.swing.JButton boton, String texto, javax.swing.Icon icono,
-            java.awt.Color fondo, java.awt.Color textoColor, java.awt.Color colorBorde) {
-        boton.setUI(new BotonPlanoUI());
-        boton.setText(texto);
-        boton.setIcon(icono);
-        boton.setIconTextGap(8);
-        boton.setBackground(fondo);
-        boton.setForeground(textoColor);
-        EstiloAplicacion.aplicarTipografiaBoton(boton);
-        boton.setFocusPainted(false);
-        boton.setContentAreaFilled(false);
-        boton.setOpaque(false);
-        boton.setRolloverEnabled(true);
-        boton.setBorderPainted(colorBorde != null);
-        boton.setBorder(javax.swing.BorderFactory.createCompoundBorder(
-                new BordeRedondeado(9, colorBorde, 1.4f),
-                javax.swing.BorderFactory.createEmptyBorder(9, 16, 9, 16)));
-        int ancho = texto != null && texto.contains("Agregar") ? 150 : 140;
-        boton.setPreferredSize(new java.awt.Dimension(ancho, 38));
-        boton.setMinimumSize(new java.awt.Dimension(ancho, 38));
-        boton.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
-    }//prepararBoton
-
-    private static java.awt.Color mezclarColor(java.awt.Color base, java.awt.Color destino, float proporcion) {
-        int r = base.getRed() + Math.round((destino.getRed() - base.getRed()) * proporcion);
-        int g = base.getGreen() + Math.round((destino.getGreen() - base.getGreen()) * proporcion);
-        int b = base.getBlue() + Math.round((destino.getBlue() - base.getBlue()) * proporcion);
-        return new java.awt.Color(
-                Math.max(0, Math.min(255, r)),
-                Math.max(0, Math.min(255, g)),
-                Math.max(0, Math.min(255, b)));
-    }//mezclarColor
-
-    /**
-     * ButtonUI plano que sustituye el bisel nativo de Windows por un relleno
-     * redondeado propio (mismo patr\u00f3n que PROVEEDORES.java, para mantener la
-     * consistencia visual entre pantallas).
-     */
-    private static final class BotonPlanoUI extends javax.swing.plaf.basic.BasicButtonUI {
-        @Override
-        public void paint(java.awt.Graphics g, javax.swing.JComponent c) {
-            javax.swing.AbstractButton boton = (javax.swing.AbstractButton) c;
-            javax.swing.ButtonModel modelo = boton.getModel();
-            java.awt.Color fondo = boton.getBackground();
-            if (modelo.isPressed()) {
-                fondo = mezclarColor(fondo, java.awt.Color.BLACK, 0.16f);
-            } else if (modelo.isRollover()) {
-                fondo = mezclarColor(fondo, java.awt.Color.BLACK, 0.07f);
-            }
-
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
-            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(fondo);
-            g2.fillRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, 9, 9);
-            g2.dispose();
-
-            super.paint(g, c);
-        }
-    }
 
     private static final class BordeRedondeado extends javax.swing.border.AbstractBorder {
         private final int radio;
@@ -1056,30 +968,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         @Override
         public boolean isBorderOpaque() {
             return false;
-        }
-    }
-
-    private static final class RoundedPanel extends javax.swing.JPanel {
-        private final int radio;
-        private final java.awt.Color color;
-
-        RoundedPanel(int radio, java.awt.Color color) {
-            this.radio = radio;
-            this.color = color;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(java.awt.Graphics g) {
-            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
-            g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(new java.awt.Color(180, 196, 213, 90));
-            g2.fillRoundRect(1, 2, getWidth() - 2, getHeight() - 2, radio, radio);
-            g2.setColor(color);
-            g2.fillRoundRect(0, 0, getWidth() - 2, getHeight() - 3, radio, radio);
-            g2.dispose();
-            super.paintComponent(g);
         }
     }
 
@@ -1122,25 +1010,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
             return tamano;
         }
     }
-
-    private static javax.swing.JComponent crearInsigniaCuadrada(javax.swing.Icon icono, java.awt.Color colorFondo, int tamano, int radio) {
-        javax.swing.JLabel insignia = new javax.swing.JLabel(icono) {
-            @Override
-            protected void paintComponent(java.awt.Graphics g) {
-                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
-                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(colorFondo);
-                g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radio, radio);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-            insignia.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        insignia.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
-        insignia.setPreferredSize(new java.awt.Dimension(tamano, tamano));
-        insignia.setOpaque(false);
-        return insignia;
-    }//crearInsigniaCuadrada
 
     // ===================== Iconos vectoriales (Java2D) =====================
     private static javax.swing.Icon iconoCaja(java.awt.Color color) {
@@ -1215,13 +1084,6 @@ public class INVENTARIOS extends javax.swing.JFrame {
         });
     }//iconoBasura
 
-    private static javax.swing.Icon iconoPower(java.awt.Color color) {
-        return new VectorIcon(16, color, (g2, t) -> {
-            g2.drawArc(2, 2, t - 4, t - 4, -45, 270);
-            g2.drawLine(t / 2, 1, t / 2, t / 2);
-        });
-    }
-
     private static javax.swing.Icon iconoMas(java.awt.Color color) {
         return new VectorIcon(14, color, (g2, t) -> {
             g2.drawLine(t / 2, 1, t / 2, t - 1);
@@ -1242,21 +1104,4 @@ public class INVENTARIOS extends javax.swing.JFrame {
         });
     }//iconoEditar
 
-    private static javax.swing.Icon iconoCampo(java.awt.Color color) {
-        return new VectorIcon(15, color, (g2, t) -> {
-            g2.drawRoundRect(2, 3, t - 5, t - 6, 3, 3);
-            g2.drawLine(5, 7, t - 5, 7);
-            g2.drawLine(5, 10, t - 7, 10);
-        });
-    }//iconoCampo
-
-    private static javax.swing.Icon iconoRadio(boolean marcado) {
-        java.awt.Color color = marcado ? new java.awt.Color(0, 130, 60) : new java.awt.Color(160, 170, 180);
-        return new VectorIcon(16, color, (g2, t) -> {
-            g2.drawOval(2, 2, t - 4, t - 4);
-            if (marcado) {
-                g2.fillOval(5, 5, t - 10, t - 10);
-            }
-        });
-    }//iconoRadio
 }

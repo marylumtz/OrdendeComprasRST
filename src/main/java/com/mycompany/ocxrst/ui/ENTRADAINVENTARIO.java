@@ -7,7 +7,6 @@ import com.mycompany.ocxrst.config.AppConfig;
 import com.mycompany.ocxrst.service.SesionActual;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -490,7 +489,7 @@ public class ENTRADAINVENTARIO extends JPanel {
                     throw new IllegalArgumentException("No se encontró el producto seleccionado.");
                 }
                 Row fila = hoja.getRow(filaIndice);
-                double existencia = numero(repository.leerCelda(fila, 4));
+                double existencia = numeroExistencia(repository.leerCelda(fila, 4));
                 if (!Double.isFinite(existencia)) {
                     throw new IllegalArgumentException("La existencia del producto no es válida.");
                 }
@@ -534,6 +533,13 @@ public class ENTRADAINVENTARIO extends JPanel {
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("La cantidad o el costo no tiene un formato válido.");
         }
+    }
+
+    private double numeroExistencia(String valor) {
+        if (valor == null || valor.trim().isEmpty()) {
+            return 0;
+        }
+        return numero(valor);
     }
 
     private String formatoNumero(double valor) {

@@ -116,7 +116,7 @@ public class ENTRADAINVENTARIO extends JPanel {
 
     private DefaultTableModel crearModelo() {
         return new DefaultTableModel(
-                new String[]{"Código", "Descripción", "SKU", "UM", "Cantidad", "Costo"}, 0) {
+                new String[]{"Código", "Descripción", "SKU", "UNIDAD", "Cantidad", "Costo"}, 0) {
             @Override
             public boolean isCellEditable(int fila, int columna) {
                 return columna == 4 || columna == 5;

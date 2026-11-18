@@ -330,7 +330,10 @@ public class ALTAPRODUCTO extends JPanel {
     }
 
     private String texto(JComboBox<String> combo) {
-        Object valor = combo.getEditor().getItem();
+        Object valor = combo.getSelectedItem();
+        if (valor == null || valor.toString().isBlank()) {
+            valor = combo.getEditor().getItem();
+        }
         return valor == null ? "" : valor.toString().trim();
     }
 

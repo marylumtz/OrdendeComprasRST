@@ -9,6 +9,7 @@ import com.mycompany.ocxrst.util.EstiloAplicacion;
 import com.mycompany.ocxrst.reporting.PDFORDENCOMPRA;
 import com.mycompany.ocxrst.config.AppConfig;
 import com.mycompany.ocxrst.repository.OrdenCompraRepository;
+import com.mycompany.ocxrst.repository.ActividadRepository;
 import com.mycompany.ocxrst.service.InventarioService;
 import com.mycompany.ocxrst.service.ProveedorService;
 import com.mycompany.ocxrst.service.SesionActual;
@@ -79,6 +80,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private static final String RUTA_CFDI = AppConfig.cfdiFile().getAbsolutePath();
     private static final String RUTA_TIPOMONEDA = AppConfig.tipoMonedaFile().getAbsolutePath();
     private static final OrdenCompraRepository ORDEN_COMPRA_REPOSITORY = new OrdenCompraRepository();
+    private final ActividadRepository actividadRepository = new ActividadRepository();
     private final DataFormatter dataFormatter = new DataFormatter();
     private final java.util.Map<String, String> monedaDescMap = new java.util.HashMap<>();
 
@@ -95,6 +97,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     /** Alto reservado para la nueva sección "Observaciones", ubicada debajo
      *  de la tabla de productos y antes de Autorizaciones/Impuestos/Totales. */
     private static final int ALTO_OBSERVACIONES = 110;
+    private static final int COLUMNA_AUTORIZACION_ESTADO = 28;
+    private static final int COLUMNA_AUTORIZADO_POR = 29;
+    private static final int COLUMNA_FECHA_AUTORIZACION = 30;
 
     // Caché de inventario: código -> "código | descripción"
     private final java.util.List<String[]> cacheInventario = new java.util.ArrayList<>();
@@ -110,9 +115,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JPanel panelNavegacionOrdenes;
     private javax.swing.JButton botonPrimeraOrden;
     private javax.swing.JButton botonAnteriorOrden;
+    private javax.swing.JButton botonPosicionOrden;
     private javax.swing.JButton botonSiguienteOrden;
     private javax.swing.JButton botonUltimaOrden;
     private javax.swing.JButton jButtonFirmar;
+    private javax.swing.JButton jButtonAutorizar;
     private javax.swing.JScrollPane desplazamientoFormulario;
     private javax.swing.JPanel panelBusquedaOrdenes;
     private java.awt.Container contenedorVista;
@@ -158,6 +165,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jPanel1.add(jScrollPaneObservaciones);
         jButtonDesactivar = new javax.swing.JButton("DESACTIVAR");
         jPanel1.add(jButtonDesactivar);
+        jButtonAutorizar = new javax.swing.JButton("AUTORIZAR");
+        jButtonAutorizar.addActionListener(e -> autorizarOrden());
+        jPanel1.add(jButtonAutorizar);
         crearNavegacionOrdenes();
 
         aplicarDisenoReferencia();
@@ -167,6 +177,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         configurarTablaProductos();
         cargarCFDI();
         cargarUsuario();
+        seleccionarElaboradorSesion();
         cargarMoneda();
         cargarPagos();
         cargarFormaPago();
@@ -423,37 +434,141 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jButtonEditar.setBounds(238, y, 100, 30);
         jButtonDesactivar.setBounds(346, y, 100, 30);
         jButton1.setBounds(454, y, 92, 30);
-        panelNavegacionOrdenes.setBounds(554, y, 108, 30);
+        panelNavegacionOrdenes.setBounds(554, y, 140, 30);
+        jButtonAutorizar.setBounds(700, y, 100, 30);
         jButton6.setBounds(Math.max(22, anchoPanel - 122), y, 100, 30);
     }
 
     private void crearNavegacionOrdenes() {
         botonPrimeraOrden = botonNavegacion("|<", this::irPrimeraOrden);
         botonAnteriorOrden = botonNavegacion("<", () -> navegarOrden(-1));
+        botonPosicionOrden = new javax.swing.JButton("1");
+        botonPosicionOrden.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+        botonPosicionOrden.setForeground(java.awt.Color.WHITE);
+        botonPosicionOrden.setBackground(new java.awt.Color(31, 112, 184));
+        botonPosicionOrden.setFocusPainted(false);
+        botonPosicionOrden.setFocusable(false);
+        botonPosicionOrden.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        botonPosicionOrden.setToolTipText("Orden actual");
         botonSiguienteOrden = botonNavegacion(">", () -> navegarOrden(1));
         botonUltimaOrden = botonNavegacion(">|", this::irUltimaOrden);
-        panelNavegacionOrdenes = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 2, 0));
+        panelNavegacionOrdenes = new javax.swing.JPanel(new java.awt.GridLayout(1, 5, 2, 0));
         panelNavegacionOrdenes.setOpaque(false);
         panelNavegacionOrdenes.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         panelNavegacionOrdenes.add(botonPrimeraOrden);
         panelNavegacionOrdenes.add(botonAnteriorOrden);
+        panelNavegacionOrdenes.add(botonPosicionOrden);
         panelNavegacionOrdenes.add(botonSiguienteOrden);
         panelNavegacionOrdenes.add(botonUltimaOrden);
         jPanel1.add(panelNavegacionOrdenes);
     }
 
+    private void seleccionarElaboradorSesion() {
+        String nombreSesion = SesionActual.nombre();
+        if (nombreSesion == null || nombreSesion.isBlank()) {
+            nombreSesion = SesionActual.usuario();
+        }
+        if (nombreSesion == null || nombreSesion.isBlank()) {
+            return;
+        }
+        for (int i = 0; i < jComboBox4.getItemCount(); i++) {
+            if (nombreSesion.equalsIgnoreCase(jComboBox4.getItemAt(i))) {
+                jComboBox4.setSelectedIndex(i);
+                return;
+            }
+        }
+        jComboBox4.addItem(nombreSesion);
+        jComboBox4.setSelectedItem(nombreSesion);
+    }
+
     private javax.swing.JButton botonNavegacion(String texto, Runnable accion) {
-        javax.swing.JButton boton = new javax.swing.JButton(texto);
+        javax.swing.JButton boton = new javax.swing.JButton();
         boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
         boton.setForeground(new java.awt.Color(28, 82, 132));
         boton.setBackground(java.awt.Color.WHITE);
         boton.setFocusPainted(false);
-        boton.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         boton.setRolloverEnabled(false);
         boton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        boton.setToolTipText(texto);
+        boton.setIcon(crearIconoNavegacion(texto, new java.awt.Color(28, 82, 132)));
         EstiloAplicacion.aplicarEstiloBotones(boton);
+        EstiloAplicacion.excluirBotonDelEstiloComun(boton);
+        boton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        boton.setMargin(new java.awt.Insets(0, 0, 0, 0));
         boton.addActionListener(e -> accion.run());
         return boton;
+    }
+
+    private void actualizarPosicionNavegacion() {
+        if (botonPosicionOrden == null) {
+            return;
+        }
+        java.util.List<Integer> ordenes = obtenerNumerosOrdenes();
+        int posicion = 1;
+        try {
+            int numeroActual = Integer.parseInt(jTextField6.getText().trim());
+            int indice = ordenes.indexOf(numeroActual);
+            if (indice >= 0) {
+                posicion = indice + 1;
+            }
+        } catch (NumberFormatException ex) {
+            // La vista puede estar en modo de captura sin una orden cargada.
+        }
+        botonPosicionOrden.setText(String.valueOf(posicion));
+        botonPosicionOrden.setToolTipText(ordenes.isEmpty()
+                ? "Orden actual"
+                : "Orden " + posicion + " de " + ordenes.size());
+    }
+
+    private javax.swing.Icon crearIconoNavegacion(String tipo, java.awt.Color color) {
+        return new javax.swing.Icon() {
+            @Override
+            public int getIconWidth() {
+                return 16;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 16;
+            }
+
+            @Override
+            public void paintIcon(java.awt.Component componente, java.awt.Graphics graphics,
+                    int x, int y) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) graphics.create();
+                try {
+                    g2.setColor(color);
+                    g2.setStroke(new java.awt.BasicStroke(1.8f,
+                            java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+                    int centroY = y + 8;
+                    if ("|<".equals(tipo)) {
+                        g2.drawLine(x + 4, y + 3, x + 4, y + 13);
+                        dibujarTriangulo(g2, x + 5, centroY, false);
+                    } else if ("<".equals(tipo)) {
+                        dibujarTriangulo(g2, x + 5, centroY, false);
+                    } else if (">".equals(tipo)) {
+                        dibujarTriangulo(g2, x + 11, centroY, true);
+                    } else {
+                        dibujarTriangulo(g2, x + 10, centroY, true);
+                        g2.drawLine(x + 12, y + 3, x + 12, y + 13);
+                    }
+                } finally {
+                    g2.dispose();
+                }
+            }
+        };
+    }
+
+    private void dibujarTriangulo(java.awt.Graphics2D graphics, int centroX,
+            int centroY, boolean apuntaDerecha) {
+        java.awt.Polygon triangulo = apuntaDerecha
+                ? new java.awt.Polygon(
+                        new int[]{centroX - 4, centroX - 4, centroX + 4},
+                        new int[]{centroY - 5, centroY + 5, centroY}, 3)
+                : new java.awt.Polygon(
+                        new int[]{centroX + 4, centroX + 4, centroX - 4},
+                        new int[]{centroY - 5, centroY + 5, centroY}, 3);
+        graphics.drawPolygon(triangulo);
     }
 
     private void prepararBotonCabecera(javax.swing.JButton boton, String texto,
@@ -596,6 +711,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         prepararBotonCabecera(jButtonDesactivar, "DESACTIVAR",
                 new java.awt.Color(31, 112, 184), java.awt.Color.WHITE);
         prepararBotonCabecera(jButton1, "IMPRIMIR", java.awt.Color.WHITE, new java.awt.Color(28, 82, 132));
+        prepararBotonCabecera(jButtonAutorizar, "AUTORIZAR",
+                new java.awt.Color(34, 139, 94), java.awt.Color.WHITE);
+        actualizarBotonAutorizar();
         ajustarTamanoPanelAlContenido();
         pack();
         jPanel1.revalidate();
@@ -1391,7 +1509,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     String solicitante = dataFormatter.formatCellValue(fila.getCell(6)).trim();
                     String proyecto = dataFormatter.formatCellValue(fila.getCell(7)).trim();
                     String totalOrden = dataFormatter.formatCellValue(fila.getCell(21)).trim();
-                    String estado = dataFormatter.formatCellValue(fila.getCell(23)).trim();
+                    String estadoEntrega = dataFormatter.formatCellValue(fila.getCell(23)).trim();
+                    String estadoAutorizacion = dataFormatter.formatCellValue(
+                            fila.getCell(COLUMNA_AUTORIZACION_ESTADO)).trim();
+                    if (estadoAutorizacion.isEmpty() && !dataFormatter.formatCellValue(fila.getCell(16)).trim().isEmpty()
+                            && "PENDIENTE".equalsIgnoreCase(estadoEntrega)) {
+                        estadoAutorizacion = "PENDIENTE";
+                    }
+                    String estado = estadoAutorizacion.isEmpty() ? estadoEntrega : estadoAutorizacion;
                     java.util.Date fechaOrden = leerFechaCelda(fila.getCell(1));
                     String datos = (numero + " " + proveedor + " " + solicitante + " " + proyecto).toLowerCase(java.util.Locale.ROOT);
                     if (!texto.isEmpty() && !datos.contains(texto)) continue;
@@ -1401,8 +1526,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                             && !estado.equalsIgnoreCase(estadoSeleccionado)) continue;
                     modelo.addRow(new Object[]{numero, fecha, proveedor, solicitante, proyecto,
                         totalOrden, estado.isEmpty() ? "Borrador" : estado, "VER"});
-                    if ("PENDIENTE".equalsIgnoreCase(estado)) pendientes++;
-                    if ("EN PROCESO".equalsIgnoreCase(estado)) enProceso++;
+                    if ("PENDIENTE".equalsIgnoreCase(estadoAutorizacion)) pendientes++;
+                    if ("EN PROCESO".equalsIgnoreCase(estadoEntrega)) enProceso++;
                     try {
                         importeMes += Double.parseDouble(totalOrden.replace("$", "").replace(",", "").trim());
                     } catch (NumberFormatException ignored) {
@@ -2172,7 +2297,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private void cargarCacheInventario() {
         cacheInventario.clear();
         try {
-            for (String[] item : ORDEN_COMPRA_REPOSITORY.cargarCatalogo(new File(RUTA_INVENTARIOS), 0, 1)) {
+            for (String[] item : ORDEN_COMPRA_REPOSITORY.cargarCatalogo(
+                    new File(RUTA_INVENTARIOS), 0, 1, 2, 3)) {
                 if (!item[0].isEmpty()) {
                     cacheInventario.add(item);
                 }
@@ -2791,7 +2917,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         datos.formaPago = valorCombo(jComboBox7);
         datos.metodoPago = valorCombo(jComboBox8);
         datos.elaboro = valorCombo(jComboBox4);
+        datos.firmaElaboro = obtenerRutaFirma(datos.elaboro);
         datos.autorizo = valorCombo(jComboBox5);
+        datos.firmaAutorizo = obtenerRutaFirma(datos.autorizo);
         datos.subtotalTexto = jLabel23.getText();
         datos.ivaTexto = jLabel24.getText();
         datos.totalTexto = jLabel25.getText();
@@ -2830,6 +2958,29 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             datos.productos.add(producto);
         }
         return datos;
+    }
+
+    private String obtenerRutaFirma(String nombre) throws IOException {
+        if (nombre == null || nombre.isBlank()) {
+            return "";
+        }
+        File archivo = new File(RUTA_USUARIOS);
+        if (!archivo.isFile()) {
+            return "";
+        }
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (Row fila : hoja) {
+                if (fila.getRowNum() == 0) {
+                    continue;
+                }
+                String nombreFila = dataFormatter.formatCellValue(fila.getCell(2)).trim();
+                if (nombre.equalsIgnoreCase(nombreFila)) {
+                    return dataFormatter.formatCellValue(fila.getCell(6)).trim();
+                }
+            }
+        }
+        return "";
     }
 
     private static String valorCombo(javax.swing.JComboBox<?> combo) {
@@ -3705,7 +3856,114 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (encabezado.getCell(27, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null) {
             encabezado.createCell(COLUMNA_OBSERVACIONES_ORDEN).setCellValue("OBSERVACIONES");
         }
+        encabezado.getCell(COLUMNA_AUTORIZACION_ESTADO, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
+                .setCellValue("AUTORIZACION_ESTADO");
+        encabezado.getCell(COLUMNA_AUTORIZADO_POR, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
+                .setCellValue("AUTORIZADO_POR");
+        encabezado.getCell(COLUMNA_FECHA_AUTORIZACION, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
+                .setCellValue("FECHA_AUTORIZACION");
     }//asegurarEncabezadosAbonadoEstatus
+
+    private void actualizarBotonAutorizar() {
+        if (jButtonAutorizar == null) {
+            return;
+        }
+        boolean habilitado = estadoOrdenCargada != null
+                && !ordenEstaAutorizada()
+                && (SesionActual.esAdministrador() || usuarioSesionEsAutorizador());
+        jButtonAutorizar.setEnabled(habilitado);
+        jButtonAutorizar.setToolTipText(habilitado
+                ? "Autorizar esta orden de compra"
+                : "Solo el autorizador asignado o un administrador puede autorizar");
+    }
+
+    private boolean usuarioSesionEsAutorizador() {
+        String autorizado = valorCombo(jComboBox5);
+        String usuario = nombreUsuarioSesion();
+        return !autorizado.isBlank() && autorizado.equalsIgnoreCase(usuario);
+    }
+
+    private String nombreUsuarioSesion() {
+        return SesionActual.nombre().isBlank() ? SesionActual.usuario() : SesionActual.nombre();
+    }
+
+    private void registrarActividad(String actividad, String referencia, String usuario) {
+        try {
+            actividadRepository.registrar("Órdenes de compra", actividad, referencia, usuario);
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "La orden se guardó, pero no se pudo registrar la actividad.", ex);
+        }
+    }
+
+    private boolean ordenEstaAutorizada() {
+        if (jTextField6 == null || jTextField6.getText().trim().isEmpty()) {
+            return false;
+        }
+        File archivo = new File(RUTA_REGISTROC);
+        if (!archivo.isFile()) {
+            return false;
+        }
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            for (Row fila : libro.getSheetAt(0)) {
+                if (fila.getRowNum() == 0
+                        || !jTextField6.getText().trim().equals(dataFormatter.formatCellValue(fila.getCell(0)).trim())) {
+                    continue;
+                }
+                return "AUTORIZADA".equalsIgnoreCase(
+                        dataFormatter.formatCellValue(fila.getCell(COLUMNA_AUTORIZACION_ESTADO)).trim());
+            }
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo consultar el estado de autorización.", ex);
+        }
+        return false;
+    }
+
+    private void autorizarOrden() {
+        if (!SesionActual.esAdministrador() && !usuarioSesionEsAutorizador()) {
+            JOptionPane.showMessageDialog(this,
+                    "Solo la persona autorizadora asignada o un administrador puede autorizar esta orden.",
+                    "Autorización no permitida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String numero = jTextField6.getText().trim();
+        File archivo = new File(RUTA_REGISTROC);
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            Sheet hoja = libro.getSheetAt(0);
+            Row orden = null;
+            for (Row fila : hoja) {
+                if (fila.getRowNum() > 0
+                        && numero.equals(dataFormatter.formatCellValue(fila.getCell(0)).trim())) {
+                    orden = fila;
+                    break;
+                }
+            }
+            if (orden == null) {
+                throw new IOException("No se encontró la orden " + numero + ".");
+            }
+            String autorizador = SesionActual.nombre().isBlank()
+                    ? SesionActual.usuario() : SesionActual.nombre();
+            setCellString(orden, 16, autorizador);
+            setCellString(orden, COLUMNA_AUTORIZACION_ESTADO, "AUTORIZADA");
+            setCellString(orden, COLUMNA_AUTORIZADO_POR, autorizador);
+            setCellString(orden, COLUMNA_FECHA_AUTORIZACION,
+                    new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date()));
+            ORDEN_COMPRA_REPOSITORY.guardarWorkbook(libro, archivo);
+            jComboBox5.setSelectedItem(autorizador);
+            registrarActividad("Orden de compra autorizada", numero, autorizador);
+            actualizarBotonAutorizar();
+            PRINCIPAL.actualizarAlarmasEnTiempoReal();
+            JOptionPane.showMessageDialog(this,
+                    "La orden " + numero + " fue autorizada correctamente.",
+                    "Autorización completada", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING, "No se pudo autorizar la orden.", ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo autorizar la orden:\n" + ex.getMessage(),
+                    "Error de autorización", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     // =====================================================================
     // Guardado y carga de ordenes en archivos Excel
@@ -3758,7 +4016,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     "CFDI","SOLICITUD","PROYECTO","PAGO","FORMAPAGO","METODOPAGO",
                     "FECHA_ENTREGA","DIAS_PAGO","DESCUENTO","IVA","ELABORO","AUTORIZO",
                     "MONEDA","TIPOCAMBIO","SUBTOTAL","IVA_IMPORTE","TOTAL","ABONADO","ESTATUS",
-                    "MERCANCIA_RECIBIDA","DIAS_RETRASO_AL_RECIBIR","FECHA_RECEPCION_REAL","OBSERVACIONES"};
+                    "MERCANCIA_RECIBIDA","DIAS_RETRASO_AL_RECIBIR","FECHA_RECEPCION_REAL","OBSERVACIONES",
+                    "AUTORIZACION_ESTADO","AUTORIZADO_POR","FECHA_AUTORIZACION"};
                 Row headerRow = sheet.createRow(0);
                 for (int i = 0; i < headers.length; i++) {
                     headerRow.createCell(i).setCellValue(headers[i]);
@@ -3818,8 +4077,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             // IVA
             row.createCell(14).setCellValue((jCheckBoxIVA != null && jCheckBoxIVA.isSelected()) ? "SI" : "NO");
             // ELABORO
-            Object elaboro = jComboBox4.getSelectedItem();
-            row.createCell(15).setCellValue(elaboro != null ? elaboro.toString() : "");
+            String elaboro = SesionActual.esAdministrador()
+                    ? valorCombo(jComboBox4) : nombreUsuarioSesion();
+            row.createCell(15).setCellValue(elaboro);
             // AUTORIZO
             Object autorizo = jComboBox5.getSelectedItem();
             row.createCell(16).setCellValue(autorizo != null ? autorizo.toString() : "");
@@ -3839,10 +4099,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             row.createCell(23).setCellValue("PENDIENTE");
             row.createCell(24).setCellValue("NO");
             row.createCell(COLUMNA_OBSERVACIONES_ORDEN).setCellValue(jTextAreaObservaciones.getText().trim());
+            row.createCell(COLUMNA_AUTORIZACION_ESTADO).setCellValue("PENDIENTE");
+            row.createCell(COLUMNA_AUTORIZADO_POR).setCellValue("");
+            row.createCell(COLUMNA_FECHA_AUTORIZACION).setCellValue("");
 
             ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
             wb.close();
             guardarTablaEnIntOrden(jTextField6.getText().trim());
+            registrarActividad("Orden de compra creada", jTextField6.getText().trim(), elaboro);
             PRINCIPAL.actualizarAlarmasEnTiempoReal();
             JOptionPane.showMessageDialog(this,
                     "Orden de compra No. " + jTextField6.getText().trim() + " guardada correctamente.",
@@ -3941,7 +4205,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             // IVA
             setCellString(rowToUpdate, 14, (jCheckBoxIVA != null && jCheckBoxIVA.isSelected()) ? "SI" : "NO");
             // ELABORO
-            setCellString(rowToUpdate, 15, jComboBox4.getSelectedItem() != null ? jComboBox4.getSelectedItem().toString() : "");
+            setCellString(rowToUpdate, 15, SesionActual.esAdministrador()
+                    ? valorCombo(jComboBox4) : dataFormatter.formatCellValue(rowToUpdate.getCell(15)).trim());
             // AUTORIZO
             setCellString(rowToUpdate, 16, jComboBox5.getSelectedItem() != null ? jComboBox5.getSelectedItem().toString() : "");
             // MONEDA
@@ -4285,6 +4550,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 actualizarEstadoBotonPDF();
                 jButton3.setText("DUPLICAR");
                 actualizarBotonesEdicion(true, false);
+                actualizarBotonAutorizar();
+                actualizarPosicionNavegacion();
                 return;
             }
 
@@ -4537,10 +4804,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         // ── Generar nuevo número de orden y re-habilitar edición ──────────
         generarNumeroOrden();
         estadoOrdenCargada = null;
+        seleccionarElaboradorSesion();
         actualizarBotonBuscar(false);
         jButton3.setText("CREAR");
         actualizarEstadoBotonPDF();
         actualizarBotonesEdicion(false, false);
+        actualizarBotonAutorizar();
+        actualizarPosicionNavegacion();
     }
 
     private void activarEdicionOrden() {
@@ -4590,7 +4860,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         jComboBox1.setEnabled(!soloLectura);
         jComboBox2.setEnabled(!soloLectura);
         jComboBox3.setEnabled(!soloLectura);
-        jComboBox4.setEnabled(!soloLectura);
+        jComboBox4.setEnabled(!soloLectura && SesionActual.esAdministrador());
         jComboBox5.setEnabled(!soloLectura);
         jComboBox6.setEnabled(!soloLectura);
         jComboBox7.setEnabled(!soloLectura);

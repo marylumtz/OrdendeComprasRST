@@ -51,6 +51,7 @@ com\mycompany\ocxrst\util\IconoVentanaUtil.class
 com\mycompany\ocxrst\service\AutenticacionService.class
 com\mycompany\ocxrst\ui\INVENTARIOS$5.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$15.class
+com\mycompany\ocxrst\ui\ORDENCOMPRA$25.class
 com\mycompany\ocxrst\validation\ProveedorValidator.class
 com\mycompany\ocxrst\ui\NUEVATAREA.class
 com\mycompany\ocxrst\ui\MESATRABAJO$3.class

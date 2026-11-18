@@ -83,7 +83,9 @@ public final class PDFORDENCOMPRA {
         public String formaPago = "";
         public String metodoPago = "";
         public String elaboro = "";
+        public String firmaElaboro = "";
         public String autorizo = "";
+        public String firmaAutorizo = "";
         public String subtotalTexto = "";
         public String ivaTexto = "";
         public String totalTexto = "";
@@ -290,16 +292,26 @@ public final class PDFORDENCOMPRA {
                 .setTextAlignment(TextAlignment.CENTER));
     }
 
-    private static void agregarFirmas(Document doc, DatosOrden d, PdfFont bold, PdfFont plain) {
+    private static void agregarFirmas(Document doc, DatosOrden d, PdfFont bold, PdfFont plain)
+            throws IOException {
         Table table = new Table(UnitValue.createPercentArray(new float[]{1, 1}))
                 .useAllAvailableWidth().setKeepTogether(true).setMarginTop(57);
         for (String[] firma : new String[][]{{"ELABORÓ", d.elaboro}, {"AUTORIZÓ", d.autorizo}}) {
-            table.addCell(new Cell().add(new Paragraph("___________________________").setFont(bold)
+            Cell celdaFirma = new Cell().setBorder(Border.NO_BORDER);
+            String rutaFirma = "ELABORÓ".equals(firma[0]) ? d.firmaElaboro : d.firmaAutorizo;
+            if (rutaFirma != null && !rutaFirma.isBlank() && new File(rutaFirma).isFile()) {
+                Image imagenFirma = new Image(ImageDataFactory.create(rutaFirma))
+                        .scaleToFit(130, 42)
+                        .setHorizontalAlignment(com.itextpdf.layout.properties.HorizontalAlignment.CENTER);
+                celdaFirma.add(imagenFirma);
+            }
+            celdaFirma.add(new Paragraph("___________________________").setFont(bold)
                     .setFontSize(9).setTextAlignment(TextAlignment.CENTER))
                     .add(new Paragraph(firma[0]).setFont(bold).setFontSize(9)
                             .setTextAlignment(TextAlignment.CENTER))
                     .add(new Paragraph(firma[1]).setFont(plain).setFontSize(8)
-                            .setTextAlignment(TextAlignment.CENTER)).setBorder(Border.NO_BORDER));
+                            .setTextAlignment(TextAlignment.CENTER));
+            table.addCell(celdaFirma);
         }
         doc.add(table);
     }
@@ -376,8 +388,12 @@ public final class PDFORDENCOMPRA {
         }
         int observaciones = d.observaciones == null ? 0
                 : Math.max(0, (d.observaciones.trim().length() + 95) / 96);
+        boolean tieneFirmaElaboro = d.firmaElaboro != null
+                && !d.firmaElaboro.isBlank()
+                && new File(d.firmaElaboro).isFile();
+        float espacioFirma = tieneFirmaElaboro ? 50f : 0f;
         return Math.max(PageSize.LETTER.getHeight(), 750f + d.productos.size() * 11f
-                + lineas * 8f + observaciones * 9f + 45f);
+                + lineas * 8f + observaciones * 9f + 45f + espacioFirma);
     }
 
     private static String fecha(Date date) {

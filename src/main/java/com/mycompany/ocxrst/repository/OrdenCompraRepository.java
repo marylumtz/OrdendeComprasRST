@@ -43,6 +43,11 @@ public class OrdenCompraRepository {
     }
 
     public List<String[]> cargarCatalogo(File archivo, int columnaCodigo, int columnaDescripcion) throws IOException {
+        return cargarCatalogo(archivo, columnaCodigo, columnaDescripcion, -1, -1);
+    }
+
+    public List<String[]> cargarCatalogo(File archivo, int columnaCodigo, int columnaDescripcion,
+            int columnaUnidad, int columnaPrecio) throws IOException {
         List<String[]> resultado = new ArrayList<>();
         try (Workbook workbook = abrirWorkbook(archivo)) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -53,7 +58,9 @@ public class OrdenCompraRepository {
                 String codigo = leerCelda(row.getCell(columnaCodigo));
                 String descripcion = leerCelda(row.getCell(columnaDescripcion));
                 if (!codigo.isEmpty()) {
-                    resultado.add(new String[]{codigo, descripcion});
+                    String unidad = columnaUnidad < 0 ? "" : leerCelda(row.getCell(columnaUnidad));
+                    String precio = columnaPrecio < 0 ? "" : leerCelda(row.getCell(columnaPrecio));
+                    resultado.add(new String[]{codigo, descripcion, unidad, precio});
                 }
             }
         }

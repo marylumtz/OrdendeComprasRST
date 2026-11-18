@@ -89,7 +89,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
     private JPanel crearMenuLateral() {
         JPanel lateral = new JPanel(new BorderLayout());
         lateral.setOpaque(false);
-        lateral.setBorder(BorderFactory.createEmptyBorder(86, 0, 0, 0));
+        lateral.setBorder(BorderFactory.createEmptyBorder(42, 0, 0, 0));
         JPanel menu = new JPanel();
         menu.setPreferredSize(new Dimension(186, 627));
         menu.setOpaque(false);
@@ -286,7 +286,7 @@ public class PRINCIPAL extends javax.swing.JFrame {
         jButtonNotificaciones.setFocusPainted(false);
         jButtonNotificaciones.setBorder(BorderFactory.createEmptyBorder(7, 12, 7, 12));
         jButtonNotificaciones.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        jButtonNotificaciones.addActionListener(e -> PROVEEDORES.mostrarAlertaEntregasPendientes(this));
+        jButtonNotificaciones.addActionListener(e -> mostrarNotificaciones());
         jButtonMenu = new JButton(nombreUsuario());
         EstiloAplicacion.excluirBotonDelEstiloComun(jButtonMenu);
         jButtonMenu.setIcon(new IconoMenu("usuarios"));
@@ -722,16 +722,6 @@ public class PRINCIPAL extends javax.swing.JFrame {
                     leer(row, 3), leer(row, 4)});
             }
         });
-        leerFilas(AppConfig.registroCFile(), (row, formato) -> {
-            if (filas.size() < 5 && !leer(row, 0).isBlank()) {
-                String usuario = leer(row, 15);
-                if (usuario.isBlank()) {
-                    usuario = nombreUsuario();
-                }
-                filas.add(new Object[]{leer(row, 1), "Órdenes de compra", "Orden registrada",
-                    leer(row, 0), usuario});
-            }
-        });
         return filas.toArray(new Object[0][]);
     }
 
@@ -805,10 +795,62 @@ public class PRINCIPAL extends javax.swing.JFrame {
     }
 
     private void actualizarBotonNotificaciones() {
-        totalNotificaciones = PROVEEDORES.contarAlertasEntregasPendientes();
+        totalNotificaciones = PROVEEDORES.contarAlertasEntregasPendientes()
+                + contarOrdenesPendientesAutorizacion();
         jButtonNotificaciones.setText("NOTIFICACIONES (" + totalNotificaciones + ")");
         jButtonNotificaciones.setBackground(totalNotificaciones > 0 ? new Color(190, 45, 55) : new Color(55, 105, 175));
         EstiloAplicacion.aplicarEstiloBoton(jButtonNotificaciones);
+    }
+
+    private int contarOrdenesPendientesAutorizacion() {
+        int[] total = {0};
+        leerFilas(AppConfig.registroCFile(), (fila, formato) -> {
+            String estado = leer(fila, 28);
+            String autorizador = leer(fila, 16);
+            boolean pendiente = "PENDIENTE".equalsIgnoreCase(estado)
+                    || (estado.isBlank() && !autorizador.isBlank()
+                    && "PENDIENTE".equalsIgnoreCase(leer(fila, 23)));
+            boolean asignada = SesionActual.esAdministrador()
+                    || autorizador.equalsIgnoreCase(nombreUsuario());
+            if (pendiente && asignada) {
+                total[0]++;
+            }
+        });
+        return total[0];
+    }
+
+    private void mostrarNotificaciones() {
+        StringBuilder mensaje = new StringBuilder();
+        int pendientes = agregarOrdenesPendientesAutorizacion(mensaje);
+        if (pendientes > 0) {
+            mensaje.append("\nEstas órdenes requieren autorización. Abre Órdenes de compra para revisarlas.");
+        }
+        if (pendientes == 0) {
+            PROVEEDORES.mostrarAlertaEntregasPendientes(this);
+            return;
+        }
+        javax.swing.JOptionPane.showMessageDialog(this, mensaje.toString(),
+                "Notificaciones", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        abrirOrdenes();
+    }
+
+    private int agregarOrdenesPendientesAutorizacion(StringBuilder mensaje) {
+        int[] total = {0};
+        leerFilas(AppConfig.registroCFile(), (fila, formato) -> {
+            String estado = leer(fila, 28);
+            String autorizador = leer(fila, 16);
+            boolean pendiente = "PENDIENTE".equalsIgnoreCase(estado)
+                    || (estado.isBlank() && !autorizador.isBlank()
+                    && "PENDIENTE".equalsIgnoreCase(leer(fila, 23)));
+            boolean asignada = SesionActual.esAdministrador()
+                    || autorizador.equalsIgnoreCase(nombreUsuario());
+            if (pendiente && asignada) {
+                total[0]++;
+                mensaje.append("• Orden ").append(leer(fila, 0))
+                        .append(" | Autorizador: ").append(autorizador).append('\n');
+            }
+        });
+        return total[0];
     }
 
     private void iniciarReloj() {

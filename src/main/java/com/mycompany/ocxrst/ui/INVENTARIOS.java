@@ -501,11 +501,21 @@ public class INVENTARIOS extends javax.swing.JFrame {
             javax.swing.JTable tabla = new javax.swing.JTable(modelo);
             EstiloAplicacion.aplicarEstiloTabla(tabla);
             tabla.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
+            tabla.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+            tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mousePressed(java.awt.event.MouseEvent evento) {
+                    int fila = tabla.rowAtPoint(evento.getPoint());
+                    if (fila >= 0) {
+                        tabla.setRowSelectionInterval(fila, fila);
+                        int filaModelo = tabla.convertRowIndexToModel(fila);
+                        mostrarDetalleMovimiento(tabla, filaModelo);
+                    }
+                }
+            });
             javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tabla);
             scroll.setPreferredSize(new java.awt.Dimension(850, 260));
-            JOptionPane.showMessageDialog(this, scroll,
-                    "Movimientos de " + codigo + " - " + descripcion,
-                    JOptionPane.PLAIN_MESSAGE);
+            mostrarVentanaMovimiento("Movimientos de " + codigo + " - " + descripcion,
+                    scroll, new java.awt.Dimension(900, 390), "Aceptar");
         } catch (IOException ex) {
             mostrarError("No se pudo cargar el historial del producto.", ex);
         }
@@ -541,13 +551,228 @@ public class INVENTARIOS extends javax.swing.JFrame {
             }
             javax.swing.JTable tabla = new javax.swing.JTable(modelo);
             EstiloAplicacion.aplicarEstiloTabla(tabla);
+            tabla.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+            tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override public void mouseClicked(java.awt.event.MouseEvent evento) {
+                    int fila = tabla.rowAtPoint(evento.getPoint());
+                    if (fila >= 0) {
+                        tabla.setRowSelectionInterval(fila, fila);
+                        int filaSeleccionada = tabla.convertRowIndexToModel(fila);
+                        mostrarDetalleMovimiento(tabla, filaSeleccionada);
+                    }
+                }
+            });
             javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(tabla);
             scroll.setPreferredSize(new java.awt.Dimension(850, 260));
-            JOptionPane.showMessageDialog(this, scroll,
-                    tipoMovimiento + " de inventario", JOptionPane.PLAIN_MESSAGE);
+            mostrarVentanaMovimiento(tipoMovimiento + " de inventario", scroll,
+                    new java.awt.Dimension(900, 390), "Aceptar");
         } catch (IOException ex) {
             mostrarError("No se pudo cargar el historial del inventario.", ex);
         }
+    }
+
+    private void mostrarDetalleMovimiento(javax.swing.JTable tabla, int filaVista) {
+        int filaModelo = filaVista;
+        String tipo = String.valueOf(tabla.getModel().getValueAt(filaModelo, 1));
+        String documento = String.valueOf(tabla.getModel().getValueAt(filaModelo, 2));
+        String fecha = String.valueOf(tabla.getModel().getValueAt(filaModelo, 0));
+        String usuario = String.valueOf(tabla.getModel().getValueAt(filaModelo, 5));
+        String observaciones = String.valueOf(tabla.getModel().getValueAt(filaModelo, 6));
+        java.util.List<String[]> productos = new java.util.ArrayList<>();
+        try {
+            cargarProductosMovimiento(productos, tipo, documento, fecha, usuario, observaciones);
+        } catch (IOException ex) {
+            mostrarError("No se pudo cargar el detalle del movimiento.", ex);
+            return;
+        }
+        if (productos.isEmpty()) {
+            productos.add(new String[]{"N/A", "No se encontró el detalle del movimiento.",
+                "N/A", "N/A", String.valueOf(tabla.getModel().getValueAt(filaModelo, 4)),
+                "N/A", "N/A"});
+        }
+
+        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(0, 10));
+        contenido.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        javax.swing.JPanel datos = new javax.swing.JPanel(new java.awt.GridLayout(2, 4, 8, 4));
+        datos.add(crearDatoMovimiento("Tipo de movimiento", tipo));
+        datos.add(crearDatoMovimiento("Documento / folio", documento));
+        datos.add(crearDatoMovimiento("Fecha", fecha));
+        datos.add(crearDatoMovimiento("Usuario", usuario));
+        datos.add(crearDatoMovimiento("Observaciones", observaciones));
+        datos.add(new javax.swing.JLabel());
+        datos.add(new javax.swing.JLabel());
+        datos.add(new javax.swing.JLabel());
+        contenido.add(datos, java.awt.BorderLayout.NORTH);
+
+        javax.swing.table.DefaultTableModel modeloDetalle = new javax.swing.table.DefaultTableModel(
+                new String[]{"Código", "Descripción", "SKU", "UM", "Cantidad",
+                    "Costo unitario", "Costo total"}, 0) {
+            @Override public boolean isCellEditable(int fila, int columna) {
+                return false;
+            }
+        };
+        double total = 0;
+        double cantidadTotal = 0;
+        for (String[] producto : productos) {
+            double cantidad = numeroSeguro(producto[4]);
+            double costo = numeroSeguro(producto[5]);
+            double costoTotal = cantidad * costo;
+            cantidadTotal += cantidad;
+            total += costoTotal;
+            modeloDetalle.addRow(new Object[]{producto[0], producto[1], producto[2], producto[3],
+                producto[4], producto[5], formatoMoneda(costoTotal)});
+        }
+        javax.swing.JTable tablaDetalle = new javax.swing.JTable(modeloDetalle);
+        EstiloAplicacion.aplicarEstiloTabla(tablaDetalle);
+        javax.swing.JScrollPane scrollDetalle = new javax.swing.JScrollPane(tablaDetalle);
+        scrollDetalle.setPreferredSize(new java.awt.Dimension(850, 230));
+        contenido.add(scrollDetalle, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel pie = new javax.swing.JPanel(new java.awt.FlowLayout(
+                java.awt.FlowLayout.RIGHT));
+        pie.add(new javax.swing.JLabel("Total de productos: " + formatoNumero(cantidadTotal)));
+        pie.add(new javax.swing.JLabel("    Total: " + formatoMoneda(total)));
+        contenido.add(pie, java.awt.BorderLayout.SOUTH);
+
+        mostrarVentanaMovimiento("Detalle de movimiento " + documento, contenido,
+                new java.awt.Dimension(930, 470), "Cerrar");
+    }
+
+    private void mostrarVentanaMovimiento(String titulo, javax.swing.JComponent contenido,
+            java.awt.Dimension dimension, String textoCerrar) {
+        javax.swing.JDialog dialogo = new javax.swing.JDialog(this, true);
+        dialogo.setUndecorated(true);
+        dialogo.setLayout(new java.awt.BorderLayout());
+
+        javax.swing.JPanel marco = new javax.swing.JPanel(new java.awt.BorderLayout());
+        marco.setBorder(javax.swing.BorderFactory.createLineBorder(COLOR_AZUL_OSCURO, 1));
+        marco.setBackground(java.awt.Color.WHITE);
+
+        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout());
+        encabezado.setBackground(COLOR_AZUL_OSCURO);
+        encabezado.setBorder(javax.swing.BorderFactory.createEmptyBorder(9, 14, 9, 8));
+        javax.swing.JLabel etiquetaTitulo = new javax.swing.JLabel(titulo);
+        etiquetaTitulo.setForeground(java.awt.Color.WHITE);
+        etiquetaTitulo.setFont(new java.awt.Font(FAMILIA_TIPOGRAFICA,
+                java.awt.Font.BOLD, 14));
+        javax.swing.JButton cerrarVentana = new javax.swing.JButton("X");
+        cerrarVentana.setForeground(java.awt.Color.WHITE);
+        cerrarVentana.setBackground(COLOR_AZUL_OSCURO);
+        cerrarVentana.setFont(new java.awt.Font(FAMILIA_TIPOGRAFICA,
+                java.awt.Font.BOLD, 14));
+        cerrarVentana.setBorderPainted(false);
+        cerrarVentana.setFocusPainted(false);
+        cerrarVentana.setContentAreaFilled(false);
+        cerrarVentana.setToolTipText("Cerrar");
+        cerrarVentana.addActionListener(evento -> dialogo.dispose());
+        encabezado.add(etiquetaTitulo, java.awt.BorderLayout.CENTER);
+        encabezado.add(cerrarVentana, java.awt.BorderLayout.EAST);
+        marco.add(encabezado, java.awt.BorderLayout.NORTH);
+
+        contenido.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 6, 10));
+        marco.add(contenido, java.awt.BorderLayout.CENTER);
+        javax.swing.JPanel pie = new javax.swing.JPanel(
+                new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 8));
+        pie.setBackground(new java.awt.Color(238, 243, 250));
+        javax.swing.JButton aceptar = new javax.swing.JButton(textoCerrar);
+        aceptar.setPreferredSize(new java.awt.Dimension(90, 30));
+        aceptar.addActionListener(evento -> dialogo.dispose());
+        pie.add(aceptar);
+        marco.add(pie, java.awt.BorderLayout.SOUTH);
+
+        dialogo.add(marco, java.awt.BorderLayout.CENTER);
+        dialogo.setSize(dimension);
+        dialogo.setLocationRelativeTo(this);
+        dialogo.setVisible(true);
+    }
+
+    private javax.swing.JLabel crearDatoMovimiento(String titulo, String valor) {
+        javax.swing.JLabel dato = new javax.swing.JLabel("<html><b>" + titulo
+                + ":</b> " + escaparHtml(valor) + "</html>");
+        dato.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 4, 2, 4));
+        return dato;
+    }
+
+    private String escaparHtml(String valor) {
+        return valor.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    private void cargarProductosMovimiento(java.util.List<String[]> productos, String tipo,
+            String documento, String fecha, String usuario, String observaciones) throws IOException {
+        File archivo = AppConfig.resolveBaseFile("MOVIMIENTOSINVENTARIO.xlsx");
+        if (archivo.exists()) {
+            try (Workbook libro = cargarLibro(archivo)) {
+                Sheet hoja = obtenerHojaInventarios(libro);
+                for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                    Row fila = hoja.getRow(indice);
+                    if (documento.equalsIgnoreCase(leerCelda(fila, 0))
+                            && tipo.equalsIgnoreCase(leerCelda(fila, 0).startsWith("SI")
+                                    ? "Salida" : "Entrada")) {
+                        String codigo = leerCelda(fila, 2);
+                        productos.add(crearDetalleProducto(codigo, leerCelda(fila, 3),
+                                leerCelda(fila, 4), leerCelda(fila, 5)));
+                    }
+                }
+            }
+        }
+        if (!productos.isEmpty()) {
+            return;
+        }
+        File recepciones = AppConfig.resolveBaseFile("REGISTRORECIBIR.xlsx");
+        if (recepciones.exists() && "Entrada".equalsIgnoreCase(tipo)) {
+            try (Workbook libro = cargarLibro(recepciones)) {
+                Sheet hoja = obtenerHojaInventarios(libro);
+                for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                    Row fila = hoja.getRow(indice);
+                    if (documento.equalsIgnoreCase(leerCelda(fila, 0))) {
+                        String codigo = leerCelda(fila, 6);
+                        productos.add(crearDetalleProducto(codigo, "", leerCelda(fila, 7), ""));
+                    }
+                }
+            }
+        }
+    }
+
+    private String[] crearDetalleProducto(String codigo, String sku, String cantidad, String costo)
+            throws IOException {
+        String descripcion = "";
+        String unidad = "";
+        File inventarios = AppConfig.resolveBaseFile("INVENTARIOS.xlsx");
+        if (inventarios.exists()) {
+            try (Workbook libro = cargarLibro(inventarios)) {
+                Sheet hoja = obtenerHojaInventarios(libro);
+                for (int indice = 1; indice <= hoja.getLastRowNum(); indice++) {
+                    Row fila = hoja.getRow(indice);
+                    if (codigo.equalsIgnoreCase(leerCelda(fila, 0))) {
+                        descripcion = leerCelda(fila, 1);
+                        unidad = leerCelda(fila, 2);
+                        if (sku.isBlank()) {
+                            sku = leerCelda(fila, 11);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return new String[]{valorONa(codigo), valorONa(descripcion, "Producto no identificado"),
+            valorONa(sku), valorONa(unidad), valorONa(cantidad, "0"), valorONa(costo, "0")};
+    }
+
+    private double numeroSeguro(String valor) {
+        try {
+            return Double.parseDouble(valor.replace(",", "").replace("$", "").trim());
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }
+
+    private String formatoNumero(double valor) {
+        return valor == Math.rint(valor) ? String.valueOf((long) valor)
+                : String.format(java.util.Locale.ROOT, "%.2f", valor);
+    }
+
+    private String formatoMoneda(double valor) {
+        return String.format(java.util.Locale.ROOT, "$%,.2f", valor);
     }
 
     private void mostrarFormularioEntradaInventario() {

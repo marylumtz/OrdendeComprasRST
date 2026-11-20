@@ -33,6 +33,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.table.DefaultTableModel;
@@ -78,6 +79,7 @@ public class ENTRADAINVENTARIO extends JPanel {
     private final JTextField cantidad = new JTextField("1");
     private final JTextField costo = new JTextField();
     private final JTextField movimiento = new JTextField();
+    private final JTextArea observaciones = new JTextArea(2, 20);
     private final JPopupMenu popupSugerencias = new JPopupMenu();
     private final List<Producto> productos = new ArrayList<>();
     private Producto productoSeleccionado;
@@ -86,6 +88,11 @@ public class ENTRADAINVENTARIO extends JPanel {
 
     public ENTRADAINVENTARIO(Runnable volver) {
         this(volver, new InventarioRepository());
+    }
+
+    public ENTRADAINVENTARIO(Runnable volver, java.util.List<String[]> productosIniciales) {
+        this(volver);
+        cargarProductosIniciales(productosIniciales);
     }
 
     ENTRADAINVENTARIO(Runnable volver, InventarioRepository repository) {
@@ -121,6 +128,20 @@ public class ENTRADAINVENTARIO extends JPanel {
                 return columna == 4 || columna == 5;
             }
         };
+    }
+
+    protected final void cargarProductosIniciales(java.util.List<String[]> productosIniciales) {
+        if (productosIniciales == null) {
+            return;
+        }
+        for (String[] productoInicial : productosIniciales) {
+            if (productoInicial == null || productoInicial.length < 5
+                    || productoInicial[0] == null || productoInicial[0].isBlank()) {
+                continue;
+            }
+            modelo.addRow(new Object[]{productoInicial[0], productoInicial[1], "",
+                productoInicial[2], "1", productoInicial[4]});
+        }
     }
 
     private void construirVista() {
@@ -240,10 +261,28 @@ public class ENTRADAINVENTARIO extends JPanel {
         contenido.setOpaque(false);
         contenido.add(superior, BorderLayout.NORTH);
         contenido.add(scroll, BorderLayout.CENTER);
+
+        observaciones.setLineWrap(true);
+        observaciones.setWrapStyleWord(true);
+        observaciones.setFont(new Font(FAMILIA, Font.PLAIN, 12));
+        observaciones.setToolTipText("Indica el motivo o concepto del movimiento");
+        JScrollPane scrollObservaciones = new JScrollPane(observaciones);
+        scrollObservaciones.setPreferredSize(new java.awt.Dimension(0, 58));
+        JPanel pieContenido = new JPanel(new BorderLayout(0, 3));
+        pieContenido.setOpaque(false);
+        JLabel etiquetaObservaciones = new JLabel("Observaciones / concepto del movimiento");
+        etiquetaObservaciones.setFont(FUENTE_ETIQUETA);
+        etiquetaObservaciones.setForeground(AZUL_OSCURO);
+        pieContenido.add(etiquetaObservaciones, BorderLayout.NORTH);
+        pieContenido.add(scrollObservaciones, BorderLayout.CENTER);
         JLabel ayudaEliminar = new JLabel("Selecciona un renglón y presiona Suprimir para eliminarlo.");
         ayudaEliminar.setFont(FUENTE_ETIQUETA);
         ayudaEliminar.setForeground(AZUL_OSCURO);
-        contenido.add(ayudaEliminar, BorderLayout.SOUTH);
+        JPanel pieTabla = new JPanel(new BorderLayout(0, 5));
+        pieTabla.setOpaque(false);
+        pieTabla.add(pieContenido, BorderLayout.CENTER);
+        pieTabla.add(ayudaEliminar, BorderLayout.SOUTH);
+        contenido.add(pieTabla, BorderLayout.SOUTH);
         add(contenido, BorderLayout.CENTER);
         javax.swing.SwingUtilities.invokeLater(() -> producto.requestFocusInWindow());
 
@@ -580,7 +619,8 @@ public class ENTRADAINVENTARIO extends JPanel {
                     hoja.removeRow(hoja.getRow(0));
                 }
                 Row encabezado = hoja.createRow(0);
-                String[] columnas = {"FOLIO", "FECHA", "CODIGO", "SKU", "CANTIDAD", "COSTO", "USUARIO"};
+                String[] columnas = {"FOLIO", "FECHA", "CODIGO", "SKU", "CANTIDAD", "COSTO",
+                    "USUARIO", "OBSERVACIONES"};
                 for (int columna = 0; columna < columnas.length; columna++) {
                     encabezado.createCell(columna).setCellValue(columnas[columna]);
                 }
@@ -588,6 +628,9 @@ public class ENTRADAINVENTARIO extends JPanel {
             Row encabezado = hoja.getRow(0);
             if (encabezado.getCell(6) == null) {
                 encabezado.createCell(6).setCellValue("USUARIO");
+            }
+            if (encabezado.getCell(7) == null) {
+                encabezado.createCell(7).setCellValue("OBSERVACIONES");
             }
             Row fila = hoja.createRow(hoja.getLastRowNum() + 1);
             repository.escribirCelda(fila, 0, folio);
@@ -597,6 +640,7 @@ public class ENTRADAINVENTARIO extends JPanel {
             repository.escribirCelda(fila, 4, String.valueOf(tabla.getValueAt(indice, 4)));
             repository.escribirCelda(fila, 5, String.valueOf(tabla.getValueAt(indice, 5)));
             repository.escribirCelda(fila, 6, usuario);
+            repository.escribirCelda(fila, 7, observaciones.getText().trim());
             repository.guardarLibro(libro, archivo);
         }
     }

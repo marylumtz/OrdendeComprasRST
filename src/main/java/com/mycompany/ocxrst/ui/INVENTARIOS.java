@@ -319,6 +319,8 @@ public class INVENTARIOS extends javax.swing.JFrame {
             }
         };
             EstiloAplicacion.aplicarEstiloTabla(tablaInventarioDashboard);
+        tablaInventarioDashboard.setSelectionMode(
+                javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         javax.swing.table.TableRowSorter<javax.swing.table.TableModel> ordenInventario =
                 new javax.swing.table.TableRowSorter<>(modeloInventarioDashboard);
         java.util.Comparator<Object> comparadorNumerico = (primero, segundo) ->
@@ -394,6 +396,14 @@ public class INVENTARIOS extends javax.swing.JFrame {
                         mostrarDashboardInventario();
                     }
                 }
+            }
+
+            @Override public void mousePressed(java.awt.event.MouseEvent evento) {
+                mostrarMenuContextualInventario(evento);
+            }
+
+            @Override public void mouseReleased(java.awt.event.MouseEvent evento) {
+                mostrarMenuContextualInventario(evento);
             }
         });
         javax.swing.JScrollPane scrollTabla = new javax.swing.JScrollPane(tablaInventarioDashboard);
@@ -593,16 +603,27 @@ public class INVENTARIOS extends javax.swing.JFrame {
 
         javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(0, 10));
         contenido.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        javax.swing.JPanel datos = new javax.swing.JPanel(new java.awt.GridLayout(2, 4, 8, 4));
+        javax.swing.JPanel datos = new javax.swing.JPanel(new java.awt.GridLayout(1, 4, 8, 4));
         datos.add(crearDatoMovimiento("Tipo de movimiento", tipo));
         datos.add(crearDatoMovimiento("Documento / folio", documento));
         datos.add(crearDatoMovimiento("Fecha", fecha));
         datos.add(crearDatoMovimiento("Usuario", usuario));
-        datos.add(crearDatoMovimiento("Observaciones", observaciones));
-        datos.add(new javax.swing.JLabel());
-        datos.add(new javax.swing.JLabel());
-        datos.add(new javax.swing.JLabel());
-        contenido.add(datos, java.awt.BorderLayout.NORTH);
+        javax.swing.JPanel observacion = new javax.swing.JPanel(
+                new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 4, 0));
+        observacion.setOpaque(false);
+        javax.swing.JLabel etiquetaObservacion = new javax.swing.JLabel("Observaciones:");
+        etiquetaObservacion.setFont(etiquetaObservacion.getFont().deriveFont(java.awt.Font.BOLD));
+        javax.swing.JLabel valorObservacion = new javax.swing.JLabel(
+                textoUnaLinea(observaciones, 140));
+        valorObservacion.setToolTipText(escaparHtml(observaciones));
+        observacion.add(etiquetaObservacion);
+        observacion.add(valorObservacion);
+        javax.swing.JPanel encabezadoDatos = new javax.swing.JPanel(
+                new java.awt.BorderLayout(0, 5));
+        encabezadoDatos.setOpaque(false);
+        encabezadoDatos.add(datos, java.awt.BorderLayout.NORTH);
+        encabezadoDatos.add(observacion, java.awt.BorderLayout.CENTER);
+        contenido.add(encabezadoDatos, java.awt.BorderLayout.NORTH);
 
         javax.swing.table.DefaultTableModel modeloDetalle = new javax.swing.table.DefaultTableModel(
                 new String[]{"Código", "Descripción", "SKU", "UM", "Cantidad",
@@ -697,6 +718,11 @@ public class INVENTARIOS extends javax.swing.JFrame {
         return valor.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
+    private String textoUnaLinea(String valor, int maximo) {
+        String texto = valor == null ? "" : valor.replaceAll("\\s+", " ").trim();
+        return texto.length() > maximo ? texto.substring(0, maximo - 3) + "..." : texto;
+    }
+
     private void cargarProductosMovimiento(java.util.List<String[]> productos, String tipo,
             String documento, String fecha, String usuario, String observaciones) throws IOException {
         File archivo = AppConfig.resolveBaseFile("MOVIMIENTOSINVENTARIO.xlsx");
@@ -783,12 +809,85 @@ public class INVENTARIOS extends javax.swing.JFrame {
         jPanel1.repaint();
     }
 
+    private void mostrarFormularioEntradaInventario(java.util.List<String[]> productos) {
+        ENTRADAINVENTARIO formulario = new ENTRADAINVENTARIO(
+                this::mostrarDashboardInventario, productos);
+        jPanel1.removeAll();
+        jPanel1.add(formulario, java.awt.BorderLayout.CENTER);
+        jPanel1.revalidate();
+        jPanel1.repaint();
+    }
+
     private void mostrarFormularioSalidaInventario() {
         SALIDAINVENTARIO formulario = new SALIDAINVENTARIO(this::mostrarDashboardInventario);
         jPanel1.removeAll();
         jPanel1.add(formulario, java.awt.BorderLayout.CENTER);
         jPanel1.revalidate();
         jPanel1.repaint();
+    }
+
+    private void mostrarFormularioSalidaInventario(java.util.List<String[]> productos) {
+        SALIDAINVENTARIO formulario = new SALIDAINVENTARIO(
+                this::mostrarDashboardInventario, productos);
+        jPanel1.removeAll();
+        jPanel1.add(formulario, java.awt.BorderLayout.CENTER);
+        jPanel1.revalidate();
+        jPanel1.repaint();
+    }
+
+    private void mostrarMenuContextualInventario(java.awt.event.MouseEvent evento) {
+        if (!evento.isPopupTrigger()) {
+            return;
+        }
+        int fila = tablaInventarioDashboard.rowAtPoint(evento.getPoint());
+        if (fila < 0) {
+            return;
+        }
+        if (!tablaInventarioDashboard.isRowSelected(fila)) {
+            tablaInventarioDashboard.setRowSelectionInterval(fila, fila);
+        }
+        java.util.List<String[]> productos = obtenerProductosSeleccionados();
+        if (productos.isEmpty()) {
+            return;
+        }
+
+        javax.swing.JPopupMenu menu = new javax.swing.JPopupMenu();
+        javax.swing.JMenuItem entrada = new javax.swing.JMenuItem("Crear entrada de inventario");
+        entrada.addActionListener(e -> mostrarFormularioEntradaInventario(productos));
+        javax.swing.JMenuItem salida = new javax.swing.JMenuItem("Crear salida de inventario");
+        salida.addActionListener(e -> mostrarFormularioSalidaInventario(productos));
+        javax.swing.JMenuItem orden = new javax.swing.JMenuItem("Crear orden de compra");
+        orden.addActionListener(e -> crearOrdenCompra(productos));
+        menu.add(entrada);
+        menu.add(salida);
+        menu.addSeparator();
+        menu.add(orden);
+        menu.show(evento.getComponent(), evento.getX(), evento.getY());
+    }
+
+    private java.util.List<String[]> obtenerProductosSeleccionados() {
+        java.util.List<String[]> productos = new java.util.ArrayList<>();
+        for (int filaVista : tablaInventarioDashboard.getSelectedRows()) {
+            int filaModelo = tablaInventarioDashboard.convertRowIndexToModel(filaVista);
+            productos.add(new String[]{
+                String.valueOf(modeloInventarioDashboard.getValueAt(filaModelo, 0)),
+                String.valueOf(modeloInventarioDashboard.getValueAt(filaModelo, 1)),
+                String.valueOf(modeloInventarioDashboard.getValueAt(filaModelo, 4)),
+                String.valueOf(modeloInventarioDashboard.getValueAt(filaModelo, 5)),
+                limpiarPrecio(String.valueOf(modeloInventarioDashboard.getValueAt(filaModelo, 7)))
+            });
+        }
+        return productos;
+    }
+
+    private String limpiarPrecio(String precio) {
+        return precio.replace("$", "").trim();
+    }
+
+    private void crearOrdenCompra(java.util.List<String[]> productos) {
+        ORDENCOMPRA orden = new ORDENCOMPRA(productos);
+        orden.setLocationRelativeTo(this);
+        orden.setVisible(true);
     }
 
     private void agregarMovimientosRecepcion(javax.swing.table.DefaultTableModel modelo,
@@ -843,9 +942,14 @@ public class INVENTARIOS extends javax.swing.JFrame {
                 if (usuario.isBlank()) {
                     usuario = usuariosPorFolio.getOrDefault(folio, "Usuario no identificado");
                 }
+                String observaciones = repository.leerCelda(fila, 7);
+                if (observaciones.isBlank()) {
+                    observaciones = salida ? "Salida manual de inventario"
+                            : "Entrada manual de inventario";
+                }
                 modelo.addRow(new Object[]{repository.leerCelda(fila, 1), salida ? "Salida" : "Entrada",
                     folio, "N/A", repository.leerCelda(fila, 4), usuario,
-                    salida ? "Salida manual de inventario" : "Entrada manual de inventario"});
+                    observaciones});
             }
         }
     }

@@ -20,7 +20,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class ProductoProveedorRepository {
 
     public static final String[] ENCABEZADOS = {
-        "CODIGO_PRODUCTO", "ID_PROVEEDOR", "CODIGO_PROVEEDOR", "PRECIO", "TIEMPO_ENTREGA", "PREDETERMINADO"
+        "ID_PROVEEDOR", "CODIGO_PRODUCTO", "PRECIO", "NO_COMPRA", "FECHA_COMPRA"
     };
     private static final DataFormatter DATA_FORMATTER = new DataFormatter();
 
@@ -116,6 +116,59 @@ public class ProductoProveedorRepository {
     public void escribirCelda(Row fila, int columna, String valor) {
         Cell celda = fila.getCell(columna, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
         celda.setCellValue(valor == null ? "" : valor.trim());
+    }
+
+    /**
+     * Registra los productos incluidos en una orden de compra confirmada.
+     * Cada producto se almacena como una fila independiente.
+     */
+    public void registrarProductosOrden(String idProveedor, String numeroCompra,
+            java.util.Date fechaCompra, java.util.List<String[]> productos) {
+        if (productos == null || productos.isEmpty()) {
+            return;
+        }
+        asegurarArchivoProductoProveedor();
+        File archivo = obtenerArchivoProductoProveedor();
+        try (Workbook libro = cargarLibro(archivo)) {
+            Sheet hoja = obtenerHojaProductoProveedor(libro);
+            asegurarEncabezados(hoja);
+            org.apache.poi.ss.usermodel.CellStyle estiloFecha = libro.createCellStyle();
+            estiloFecha.setDataFormat(libro.getCreationHelper()
+                    .createDataFormat().getFormat("dd/MM/yyyy"));
+
+            for (String[] producto : productos) {
+                if (producto == null || producto.length < 5
+                        || producto[0] == null || producto[0].isBlank()) {
+                    continue;
+                }
+                Row fila = hoja.createRow(hoja.getLastRowNum() + 1);
+                escribirCelda(fila, 0, idProveedor);
+                escribirCelda(fila, 1, producto[0]);
+                Cell precio = fila.createCell(2);
+                precio.setCellValue(parsePrecio(producto[4]));
+                escribirCelda(fila, 3, numeroCompra);
+                Cell fecha = fila.createCell(4);
+                if (fechaCompra != null) {
+                    fecha.setCellValue(fechaCompra);
+                    fecha.setCellStyle(estiloFecha);
+                }
+            }
+            guardarLibro(libro, archivo);
+        } catch (IOException ex) {
+            throw new IllegalStateException(
+                    "No se pudo registrar los productos de la orden de compra.", ex);
+        }
+    }
+
+    private double parsePrecio(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return 0;
+        }
+        try {
+            return Double.parseDouble(valor.replace(",", "").replace("$", "").trim());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("El precio del producto no es válido: " + valor, ex);
+        }
     }
 
     /**

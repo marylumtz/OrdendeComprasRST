@@ -18,6 +18,7 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.layout.properties.VerticalAlignment;
+import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.mycompany.ocxrst.config.AppConfig;
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +61,9 @@ public final class PDFALTAProveedor {
         public String proyecto = "";
         public String observaciones = "";
         public String autorizadoPor = "";
+        public String actualizadoEl = "";
+        public String firmaSolicitante = "";
+        public String firmaAutorizador = "";
         public final List<CuentaBancaria> cuentas = new ArrayList<>();
     }
 
@@ -130,8 +134,8 @@ public final class PDFALTAProveedor {
 
             Table firmas = new Table(UnitValue.createPercentArray(new float[]{50, 50}))
                     .useAllAvailableWidth().setMarginTop(16);
-            firmas.addCell(firma("SOLICITADO POR", datos.solicitante, bold, plain));
-            firmas.addCell(firma("AUTORIZADO POR", datos.autorizadoPor, bold, plain));
+            firmas.addCell(firma("SOLICITADO POR", datos.solicitante, datos.firmaSolicitante, bold, plain));
+            firmas.addCell(firma("AUTORIZADO POR", datos.autorizadoPor, datos.firmaAutorizador, bold, plain));
             doc.add(firmas);
             Table pie = new Table(UnitValue.createPercentArray(new float[]{70, 30}))
                     .useAllAvailableWidth().setMarginTop(10).setBorderTop(BORDE);
@@ -142,6 +146,14 @@ public final class PDFALTAProveedor {
                     .setFont(plain).setFontSize(7).setFontColor(GRIS)
                     .setTextAlignment(TextAlignment.RIGHT))
                     .setBorder(Border.NO_BORDER).setPaddingTop(6));
+            if (!vacio(datos.actualizadoEl)) {
+                Cell actualizacion = new Cell(1, 2)
+                        .add(new Paragraph("Actualizado el " + datos.actualizadoEl)
+                                .setFont(plain).setFontSize(7).setFontColor(GRIS)
+                                .setTextAlignment(TextAlignment.CENTER))
+                        .setBorder(Border.NO_BORDER).setPaddingTop(2);
+                pie.addCell(actualizacion);
+            }
             doc.add(pie);
         }
         return destino;
@@ -211,14 +223,19 @@ public final class PDFALTAProveedor {
                 .setTextAlignment(TextAlignment.CENTER)).setBorder(BORDE).setPadding(4));
     }
 
-    private static Cell firma(String titulo, String nombre, PdfFont bold, PdfFont plain) {
-        return new Cell().add(new Paragraph(titulo).setFont(bold).setFontSize(8)
-                .setTextAlignment(TextAlignment.CENTER))
-                .add(new Paragraph(" ").setMinHeight(56.7f).setMargin(0))
-                .add(new Paragraph("____________________________\n" + valor(nombre))
+    private static Cell firma(String titulo, String nombre, String rutaFirma,
+            PdfFont bold, PdfFont plain) throws IOException {
+        Cell celda = new Cell().add(new Paragraph(titulo).setFont(bold).setFontSize(8)
+                .setTextAlignment(TextAlignment.CENTER));
+        if (rutaFirma != null && !rutaFirma.isBlank() && new File(rutaFirma).isFile()) {
+            celda.add(new Image(ImageDataFactory.create(rutaFirma))
+                    .scaleToFit(130, 42).setHorizontalAlignment(HorizontalAlignment.CENTER));
+        } else {
+            celda.add(new Paragraph(" ").setMinHeight(56.7f).setMargin(0));
+        }
+        return celda.add(new Paragraph("____________________________\n" + valor(nombre))
                 .setFont(plain).setFontSize(8).setTextAlignment(TextAlignment.CENTER)
-                .setMargin(0))
-                .setBorder(Border.NO_BORDER);
+                .setMargin(0)).setBorder(Border.NO_BORDER);
     }
 
     private static float calcularAltoPagina(DatosProveedor datos) {

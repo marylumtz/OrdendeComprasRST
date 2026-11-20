@@ -9,6 +9,7 @@ import com.mycompany.ocxrst.util.EstiloAplicacion;
 import com.mycompany.ocxrst.reporting.PDFORDENCOMPRA;
 import com.mycompany.ocxrst.config.AppConfig;
 import com.mycompany.ocxrst.repository.OrdenCompraRepository;
+import com.mycompany.ocxrst.repository.ProductoProveedorRepository;
 import com.mycompany.ocxrst.repository.ActividadRepository;
 import com.mycompany.ocxrst.service.InventarioService;
 import com.mycompany.ocxrst.service.ProveedorService;
@@ -80,6 +81,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private static final String RUTA_CFDI = AppConfig.cfdiFile().getAbsolutePath();
     private static final String RUTA_TIPOMONEDA = AppConfig.tipoMonedaFile().getAbsolutePath();
     private static final OrdenCompraRepository ORDEN_COMPRA_REPOSITORY = new OrdenCompraRepository();
+    private static final ProductoProveedorRepository PRODUCTO_PROVEEDOR_REPOSITORY
+            = new ProductoProveedorRepository();
     private final ActividadRepository actividadRepository = new ActividadRepository();
     private final DataFormatter dataFormatter = new DataFormatter();
     private final java.util.Map<String, String> monedaDescMap = new java.util.HashMap<>();
@@ -123,8 +126,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JButton jButtonAgregarProducto;
     private javax.swing.JScrollPane desplazamientoFormulario;
     private javax.swing.JPanel panelBusquedaOrdenes;
-    private java.awt.Container contenedorVista;
+    private javax.swing.JPanel contenedorVista;
+    private javax.swing.JLabel etiquetaTituloVentana;
     private File ultimoPdfGenerado;
+    private java.awt.Point posicionArrastreVentana;
 
     private static final class DatosFirma {
         private final PrivateKey clavePrivada;
@@ -148,8 +153,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     /** Inicializa el formulario, catalogos, caches y tabla de productos. */
     public ORDENCOMPRA() {
         EstiloAplicacion.aplicarTipografiaGlobal();
+        setUndecorated(true);
         initComponents();
-        contenedorVista = getContentPane();
+        configurarMarcoPersonalizado();
 
         // Campo libre de observaciones/notas de la orden. Se crea aquí, antes de
         // aplicarDisenoReferencia(), porque ese método necesita posicionar estos
@@ -200,6 +206,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 jTextField1.setEditable(true);
                 jTextField1.requestFocusInWindow();
             }
+
         }
     });
 
@@ -448,6 +455,108 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     EstiloAplicacion.aplicarEstiloBotones(getContentPane());
     EstiloAplicacion.aplicarTipografia(getContentPane());
     EstiloAplicacion.aplicarEstiloCamposTexto(getContentPane());
+    aplicarEstiloSelectoresFecha();
+    }
+
+    @Override
+    public void setTitle(String titulo) {
+        super.setTitle(titulo);
+        if (etiquetaTituloVentana != null) {
+            etiquetaTituloVentana.setText(titulo);
+        }
+    }
+
+    private void configurarMarcoPersonalizado() {
+        javax.swing.JPanel raiz = new javax.swing.JPanel(new java.awt.BorderLayout());
+        raiz.setBackground(EstiloAplicacion.FONDO_PANTALLA);
+        raiz.setBorder(javax.swing.BorderFactory.createLineBorder(
+                new java.awt.Color(28, 82, 132)));
+        contenedorVista = new javax.swing.JPanel(new java.awt.BorderLayout());
+        contenedorVista.setOpaque(false);
+        raiz.add(crearBarraTitulo(), java.awt.BorderLayout.NORTH);
+        raiz.add(contenedorVista, java.awt.BorderLayout.CENTER);
+        setContentPane(raiz);
+    }
+
+    private javax.swing.JPanel crearBarraTitulo() {
+        javax.swing.JPanel barra = new javax.swing.JPanel(new java.awt.BorderLayout(10, 0));
+        barra.setBackground(new java.awt.Color(28, 82, 132));
+        barra.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 14, 5, 8));
+        barra.setPreferredSize(new java.awt.Dimension(0, 34));
+
+        etiquetaTituloVentana = new javax.swing.JLabel(getTitle());
+        etiquetaTituloVentana.setForeground(java.awt.Color.WHITE);
+        etiquetaTituloVentana.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+        barra.add(etiquetaTituloVentana, java.awt.BorderLayout.CENTER);
+
+        javax.swing.JPanel controles = new javax.swing.JPanel(
+                new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 2, 0));
+        controles.setOpaque(false);
+        javax.swing.JButton cerrar = crearBotonMarco("X", "Cerrar ventana");
+        cerrar.addActionListener(evento -> dispose());
+        controles.add(cerrar);
+        barra.add(controles, java.awt.BorderLayout.EAST);
+
+        java.awt.event.MouseAdapter arrastre = new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evento) {
+                posicionArrastreVentana = evento.getPoint();
+            }
+
+            @Override
+            public void mouseDragged(java.awt.event.MouseEvent evento) {
+                if (posicionArrastreVentana == null) {
+                    return;
+                }
+                java.awt.Point ubicacion = getLocation();
+                setLocation(ubicacion.x + evento.getX() - posicionArrastreVentana.x,
+                        ubicacion.y + evento.getY() - posicionArrastreVentana.y);
+            }
+        };
+        barra.addMouseListener(arrastre);
+        barra.addMouseMotionListener(arrastre);
+        etiquetaTituloVentana.addMouseListener(arrastre);
+        etiquetaTituloVentana.addMouseMotionListener(arrastre);
+        return barra;
+    }
+
+    private javax.swing.JButton crearBotonMarco(String texto, String ayuda) {
+        javax.swing.JButton boton = new javax.swing.JButton(texto);
+        boton.setToolTipText(ayuda);
+        boton.setForeground(java.awt.Color.WHITE);
+        boton.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        boton.setFocusPainted(false);
+        boton.setBackground("X".equals(texto)
+                ? new java.awt.Color(184, 55, 55)
+                : new java.awt.Color(45, 122, 184));
+        boton.setOpaque(true);
+        boton.setBorder(javax.swing.BorderFactory.createLineBorder(
+                new java.awt.Color(225, 237, 255)));
+        boton.setPreferredSize(new java.awt.Dimension(
+                "X".equals(texto) ? 32 : 40, 22));
+        return boton;
+    }
+
+    /**
+     * Abre una orden nueva y precarga los productos seleccionados desde inventarios.
+     *
+     * @param productosIniciales productos con código, descripción, unidad y precio
+     */
+    public ORDENCOMPRA(java.util.List<String[]> productosIniciales) {
+        this();
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        jButton6.setVisible(false);
+        abrirNuevaOrden();
+        if (productosIniciales == null) {
+            return;
+        }
+        for (String[] producto : productosIniciales) {
+            if (producto != null && producto.length >= 5
+                    && producto[0] != null && !producto[0].isBlank()) {
+                agregarATabla(producto[0], producto[1], producto[2],
+                        CalculoOrdenService.parseNumero(producto[4]));
+            }
+        }
     }
 
     private void posicionarBotonesCabecera(int anchoPanel) {
@@ -669,7 +778,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         posicionar(jLabel6, 62, 168, 105, 22);
         posicionar(jTextField1, 174, 168, 122, 24);
         posicionar(jLabel3, 330, 168, 62, 22);
-        posicionar(jDateChooser2, 400, 168, 125, 24);
+        posicionar(jDateChooser2, 400, 168, 145, 24);
         posicionar(jLabel17, 552, 168, 78, 22);
         posicionar(jComboBox3, 638, 168, 206, 24);
 
@@ -705,9 +814,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         posicionar(jLabel34, 475, 391, 125, 22);
         posicionar(jComboBox7, 610, 391, 258, 24);
         posicionar(jLabel12, 350, 423, 140, 22);
-        posicionar(jDateChooserEntrega, 495, 423, 120, 24);
-        posicionar(jLabel27, 625, 423, 115, 22);
-        posicionar(jDateChooserPago, 745, 423, 120, 24);
+        posicionar(jDateChooserEntrega, 495, 423, 135, 24);
+        posicionar(jLabel27, 635, 423, 115, 22);
+        posicionar(jDateChooserPago, 755, 423, 135, 24);
 
         posicionar(jLabel16, 70, 478 + EXTRA_ESPACIO_SECCION4, 90, 22);
         posicionar(jTextField3, 164, 478 + EXTRA_ESPACIO_SECCION4, 180, 24);
@@ -773,9 +882,20 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         contenedorVista.removeAll();
         contenedorVista.setLayout(new java.awt.BorderLayout());
         contenedorVista.add(desplazamientoFormulario, java.awt.BorderLayout.CENTER);
-        setSize(962, 735);
+        ajustarTamanoVentanaFormulario();
         setMinimumSize(new java.awt.Dimension(520, 420));
-        setLocationRelativeTo(null);
+    }
+
+    private void ajustarTamanoVentanaFormulario() {
+        java.awt.Rectangle areaVisible = java.awt.GraphicsEnvironment
+                .getLocalGraphicsEnvironment()
+                .getMaximumWindowBounds();
+        int ancho = Math.min(962, areaVisible.width);
+        int alto = Math.min(735, areaVisible.height);
+        setSize(ancho, alto);
+        int x = areaVisible.x + (areaVisible.width - ancho) / 2;
+        int y = areaVisible.y + (areaVisible.height - alto) / 2;
+        setLocation(x, y);
     }
 
     private void mostrarBusquedaOrdenes() {
@@ -1592,7 +1712,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private void mostrarFormulario() {
         mostrarVistaInterna(desplazamientoFormulario);
         setTitle("NUEVA ORDEN DE COMPRA");
-        setSize(962, 735);
+        ajustarTamanoVentanaFormulario();
         contenedorVista.revalidate();
         contenedorVista.repaint();
     }
@@ -1601,7 +1721,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         cargarOrdenPorNumero(Integer.parseInt(numero));
         mostrarVistaInterna(desplazamientoFormulario);
         setTitle("ORDEN DE COMPRA " + numero);
-        setSize(962, 735);
+        ajustarTamanoVentanaFormulario();
         if (editar) activarEdicionOrden();
         revalidate();
         repaint();
@@ -2265,7 +2385,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         @Override
         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return columnIndex == 3;
+            return columnIndex == 3 || columnIndex == 4;
         }
 
         @Override
@@ -2276,6 +2396,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
                 Object precioObj = getValueAt(row, 4);
                 double precio = CalculoOrdenService.parseNumero(precioObj);
+                super.setValueAt(precio * cantidad, row, 5);
+                ORDENCOMPRA.this.actualizarTotales();
+                return;
+            }
+            if (column == 4) {
+                double precio = CalculoOrdenService.parseNumero(aValue);
+                int cantidad = CalculoOrdenService.parseCantidad(getValueAt(row, 3));
+                super.setValueAt(precio, row, 4);
                 super.setValueAt(precio * cantidad, row, 5);
                 ORDENCOMPRA.this.actualizarTotales();
                 return;
@@ -4151,6 +4279,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
             wb.close();
             guardarTablaEnIntOrden(jTextField6.getText().trim());
+            registrarProductosEnOrdenCompra();
             registrarActividad("Orden de compra creada", jTextField6.getText().trim(), elaboro);
             PRINCIPAL.actualizarAlarmasEnTiempoReal();
             JOptionPane.showMessageDialog(this,
@@ -4166,6 +4295,25 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     "Advertencia", JOptionPane.WARNING_MESSAGE);
             return false;
         }
+    }
+
+    private void registrarProductosEnOrdenCompra() {
+        DefaultTableModel modelo = (DefaultTableModel) jTable1.getModel();
+        java.util.List<String[]> productos = new java.util.ArrayList<>();
+        for (int fila = 0; fila < modelo.getRowCount(); fila++) {
+            productos.add(new String[]{
+                String.valueOf(modelo.getValueAt(fila, 0)),
+                String.valueOf(modelo.getValueAt(fila, 1)),
+                String.valueOf(modelo.getValueAt(fila, 2)),
+                String.valueOf(modelo.getValueAt(fila, 3)),
+                String.valueOf(modelo.getValueAt(fila, 4))
+            });
+        }
+        PRODUCTO_PROVEEDOR_REPOSITORY.registrarProductosOrden(
+                jTextField1.getText().trim(),
+                jTextField6.getText().trim(),
+                jDateChooser2.getDate(),
+                productos);
     }
 
     /** Actualiza la orden buscada en REGISTROC.xlsx (solo accesible para admin) */

@@ -120,6 +120,10 @@ public final class AppConfig {
         return BASES_DIR.toFile();
     }
 
+    public static File getDataDir() {
+        return DATA_DIR.toFile();
+    }
+
     public static File iconoFile(String fileName) {
         return ICONOS_DIR.resolve(fileName).toFile();
     }

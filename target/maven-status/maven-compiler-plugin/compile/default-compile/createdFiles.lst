@@ -17,6 +17,7 @@ com\mycompany\ocxrst\config\AppConfig.class
 com\mycompany\ocxrst\service\CalculoOrdenService$Resultado.class
 com\mycompany\ocxrst\ui\USUARIOS$DibujoIcono.class
 com\mycompany\ocxrst\ui\PROVEEDORES$14.class
+com\mycompany\ocxrst\ui\PROVEEDORES$24.class
 com\mycompany\ocxrst\ui\INVENTARIOS$3.class
 com\mycompany\ocxrst\ui\ENTRADAINVENTARIO$3.class
 com\mycompany\ocxrst\ui\PROVEEDORES$3.class
@@ -38,7 +39,9 @@ com\mycompany\ocxrst\ui\ORDENCOMPRA$1.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$16.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$4.class
 com\mycompany\ocxrst\ui\USUARIOS$3.class
+com\mycompany\ocxrst\ui\INVENTARIOS$9.class
 com\mycompany\ocxrst\validation\UsuarioValidator.class
+com\mycompany\ocxrst\ui\PROVEEDORES$25.class
 com\mycompany\ocxrst\ui\ENTRADAINVENTARIO$2.class
 com\mycompany\ocxrst\ui\PROVEEDORES$15.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$6.class
@@ -46,7 +49,6 @@ com\mycompany\ocxrst\repository\ProductoProveedorRepository.class
 com\mycompany\ocxrst\ui\MESATRABAJO.class
 com\mycompany\ocxrst\ui\USUARIOS$1.class
 com\mycompany\ocxrst\ui\PROVEEDORES$6.class
-com\mycompany\ocxrst\ui\INVENTARIOS$RoundedPanel.class
 com\mycompany\ocxrst\util\IconoVentanaUtil.class
 com\mycompany\ocxrst\service\AutenticacionService.class
 com\mycompany\ocxrst\ui\INVENTARIOS$5.class
@@ -75,7 +77,6 @@ com\mycompany\ocxrst\ui\ORDENCOMPRA$26.class
 com\mycompany\ocxrst\reporting\PDFALTAProveedor.class
 com\mycompany\ocxrst\ui\SALIDAINVENTARIO.class
 com\mycompany\ocxrst\util\EstiloAplicacion$TrianguloComboBorder.class
-com\mycompany\ocxrst\ui\INVENTARIOS$BotonPlanoUI.class
 com\mycompany\ocxrst\ui\PROVEEDORES$4.class
 com\mycompany\ocxrst\ui\PROVEEDORES$20.class
 com\mycompany\ocxrst\ui\PROVEEDORES$10.class
@@ -112,6 +113,7 @@ com\mycompany\ocxrst\service\TerminosService.class
 com\mycompany\ocxrst\ui\INVENTARIOS$BordeRedondeado.class
 com\mycompany\ocxrst\ui\USUARIOS$TarjetaPanel.class
 com\mycompany\ocxrst\ui\NUEVATAREA$1.class
+com\mycompany\ocxrst\ui\ORDENCOMPRA$28.class
 com\mycompany\ocxrst\ui\ENTRADAINVENTARIO.class
 com\mycompany\ocxrst\ui\INVENTARIOS$2.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$18.class
@@ -130,6 +132,7 @@ com\mycompany\ocxrst\ui\PRINCIPAL$3.class
 com\mycompany\ocxrst\ui\ENTRADAINVENTARIO$TipoMovimiento.class
 com\mycompany\ocxrst\repository\ProveedorRepository.class
 com\mycompany\ocxrst\ui\INVENTARIOS.class
+com\mycompany\ocxrst\ui\INVENTARIOS$8.class
 com\mycompany\ocxrst\ui\PROVEEDORES$11.class
 com\mycompany\ocxrst\ui\SOLICITUDAYUDA$1.class
 com\mycompany\ocxrst\ui\ENTRADAINVENTARIO$5.class

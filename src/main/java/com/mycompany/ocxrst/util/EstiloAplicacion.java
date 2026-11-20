@@ -195,7 +195,7 @@ public final class EstiloAplicacion {
             campoFecha.setForeground(azulOscuro);
             campoFecha.setBackground(Color.WHITE);
             campoFecha.setOpaque(true);
-            campoFecha.setBorder(javax.swing.BorderFactory.createEmptyBorder(4, 7, 4, 4));
+            campoFecha.setBorder(javax.swing.BorderFactory.createEmptyBorder(2, 5, 2, 2));
         }
 
         javax.swing.JButton botonCalendario = selector.getCalendarButton();
@@ -203,9 +203,9 @@ public final class EstiloAplicacion {
         botonCalendario.setForeground(Color.WHITE);
         botonCalendario.setBackground(azul);
         botonCalendario.setFocusPainted(false);
-        botonCalendario.setPreferredSize(new java.awt.Dimension(40, 30));
-        botonCalendario.setMinimumSize(new java.awt.Dimension(40, 30));
-        botonCalendario.setMaximumSize(new java.awt.Dimension(40, 30));
+        botonCalendario.setPreferredSize(new java.awt.Dimension(34, 30));
+        botonCalendario.setMinimumSize(new java.awt.Dimension(34, 30));
+        botonCalendario.setMaximumSize(new java.awt.Dimension(34, 30));
         aplicarEstiloBotones(botonCalendario);
 
         com.toedter.calendar.JCalendar calendario = selector.getJCalendar();

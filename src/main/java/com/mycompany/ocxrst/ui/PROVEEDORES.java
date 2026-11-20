@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.awt.Desktop;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import javax.swing.JOptionPane;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -68,9 +70,13 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private static final int COLUMNA_OBSERVACIONES = 18;
     private static final int COLUMNA_CARPETA_PDF = 19;
     private static final int COLUMNA_AUTORIZADOR = 20;
+    private static final int COLUMNA_ESTADO_FIRMA = 21;
+    private static final int COLUMNA_FIRMADO_SOLICITANTE = 22;
+    private static final int COLUMNA_FECHA_FIRMA_SOLICITANTE = 23;
+    private static final int COLUMNA_FIRMADO_AUTORIZADOR = 24;
+    private static final int COLUMNA_FECHA_FIRMA_AUTORIZADOR = 25;
     private static final String DOCUMENTO_PROVEEDOR = "FO-SG-01-00";
-    private static final File DIRECTORIO_PDF_PROVEEDORES = new File(
-            "C:\\OCXRST\\OrdendeComprasRST\\src\\main\\java\\com\\mycompany\\ocxrst\\PROVEEDORES");
+    private static final File DIRECTORIO_PDF_PROVEEDORES = AppConfig.getDataDir();
     private final javax.swing.JTextField campoFechaAlta = new javax.swing.JTextField();
     private final javax.swing.JTextField campoDocumento = new javax.swing.JTextField();
     private final javax.swing.JComboBox<String> comboSolicitante = new javax.swing.JComboBox<>();
@@ -96,6 +102,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private javax.swing.JLabel totalProveedoresDirectorio;
     private javax.swing.JLabel activosDirectorio;
     private javax.swing.JLabel inactivosDirectorio;
+    private final java.util.Map<String, String> accionesDirectorio = new java.util.HashMap<>();
 
     // =====================================================================
     // Alertas y metricas mostradas en el modulo principal
@@ -108,6 +115,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         if (alertasEntrega.isEmpty() && alertasPago.isEmpty()) {
             return;
         }
+
         java.util.List<String> secciones = new java.util.ArrayList<>();
         if (!alertasEntrega.isEmpty()) {
             secciones.add("ENTREGAS:\n" + String.join("\n", alertasEntrega));
@@ -422,12 +430,33 @@ public class PROVEEDORES extends javax.swing.JFrame {
         tabla.getColumnModel().getColumn(4).setPreferredWidth(210);
         tabla.getColumnModel().getColumn(5).setPreferredWidth(100);
         tabla.getColumnModel().getColumn(6).setPreferredWidth(115);
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(90);
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(150);
+        final int[] accionSobreTabla = {-1, -1};
         tabla.getColumnModel().getColumn(7).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
             @Override
             public java.awt.Component getTableCellRendererComponent(javax.swing.JTable tabla, Object valor,
                     boolean seleccionado, boolean foco, int fila, int columna) {
-                javax.swing.JLabel etiqueta = new javax.swing.JLabel("VER  |  EDITAR");
+                boolean verActivo = fila == accionSobreTabla[0] && accionSobreTabla[1] == 0;
+                boolean editarActivo = fila == accionSobreTabla[0] && accionSobreTabla[1] == 1;
+                String ver = verActivo ? "<u>VER</u>" : "VER";
+                String accionTexto = accionesDirectorio.getOrDefault(
+                        String.valueOf(tabla.getValueAt(fila, 0)), "EDITAR");
+                if (!"EDITAR".equals(accionTexto)) {
+                    javax.swing.JLabel pendiente = new javax.swing.JLabel(
+                            "<html>" + (editarActivo ? "<u>" + accionTexto + "</u>" : accionTexto)
+                            + "</html>");
+                    pendiente.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                    pendiente.setForeground(COLOR_AZUL);
+                    pendiente.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
+                    pendiente.setOpaque(true);
+                    pendiente.setBackground(seleccionado
+                            ? tabla.getSelectionBackground() : java.awt.Color.WHITE);
+                    return pendiente;
+                }
+                String editar = editarActivo ? "<u>" + accionTexto + "</u>" : accionTexto;
+                javax.swing.JLabel etiqueta = new javax.swing.JLabel(
+                        "<html>" + ver + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+                        + editar + "</html>");
                 etiqueta.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
                 etiqueta.setForeground(COLOR_AZUL);
                 etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
@@ -436,10 +465,52 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 return etiqueta;
             }
         });
+        tabla.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override public void mouseMoved(java.awt.event.MouseEvent e) {
+                int fila = tabla.rowAtPoint(e.getPoint());
+                int columna = tabla.columnAtPoint(e.getPoint());
+                int accion = -1;
+                if (fila >= 0 && columna == 7) {
+                    java.awt.Rectangle limites = tabla.getCellRect(fila, columna, false);
+                    accion = e.getX() < limites.x + limites.width / 2 ? 0 : 1;
+                    tabla.setCursor(java.awt.Cursor.getPredefinedCursor(
+                            java.awt.Cursor.HAND_CURSOR));
+                } else {
+                    tabla.setCursor(java.awt.Cursor.getDefaultCursor());
+                }
+                if (accionSobreTabla[0] != fila || accionSobreTabla[1] != accion) {
+                    accionSobreTabla[0] = fila;
+                    accionSobreTabla[1] = accion;
+                    tabla.repaint();
+                }
+            }
+        });
+        tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseExited(java.awt.event.MouseEvent e) {
+                accionSobreTabla[0] = -1;
+                accionSobreTabla[1] = -1;
+                tabla.setCursor(java.awt.Cursor.getDefaultCursor());
+                tabla.repaint();
+            }
+        });
         tabla.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
                 int fila = tabla.rowAtPoint(e.getPoint());
-                if (fila >= 0) {
+                int columna = tabla.columnAtPoint(e.getPoint());
+                if (fila >= 0 && columna == 7) {
+                    java.awt.Rectangle limites = tabla.getCellRect(fila, columna, false);
+                    int mitad = limites.x + limites.width / 2;
+                    String id = String.valueOf(modeloDirectorio.getValueAt(fila, 0));
+                    boolean pendiente = !"EDITAR".equals(
+                            accionesDirectorio.getOrDefault(id, "EDITAR"));
+                    if (pendiente) {
+                        ejecutarAccionDirectorio(fila);
+                    } else if (e.getX() < mitad) {
+                        abrirPdfProveedorDesdeDirectorio(fila);
+                    } else {
+                        ejecutarAccionDirectorio(fila);
+                    }
+                } else if (fila >= 0) {
                     abrirProveedorDesdeDirectorio(fila);
                 }
             }
@@ -490,6 +561,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private void cargarDirectorioProveedores() {
         if (modeloDirectorio == null) return;
         modeloDirectorio.setRowCount(0);
+        accionesDirectorio.clear();
         String filtro = buscarDirectorio == null ? "" : buscarDirectorio.getText().trim().toLowerCase(
                 java.util.Locale.ROOT);
         int activos = 0;
@@ -511,6 +583,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 String datos = (id + " " + nombre + " " + rfc + " " + telefono + " " + correo)
                         .toLowerCase(java.util.Locale.ROOT);
                 if (!filtro.isEmpty() && !datos.contains(filtro)) continue;
+                accionesDirectorio.put(id, determinarAccionDirectorio(fila));
                 modeloDirectorio.addRow(new Object[]{id, nombre, rfc, tipo,
                     correo.isBlank() ? telefono : correo, activo ? "Activo" : "Inactivo", fechaAlta,
                     "VER  |  EDITAR"});
@@ -535,6 +608,63 @@ public class PROVEEDORES extends javax.swing.JFrame {
         vistasLayout.show(vistasProveedores, "FORMULARIO");
     }
 
+    private String determinarAccionDirectorio(Row fila) {
+        String estado = proveedorRepository.leerCelda(fila, COLUMNA_ESTADO_FIRMA);
+        String usuarioActual = SesionActual.nombre();
+        String solicitante = proveedorRepository.leerCelda(fila, COLUMNA_SOLICITANTE);
+        String autorizador = proveedorRepository.leerCelda(fila, COLUMNA_AUTORIZADOR);
+        boolean esSolicitante = !usuarioActual.isBlank()
+                && usuarioActual.equalsIgnoreCase(solicitante);
+        boolean esAutorizador = !usuarioActual.isBlank()
+                && usuarioActual.equalsIgnoreCase(autorizador);
+        if ("PENDIENTE DE FIRMA DEL SOLICITANTE".equalsIgnoreCase(estado) && esSolicitante) {
+            return "PENDIENTE DE AUTORIZAR";
+        }
+        if ("PENDIENTE DE AUTORIZAR".equalsIgnoreCase(estado) && esAutorizador) {
+            return "PENDIENTE DE AUTORIZAR";
+        }
+        return "EDITAR";
+    }
+
+    private void ejecutarAccionDirectorio(int fila) {
+        String id = String.valueOf(modeloDirectorio.getValueAt(fila, 0));
+        String accion = accionesDirectorio.getOrDefault(id, "EDITAR");
+        if ("EDITAR".equals(accion)) {
+            abrirProveedorDesdeDirectorio(fila);
+            return;
+        }
+        firmarDesdeDirectorio(id, accion);
+    }
+
+    private void firmarDesdeDirectorio(String id, String accion) {
+        try (Workbook libro = proveedorRepository.cargarLibro(
+                proveedorRepository.obtenerArchivoProveedores())) {
+            Sheet hoja = proveedorRepository.obtenerHojaProveedores(libro);
+            int filaIndex = buscarFilaProveedorPorId(hoja, id);
+            if (filaIndex < 0) {
+                throw new IOException("No se encontró el proveedor seleccionado.");
+            }
+            Row fila = hoja.getRow(filaIndex);
+            cargarFilaEnFormulario(fila);
+            cargarCuentasBancariasFormulario(libro, leerCelda(fila, 0));
+            carpetaPdfProveedorActual = leerCelda(fila, COLUMNA_CARPETA_PDF);
+            String estado = leerCelda(fila, COLUMNA_ESTADO_FIRMA);
+            boolean mismaPersona = leerCelda(fila, COLUMNA_SOLICITANTE)
+                    .equalsIgnoreCase(leerCelda(fila, COLUMNA_AUTORIZADOR));
+            if ("PENDIENTE DE FIRMA DEL SOLICITANTE".equalsIgnoreCase(estado)) {
+                boolean firmoSolicitante = ofrecerFirmaSolicitante(libro, fila);
+                if (firmoSolicitante && mismaPersona) {
+                    ofrecerFirmaAutorizador(libro, fila);
+                }
+            } else if ("PENDIENTE DE AUTORIZAR".equalsIgnoreCase(estado)) {
+                ofrecerFirmaAutorizador(libro, fila);
+            }
+            cargarDirectorioProveedores();
+        } catch (IOException ex) {
+            mostrarError("No se pudo procesar la firma del proveedor.", ex);
+        }
+    }
+
     private void abrirProveedorDesdeDirectorio(int fila) {
         String id = String.valueOf(modeloDirectorio.getValueAt(fila, 0));
         String nombre = String.valueOf(modeloDirectorio.getValueAt(fila, 1));
@@ -544,6 +674,90 @@ public class PROVEEDORES extends javax.swing.JFrame {
         jTextField2.setText(rfc);
         vistasLayout.show(vistasProveedores, "FORMULARIO");
         buscarProveedor();
+    }
+
+    private void abrirPdfProveedorDesdeDirectorio(int fila) {
+        String id = String.valueOf(modeloDirectorio.getValueAt(fila, 0));
+        File archivoPdf = null;
+        String estadoFirma = "";
+        try (Workbook libro = proveedorRepository.cargarLibro(
+                proveedorRepository.obtenerArchivoProveedores())) {
+            Sheet hoja = proveedorRepository.obtenerHojaProveedores(libro);
+            int filaProveedor = buscarFilaProveedorPorId(hoja, id);
+            if (filaProveedor >= 0) {
+                Row registroProveedor = hoja.getRow(filaProveedor);
+                estadoFirma = proveedorRepository.leerCelda(
+                        registroProveedor, COLUMNA_ESTADO_FIRMA);
+                String carpeta = proveedorRepository.leerCelda(
+                        registroProveedor, COLUMNA_CARPETA_PDF);
+                if (!carpeta.isBlank()) {
+                    Path raiz = DIRECTORIO_PDF_PROVEEDORES.toPath()
+                            .toAbsolutePath().normalize();
+                    Path rutaCarpeta = raiz
+                            .resolve(carpeta)
+                            .normalize();
+                    if (!rutaCarpeta.startsWith(raiz)) {
+                        throw new IOException("La ruta del PDF no pertenece a la carpeta de proveedores.");
+                    }
+                    String[] nombresPreferidos = {
+                        "Solicitud de alta de proveedor - Actualizado - Firmado.pdf",
+                        "Solicitud de alta de proveedor - Firmado.pdf",
+                        "Solicitud de alta de proveedor - Actualizado - Firmado solicitante.pdf",
+                        "Solicitud de alta de proveedor - Firmado solicitante.pdf",
+                        "Solicitud de alta de proveedor - Actualizado.pdf",
+                        "Solicitud de alta de proveedor.pdf"
+                    };
+                    for (String nombre : nombresPreferidos) {
+                        Path candidato = rutaCarpeta.resolve(nombre).normalize();
+                        if (!candidato.startsWith(raiz)) {
+                            throw new IOException("La ruta del PDF no pertenece a la carpeta de proveedores.");
+                        }
+                        if (candidato.toFile().isFile()) {
+                            archivoPdf = candidato.toFile();
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            mostrarError("No se pudo localizar el PDF del proveedor.", ex);
+            return;
+        }
+
+        if (!"AUTORIZADO".equalsIgnoreCase(estadoFirma)) {
+            String motivo;
+            if ("PENDIENTE DE FIRMA DEL SOLICITANTE".equalsIgnoreCase(estadoFirma)
+                    || estadoFirma.isBlank()) {
+                motivo = "falta la firma del solicitante";
+            } else if ("PENDIENTE DE AUTORIZAR".equalsIgnoreCase(estadoFirma)) {
+                motivo = "falta la firma del autorizador";
+            } else {
+                motivo = "las firmas requeridas aún no están completas";
+            }
+            JOptionPane.showMessageDialog(this,
+                    "El documento no puede abrirse porque no está firmado por ambas personas.\n"
+                            + "Razón: " + motivo + ".\n"
+                            + "El PDF estará disponible cuando el solicitante y el autorizador "
+                            + "hayan firmado.",
+                    "Documento pendiente de firmas", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (archivoPdf == null || !archivoPdf.isFile()) {
+            JOptionPane.showMessageDialog(this,
+                    "No se encontró el PDF de alta para el proveedor " + id + ".",
+                    "PDF no encontrado", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        try {
+            if (!Desktop.isDesktopSupported()
+                    || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                throw new IOException("El sistema no admite abrir archivos PDF automáticamente.");
+            }
+            Desktop.getDesktop().open(archivoPdf);
+        } catch (IOException | SecurityException ex) {
+            mostrarError("No se pudo abrir el PDF del proveedor.", ex);
+        }
     }
 
     // Paleta compartida por el formulario, dialogos, tablas e iconos.
@@ -1601,6 +1815,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 escribirCelda(fila, COLUMNA_CARPETA_PDF, carpetaPdfProveedorActual);
                 generarSolicitudAltaProveedor(carpetaPdfProveedorActual, idCreado);
                 guardarArchivosPdfPendientes(carpetaPdfProveedorActual);
+                marcarPendienteFirmaSolicitante(fila);
                 proveedorRepository.guardarCuentasBancarias(libro, idCreado, obtenerCuentasBancariasFormulario());
                 completarValoresComercialesPorDefecto(fila);
                 escribirCelda(fila, 11, "1");
@@ -1620,6 +1835,17 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//crearProveedor
 
     private void generarSolicitudAltaProveedor(String nombreCarpeta, String idProveedor) throws IOException {
+        generarSolicitudAltaProveedor(nombreCarpeta, idProveedor, false);
+    }
+
+    private void generarSolicitudAltaProveedor(String nombreCarpeta, String idProveedor,
+            boolean actualizado) throws IOException {
+        generarSolicitudAltaProveedor(nombreCarpeta, idProveedor, actualizado, "", "", "");
+    }
+
+    private void generarSolicitudAltaProveedor(String nombreCarpeta, String idProveedor,
+            boolean actualizado, String firmaSolicitante, String firmaAutorizador,
+            String sufijoArchivo) throws IOException {
         PDFALTAProveedor.DatosProveedor datos = new PDFALTAProveedor.DatosProveedor();
         datos.id = idProveedor;
         datos.fecha = campoFechaAlta.getText().trim();
@@ -1635,6 +1861,12 @@ public class PROVEEDORES extends javax.swing.JFrame {
         datos.proyecto = campoProyecto.getText().trim();
         datos.autorizadoPor = obtenerTextoCombo(comboAutorizador);
         datos.observaciones = campoObservaciones.getText().trim();
+        if (actualizado) {
+            datos.actualizadoEl = LocalDate.now()
+                    .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        }
+        datos.firmaSolicitante = firmaSolicitante;
+        datos.firmaAutorizador = firmaAutorizador;
         for (String[] cuenta : obtenerCuentasBancariasFormulario()) {
             PDFALTAProveedor.CuentaBancaria cuentaPdf = new PDFALTAProveedor.CuentaBancaria();
             cuentaPdf.banco = cuenta[0];
@@ -1643,8 +1875,27 @@ public class PROVEEDORES extends javax.swing.JFrame {
             datos.cuentas.add(cuentaPdf);
         }
         File destino = new File(new File(DIRECTORIO_PDF_PROVEEDORES, nombreCarpeta),
-                "Solicitud de alta de proveedor.pdf");
+                (actualizado ? "Solicitud de alta de proveedor - Actualizado"
+                        : "Solicitud de alta de proveedor") + sufijoArchivo + ".pdf");
         PDFALTAProveedor.generar(destino, datos);
+    }
+
+    private String obtenerFirmaUsuario(String nombreUsuario) throws IOException {
+        try (Workbook libro = usuarioRepository.cargarLibro(usuarioRepository.obtenerArchivoUsuarios())) {
+            Sheet hoja = usuarioRepository.obtenerHojaUsuarios(libro);
+            for (int numeroFila = 1; numeroFila <= hoja.getLastRowNum(); numeroFila++) {
+                Row fila = hoja.getRow(numeroFila);
+                if (fila != null && nombreUsuario.equalsIgnoreCase(usuarioRepository.leerCelda(fila, 2))) {
+                    String ruta = usuarioRepository.leerCelda(fila, 6);
+                    if (ruta.isBlank() || !new File(ruta).isFile()) {
+                        throw new IOException("El usuario " + nombreUsuario
+                                + " no tiene una imagen de firma válida registrada.");
+                    }
+                    return ruta;
+                }
+            }
+        }
+        throw new IOException("No se encontró el usuario solicitante/autorizador: " + nombreUsuario);
     }
 
     private String obtenerTextoSolicitante() {
@@ -1655,6 +1906,119 @@ public class PROVEEDORES extends javax.swing.JFrame {
         Object seleccionado = combo.getSelectedItem();
         return seleccionado == null || "-- Selecciona --".equals(seleccionado.toString())
                 ? "" : seleccionado.toString().trim();
+    }
+
+    private void marcarPendienteFirmaSolicitante(Row fila) {
+        escribirCelda(fila, COLUMNA_ESTADO_FIRMA, "PENDIENTE DE FIRMA DEL SOLICITANTE");
+        escribirCelda(fila, COLUMNA_FIRMADO_SOLICITANTE, "");
+        escribirCelda(fila, COLUMNA_FECHA_FIRMA_SOLICITANTE, "");
+        escribirCelda(fila, COLUMNA_FIRMADO_AUTORIZADOR, "");
+        escribirCelda(fila, COLUMNA_FECHA_FIRMA_AUTORIZADOR, "");
+    }
+
+    private boolean ofrecerFirmaSolicitante(Workbook libro, Row fila) {
+        String estado = leerCelda(fila, COLUMNA_ESTADO_FIRMA);
+        String solicitante = leerCelda(fila, COLUMNA_SOLICITANTE);
+        String usuarioActual = SesionActual.nombre();
+        if (!"PENDIENTE DE FIRMA DEL SOLICITANTE".equalsIgnoreCase(estado)
+                || solicitante.isBlank()
+                || usuarioActual.isBlank()
+                || !solicitante.equalsIgnoreCase(usuarioActual)) {
+            return false;
+        }
+
+        int respuesta = JOptionPane.showConfirmDialog(this,
+                "El proveedor tiene documentos pendientes de tu firma como solicitante.\n"
+                        + "¿Deseas firmarlos ahora?",
+                "Firma pendiente del solicitante",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (respuesta != JOptionPane.YES_OPTION) {
+            return false;
+        }
+
+        try {
+            File carpeta = new File(DIRECTORIO_PDF_PROVEEDORES,
+                    leerCelda(fila, COLUMNA_CARPETA_PDF));
+            String rutaFirma = obtenerFirmaUsuario(solicitante);
+            regenerarDocumentosFirmados(carpeta, rutaFirma, "");
+            escribirCelda(fila, COLUMNA_ESTADO_FIRMA, "PENDIENTE DE AUTORIZAR");
+            escribirCelda(fila, COLUMNA_FIRMADO_SOLICITANTE, solicitante);
+            escribirCelda(fila, COLUMNA_FECHA_FIRMA_SOLICITANTE, fechaActual());
+            guardarLibro(libro, obtenerArchivoProveedores());
+            JOptionPane.showMessageDialog(this,
+                    "Los documentos fueron firmados como solicitante y quedan pendientes de autorización.",
+                    "Firma completada", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } catch (Exception ex) {
+            mostrarError("No se pudieron firmar los documentos como solicitante.", ex);
+            return false;
+        }
+    }
+
+    private boolean ofrecerFirmaAutorizador(Workbook libro, Row fila) {
+        String estado = leerCelda(fila, COLUMNA_ESTADO_FIRMA);
+        String autorizador = leerCelda(fila, COLUMNA_AUTORIZADOR);
+        String usuarioActual = SesionActual.nombre();
+        if (!"PENDIENTE DE AUTORIZAR".equalsIgnoreCase(estado)
+                || autorizador.isBlank()
+                || usuarioActual.isBlank()
+                || !autorizador.equalsIgnoreCase(usuarioActual)) {
+            return false;
+        }
+
+        int respuesta = JOptionPane.showConfirmDialog(this,
+                "El proveedor tiene documentos pendientes de autorización.\n"
+                        + "¿Deseas firmarlos como " + autorizador + "?",
+                "Firma pendiente de autorización",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (respuesta != JOptionPane.YES_OPTION) {
+            return false;
+        }
+
+        try {
+            File carpeta = new File(DIRECTORIO_PDF_PROVEEDORES,
+                    leerCelda(fila, COLUMNA_CARPETA_PDF));
+            String rutaSolicitante = obtenerFirmaUsuario(
+                    leerCelda(fila, COLUMNA_SOLICITANTE));
+            String rutaAutorizador = obtenerFirmaUsuario(autorizador);
+            regenerarDocumentosFirmados(carpeta, rutaSolicitante, rutaAutorizador);
+            escribirCelda(fila, COLUMNA_ESTADO_FIRMA, "AUTORIZADO");
+            escribirCelda(fila, COLUMNA_FIRMADO_AUTORIZADOR, autorizador);
+            escribirCelda(fila, COLUMNA_FECHA_FIRMA_AUTORIZADOR, fechaActual());
+            guardarLibro(libro, obtenerArchivoProveedores());
+            JOptionPane.showMessageDialog(this,
+                    "Los documentos del proveedor fueron autorizados y firmados.",
+                    "Firma completada", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } catch (Exception ex) {
+            mostrarError("No se pudieron firmar los documentos como autorizador.", ex);
+            return false;
+        }
+    }
+
+    private void regenerarDocumentosFirmados(File carpeta, String firmaSolicitante,
+            String firmaAutorizador) throws IOException {
+        if (!carpeta.isDirectory()) {
+            throw new IOException("No existe la carpeta de documentos del proveedor.");
+        }
+        File original = new File(carpeta, "Solicitud de alta de proveedor.pdf");
+        File actualizado = new File(carpeta, "Solicitud de alta de proveedor - Actualizado.pdf");
+        if (!original.isFile() && !actualizado.isFile()) {
+            throw new IOException("No se encontraron documentos de proveedor para firmar.");
+        }
+        String nombreCarpeta = DIRECTORIO_PDF_PROVEEDORES.toPath().toAbsolutePath()
+                .normalize().relativize(carpeta.toPath().toAbsolutePath().normalize()).toString();
+        String idProveedor = jTextFieldId.getText().trim();
+        if (original.isFile()) {
+            generarSolicitudAltaProveedor(nombreCarpeta, idProveedor, false,
+                    firmaSolicitante, firmaAutorizador,
+                    "");
+        }
+        if (actualizado.isFile()) {
+            generarSolicitudAltaProveedor(nombreCarpeta, idProveedor, true,
+                    firmaSolicitante, firmaAutorizador,
+                    "");
+        }
     }
 
     /** Valida y guarda los cambios del proveedor actualmente seleccionado. */
@@ -1703,8 +2067,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
                         jTextField1.getText().trim(), leerCelda(fila, 0),
                         leerCelda(fila, COLUMNA_CARPETA_PDF));
                 escribirCelda(fila, COLUMNA_CARPETA_PDF, carpetaPdfProveedorActual);
-                generarSolicitudAltaProveedor(carpetaPdfProveedorActual, leerCelda(fila, 0));
+                generarSolicitudAltaProveedor(carpetaPdfProveedorActual, leerCelda(fila, 0), true);
                 guardarArchivosPdfPendientes(carpetaPdfProveedorActual);
+                marcarPendienteFirmaSolicitante(fila);
                 proveedorRepository.guardarCuentasBancarias(
                         libro, leerCelda(fila, 0), obtenerCuentasBancariasFormulario());
                 completarValoresComercialesPorDefecto(fila);
@@ -1820,6 +2185,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
                 String estado = normalizarEstado(leerCelda(fila, 11));
                 actualizarIndicadorEstado(estado);
+                ofrecerFirmaSolicitante(libro, fila);
+                ofrecerFirmaAutorizador(libro, fila);
             }
         } catch (IOException ex) {
             restablecerIndicadorEstado();
@@ -5034,26 +5401,51 @@ public class PROVEEDORES extends javax.swing.JFrame {
             carpetaVieja = null;
         }
 
-        Path destino = raiz.resolve(nombreBase).normalize();
+        Path directorioProveedores = carpetaVieja == null
+                ? crearDirectorioPeriodo(raiz)
+                : carpetaVieja.getParent();
+        if (directorioProveedores == null || !directorioProveedores.startsWith(raiz)) {
+            throw new IOException("La carpeta de destino del proveedor no es válida.");
+        }
+        Path destino = directorioProveedores.resolve(nombreBase).normalize();
         if (carpetaVieja != null && Files.isDirectory(carpetaVieja)) {
             if (carpetaVieja.equals(destino)) {
-                return carpetaVieja.getFileName().toString();
+                return raiz.relativize(carpetaVieja).toString();
             }
             if (Files.exists(destino)) {
-                destino = raiz.resolve(nombreBase + " - " + sanitizarNombreCarpeta(idProveedor)).normalize();
+                destino = directorioProveedores.resolve(
+                        nombreBase + " - " + sanitizarNombreCarpeta(idProveedor)).normalize();
             }
             if (Files.exists(destino)) {
                 throw new IOException("Ya existe una carpeta para el proveedor: " + destino);
             }
             Files.move(carpetaVieja, destino);
         } else if (Files.exists(destino)) {
-            destino = raiz.resolve(nombreBase + " - " + sanitizarNombreCarpeta(idProveedor)).normalize();
+            destino = directorioProveedores.resolve(
+                    nombreBase + " - " + sanitizarNombreCarpeta(idProveedor)).normalize();
         }
         if (!destino.startsWith(raiz)) {
             throw new IOException("El nombre del proveedor no produjo una ruta de carpeta válida.");
         }
         Files.createDirectories(destino);
-        return destino.getFileName().toString();
+        return raiz.relativize(destino).toString();
+    }
+
+    private Path crearDirectorioPeriodo(Path raiz) throws IOException {
+        java.time.LocalDate fecha = java.time.LocalDate.now();
+        try {
+            fecha = java.time.LocalDate.parse(campoFechaAlta.getText().trim(),
+                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        } catch (java.time.format.DateTimeParseException ex) {
+            // La fecha visible puede estar vacía durante una alta nueva.
+        }
+        Path directorioPeriodo = raiz.resolve(String.valueOf(fecha.getYear()))
+                .resolve(String.format("%02d", fecha.getMonthValue())).normalize();
+        if (!directorioPeriodo.startsWith(raiz)) {
+            throw new IOException("No se pudo determinar una carpeta de periodo válida.");
+        }
+        Files.createDirectories(directorioPeriodo);
+        return directorioPeriodo;
     }
 
     private String sanitizarNombreCarpeta(String nombre) {

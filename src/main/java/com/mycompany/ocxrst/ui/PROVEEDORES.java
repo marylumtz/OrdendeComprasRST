@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.awt.Desktop;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -76,7 +77,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
     private static final int COLUMNA_FIRMADO_AUTORIZADOR = 24;
     private static final int COLUMNA_FECHA_FIRMA_AUTORIZADOR = 25;
     private static final String DOCUMENTO_PROVEEDOR = "FO-SG-01-00";
-    private static final File DIRECTORIO_PDF_PROVEEDORES = AppConfig.getDataDir();
+    private static final File DIRECTORIO_PDF_PROVEEDORES = Paths
+            .get("C:\\RST_DATA\\ALTASPROVEEDOR").toFile();
     private final javax.swing.JTextField campoFechaAlta = new javax.swing.JTextField();
     private final javax.swing.JTextField campoDocumento = new javax.swing.JTextField();
     private final javax.swing.JComboBox<String> comboSolicitante = new javax.swing.JComboBox<>();
@@ -343,6 +345,66 @@ public class PROVEEDORES extends javax.swing.JFrame {
         EstiloAplicacion.aplicarEstiloCamposTexto(vistasProveedores);
     }
 
+    public static void mostrarRecepcionDesdeOrden(java.awt.Component parent, String noOrden) {
+        PROVEEDORES ventana = new PROVEEDORES();
+        try {
+            ventana.setVisible(false);
+            ventana.mostrarDetalleOrden(noOrden, null);
+        } finally {
+            ventana.dispose();
+        }
+    }
+
+    public static void mostrarAbonoDesdeOrden(java.awt.Component parent, String noOrden) {
+        PROVEEDORES ventana = new PROVEEDORES();
+        try {
+            ventana.setVisible(false);
+            javax.swing.table.DefaultTableModel modelo = new javax.swing.table.DefaultTableModel(
+                    new String[14], 0);
+            File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
+            try (FileInputStream fis = new FileInputStream(archivoOrdenes);
+                    Workbook libro = new XSSFWorkbook(fis)) {
+                for (Row fila : libro.getSheetAt(0)) {
+                    if (fila.getRowNum() == 0 || !noOrden.equalsIgnoreCase(ventana.leerCelda(fila, 0))) {
+                        continue;
+                    }
+                    Object[] datos = new Object[14];
+                    datos[2] = ventana.leerCelda(fila, 0);
+                    datos[8] = ventana.leerCelda(fila, 21);
+                    datos[9] = ventana.leerCelda(fila, 22);
+                    datos[10] = ventana.calcularPendientePago(
+                            String.valueOf(datos[8]), String.valueOf(datos[9]));
+                    datos[13] = ventana.leerCelda(fila, 23);
+                    modelo.addRow(datos);
+                    break;
+                }
+            }
+            javax.swing.JTable tabla = new javax.swing.JTable(modelo);
+            if (modelo.getRowCount() == 0) {
+                JOptionPane.showMessageDialog(ventana,
+                        "No se encontró la orden " + noOrden + ".",
+                        "Abonar", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            tabla.setRowSelectionInterval(0, 0);
+            ventana.registrarAbono(noOrden, tabla);
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo abrir la pantalla de abono para la orden " + noOrden + ".", ex);
+            JOptionPane.showMessageDialog(ventana,
+                    "No se pudo abrir la pantalla de abono:\n" + ex.getMessage(),
+                    "Abonar", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            ventana.dispose();
+        }
+    }
+
+    public static void mostrarHistorialDesdeOrdenes(java.awt.Component parent) {
+        PROVEEDORES ventana = new PROVEEDORES();
+        ventana.setVisible(true);
+        ventana.mostrarHistorialCompras();
+    }
+
     private void configurarVistasProveedores() {
         vistasProveedores.setBackground(COLOR_FONDO);
         vistasProveedores.add(crearDirectorioProveedores(), "DIRECTORIO");
@@ -415,7 +477,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
             @Override public boolean isCellEditable(int fila, int columna) { return false; }
         };
         javax.swing.JTable tabla = new javax.swing.JTable(modeloDirectorio);
-        tabla.setRowHeight(42);
+        tabla.setRowHeight(46);
         tabla.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
         tabla.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
         tabla.getTableHeader().setBackground(COLOR_AZUL_PALIDO);
@@ -423,14 +485,14 @@ public class PROVEEDORES extends javax.swing.JFrame {
         tabla.setGridColor(new java.awt.Color(225, 232, 241));
         tabla.setSelectionBackground(COLOR_AZUL_CLARO);
         tabla.setSelectionForeground(COLOR_AZUL_OSCURO);
-        tabla.getColumnModel().getColumn(0).setPreferredWidth(65);
-        tabla.getColumnModel().getColumn(1).setPreferredWidth(245);
-        tabla.getColumnModel().getColumn(2).setPreferredWidth(120);
-        tabla.getColumnModel().getColumn(3).setPreferredWidth(115);
-        tabla.getColumnModel().getColumn(4).setPreferredWidth(210);
-        tabla.getColumnModel().getColumn(5).setPreferredWidth(100);
-        tabla.getColumnModel().getColumn(6).setPreferredWidth(115);
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(150);
+        tabla.getColumnModel().getColumn(0).setPreferredWidth(52);
+        tabla.getColumnModel().getColumn(1).setPreferredWidth(185);
+        tabla.getColumnModel().getColumn(2).setPreferredWidth(105);
+        tabla.getColumnModel().getColumn(3).setPreferredWidth(92);
+        tabla.getColumnModel().getColumn(4).setPreferredWidth(145);
+        tabla.getColumnModel().getColumn(5).setPreferredWidth(78);
+        tabla.getColumnModel().getColumn(6).setPreferredWidth(102);
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(125);
         final int[] accionSobreTabla = {-1, -1};
         tabla.getColumnModel().getColumn(7).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
             @Override
@@ -442,16 +504,27 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 String accionTexto = accionesDirectorio.getOrDefault(
                         String.valueOf(tabla.getValueAt(fila, 0)), "EDITAR");
                 if (!"EDITAR".equals(accionTexto)) {
+                    javax.swing.JPanel celdaAccion = new javax.swing.JPanel(
+                            new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 5));
+                    celdaAccion.setOpaque(true);
+                    celdaAccion.setBackground(seleccionado
+                            ? tabla.getSelectionBackground()
+                            : (fila % 2 == 0 ? java.awt.Color.WHITE : new java.awt.Color(248, 249, 251)));
+                    String accionVisible = accionTexto.replace(" DE ", " DE<br>");
                     javax.swing.JLabel pendiente = new javax.swing.JLabel(
-                            "<html>" + (editarActivo ? "<u>" + accionTexto + "</u>" : accionTexto)
-                            + "</html>");
+                            "<html><div style='text-align:center'>"
+                            + (editarActivo ? "<u>" + accionVisible + "</u>" : accionVisible)
+                            + "</div></html>");
                     pendiente.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-                    pendiente.setForeground(COLOR_AZUL);
+                    pendiente.setForeground(COLOR_NARANJA);
                     pendiente.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
                     pendiente.setOpaque(true);
-                    pendiente.setBackground(seleccionado
-                            ? tabla.getSelectionBackground() : java.awt.Color.WHITE);
-                    return pendiente;
+                    pendiente.setBackground(COLOR_NARANJA_CLARO);
+                    pendiente.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                            new BordeRedondeado(10, COLOR_NARANJA_CLARO, 1f),
+                            javax.swing.BorderFactory.createEmptyBorder(3, 8, 3, 8)));
+                    celdaAccion.add(pendiente);
+                    return celdaAccion;
                 }
                 String editar = editarActivo ? "<u>" + accionTexto + "</u>" : accionTexto;
                 javax.swing.JLabel etiqueta = new javax.swing.JLabel(
@@ -886,7 +959,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 COLOR_AZUL, COLOR_AZUL);
         prepararBoton(jButton1, "CREAR", iconoMas(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
         prepararBoton(jButton2, "GUARDAR", iconoEditar(java.awt.Color.WHITE), COLOR_AZUL, java.awt.Color.WHITE, null);
-        acciones.add(jButton4);
         acciones.add(jButton1);
         acciones.add(jButton2);
         acciones.add(jButton3);
@@ -2263,6 +2335,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     String total = leerCelda(row, 21);
                     String abonado = leerCelda(row, 22);
                     String estadoRecepcion = leerCelda(row, 24);
+                    String estadoOrden = leerCelda(row, 23);
                     String diasAlRecibirGuardados = leerCelda(row, 25);
                     String fechaRecepcionReal = leerCelda(row, 26);
                     if (fechaRecepcionReal.isBlank() && "SI".equalsIgnoreCase(estadoRecepcion)) {
@@ -2272,7 +2345,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
                                     java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
                         }
                     }
-                    String estatus = calcularEstatusOrden(total, abonado, estadoRecepcion);
+                    String estatus = esOrdenCancelada(estadoOrden)
+                            ? "CANCELADA"
+                            : calcularEstatusOrden(total, abonado, estadoRecepcion);
                     String pendiente = calcularPendientePago(total, abonado);
                     sumaTotal += parseMonto(total);
                     sumaAbonado += parseMonto(abonado);
@@ -3083,6 +3158,18 @@ public class PROVEEDORES extends javax.swing.JFrame {
 
     private void mostrarAccionesPendiente(String noOrden, double pendientePago,
             double pendienteMercancia, javax.swing.JTable tabla, Runnable refrescar) {
+        if (!ordenAutorizada(noOrden)) {
+            JOptionPane.showMessageDialog(this,
+                    "La orden " + noOrden + " aún no está autorizada.",
+                    "Orden no autorizada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (ordenDesactivada(noOrden)) {
+            JOptionPane.showMessageDialog(this,
+                    "La orden " + noOrden + " está cancelada y no puede recibirse ni abonarse.",
+                    "Orden cancelada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         java.util.List<String> opcionesDisponibles = new java.util.ArrayList<>();
         if (pendientePago > 0) {
             opcionesDisponibles.add("Registrar abono");
@@ -3465,6 +3552,18 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//parseFechaOrdenable
 
     private void registrarAbono(String noOrden, javax.swing.JTable tabla) {
+        if (!ordenAutorizada(noOrden)) {
+            JOptionPane.showMessageDialog(this,
+                    "La orden " + noOrden + " aún no está autorizada y no puede recibir abonos.",
+                    "Orden no autorizada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (ordenDesactivada(noOrden)) {
+            JOptionPane.showMessageDialog(this,
+                    "La orden " + noOrden + " está cancelada y no puede recibir abonos.",
+                    "Orden cancelada", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         int filaVista = tabla.getSelectedRow();
         if (filaVista >= 0) {
             int filaSeleccionadaModelo = tabla.convertRowIndexToModel(filaVista);
@@ -3874,8 +3973,11 @@ public class PROVEEDORES extends javax.swing.JFrame {
                     datos.put("TOTAL", leerCelda(row, 21));
                     datos.put("ABONADO", leerCelda(row, 22));
                     datos.put("PENDIENTE POR PAGAR", calcularPendientePago(leerCelda(row, 21), leerCelda(row, 22)));
-                        datos.put("ESTATUS", calcularEstatusOrden(
-                            leerCelda(row, 21), leerCelda(row, 22), leerCelda(row, 24)));
+                        String estatus = leerCelda(row, 23);
+                        datos.put("ESTATUS", esOrdenCancelada(estatus)
+                                ? "CANCELADA"
+                                : calcularEstatusOrden(
+                                        leerCelda(row, 21), leerCelda(row, 22), leerCelda(row, 24)));
                     break;
                 }
             } catch (Exception ex) {
@@ -3888,6 +3990,8 @@ public class PROVEEDORES extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "No se encontr\u00f3 informaci\u00f3n de la orden " + noOrden + ".");
             return;
         }
+        final boolean ordenAutorizada = ordenAutorizada(noOrden);
+        final boolean ordenCancelada = "CANCELADA".equalsIgnoreCase(datos.get("ESTATUS"));
         final boolean ordenFinalizada = "FINALIZADO".equalsIgnoreCase(datos.get("ESTATUS"));
 
         javax.swing.JPanel panelDatos = new javax.swing.JPanel(new java.awt.GridLayout(0, 4, 12, 6));
@@ -3907,7 +4011,7 @@ public class PROVEEDORES extends javax.swing.JFrame {
         javax.swing.table.DefaultTableModel modeloProductos = new javax.swing.table.DefaultTableModel(columnasProductos, 0) {
             @Override
             public boolean isCellEditable(int fila, int columna) {
-                return !ordenFinalizada && columna == 6
+                return ordenAutorizada && !ordenFinalizada && !ordenCancelada && columna == 6
                         && parseNumeroInventario(String.valueOf(getValueAt(fila, 5))) > 0;
             }
         };
@@ -4147,13 +4251,15 @@ public class PROVEEDORES extends javax.swing.JFrame {
         javax.swing.JButton botonRecibir = new javax.swing.JButton("RECIBIR MERCANCIA");
         botonRecibir.setBackground(new java.awt.Color(0, 95, 131));
         botonRecibir.setForeground(java.awt.Color.WHITE);
-        botonRecibir.setEnabled(!ordenFinalizada
+        botonRecibir.setEnabled(ordenAutorizada && !ordenFinalizada && !ordenCancelada
                 && !ordenMercanciaRecibida(noOrden) && hayPendienteRecibir(modeloProductos));
         botonRecibir.addActionListener(e -> {
             if (recibirMercancia(noOrden, modeloProductos)) {
-                botonRecibir.setEnabled(!ordenFinalizada
+                botonRecibir.setEnabled(ordenAutorizada && !ordenFinalizada && !ordenCancelada
                         && !ordenMercanciaRecibida(noOrden) && hayPendienteRecibir(modeloProductos));
-                actualizarFilaHistorial(tablaHistorial, noOrden);
+                if (tablaHistorial != null) {
+                    actualizarFilaHistorial(tablaHistorial, noOrden);
+                }
             }
         });
         javax.swing.JPanel panelRecibir = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
@@ -4189,21 +4295,6 @@ public class PROVEEDORES extends javax.swing.JFrame {
         javax.swing.JDialog dialogo = new javax.swing.JDialog(this,
                 "Registrar incidencia - Orden No. " + noOrden, true);
         dialogo.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-
-        javax.swing.JPanel contenido = new javax.swing.JPanel(new java.awt.BorderLayout(0, 12));
-        contenido.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 18, 14, 18));
-
-        javax.swing.JLabel titulo = new javax.swing.JLabel("REGISTRAR INCIDENCIA");
-        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
-        titulo.setForeground(COLOR_AZUL);
-        contenido.add(titulo, java.awt.BorderLayout.NORTH);
-
-        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
-        java.awt.GridBagConstraints restricciones = new java.awt.GridBagConstraints();
-        restricciones.insets = new java.awt.Insets(5, 5, 5, 5);
-        restricciones.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        restricciones.anchor = java.awt.GridBagConstraints.WEST;
-
         javax.swing.JComboBox<String> tipo = new javax.swing.JComboBox<>(
                 new String[]{"Producto dañado", "Producto incorrecto", "Faltante", "Otro"});
         javax.swing.JComboBox<String> producto = new javax.swing.JComboBox<>();
@@ -4219,26 +4310,202 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
         javax.swing.JSpinner cantidad = new javax.swing.JSpinner(
                 new javax.swing.SpinnerNumberModel(1, 1, 999999, 1));
-        javax.swing.JTextField fecha = new javax.swing.JTextField(
-                java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        com.toedter.calendar.JDateChooser fecha = new com.toedter.calendar.JDateChooser();
+        fecha.setDate(new java.util.Date());
+        fecha.setDateFormatString("dd/MM/yyyy");
+        fecha.setPreferredSize(new java.awt.Dimension(0, 34));
         javax.swing.JTextArea descripcion = new javax.swing.JTextArea(5, 45);
         descripcion.setLineWrap(true);
         descripcion.setWrapStyleWord(true);
+        descripcion.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
+        descripcion.setBorder(javax.swing.BorderFactory.createEmptyBorder(8, 12, 8, 12));
         javax.swing.JScrollPane scrollDescripcion = new javax.swing.JScrollPane(descripcion);
-        javax.swing.JButton guardar = new javax.swing.JButton("GUARDAR INCIDENCIA");
-        guardar.setEnabled(!productos.isEmpty());
+        javax.swing.JLabel contadorDescripcion = new javax.swing.JLabel("0 / 500");
+        contadorDescripcion.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        contadorDescripcion.setForeground(COLOR_TEXTO_GRIS);
+        descripcion.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void actualizar() {
+                if (descripcion.getText().length() > 500) {
+                    javax.swing.SwingUtilities.invokeLater(() ->
+                            descripcion.setText(descripcion.getText().substring(0, 500)));
+                }
+                contadorDescripcion.setText(descripcion.getText().length() + " / 500");
+            }
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { actualizar(); }
+        });
 
+        javax.swing.DefaultListModel<String> modeloEvidencias = new javax.swing.DefaultListModel<>();
+        javax.swing.JList<String> listaEvidencias = new javax.swing.JList<>(modeloEvidencias);
+        listaEvidencias.setVisibleRowCount(4);
+        listaEvidencias.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+        javax.swing.JLabel contadorEvidencias = new javax.swing.JLabel("Archivos adjuntos (0)");
+        contadorEvidencias.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+        java.util.function.Consumer<File[]> agregarEvidencias = archivos -> {
+            for (File archivo : archivos) {
+                String nombre = archivo.getName().toLowerCase(java.util.Locale.ROOT);
+                boolean imagen = nombre.endsWith(".jpg") || nombre.endsWith(".jpeg")
+                        || nombre.endsWith(".png");
+                if (!imagen) {
+                    JOptionPane.showMessageDialog(dialogo,
+                            "El archivo " + archivo.getName() + " no es una imagen JPG, JPEG o PNG.",
+                            "Archivo no válido", JOptionPane.WARNING_MESSAGE);
+                    continue;
+                }
+                if (archivo.length() > 5 * 1024 * 1024) {
+                    JOptionPane.showMessageDialog(dialogo,
+                            "El archivo " + archivo.getName() + " supera el máximo de 5 MB.",
+                            "Archivo no válido", JOptionPane.WARNING_MESSAGE);
+                    continue;
+                }
+                if (!modeloEvidencias.contains(archivo.getName())) {
+                    modeloEvidencias.addElement(archivo.getName());
+                }
+            }
+            contadorEvidencias.setText("Archivos adjuntos (" + modeloEvidencias.size() + ")");
+        };
+        javax.swing.JButton seleccionarArchivos = new javax.swing.JButton(
+                "  Seleccionar archivo(s)");
+        seleccionarArchivos.setIcon(iconoDocumentoAdjunto(COLOR_AZUL));
+        seleccionarArchivos.addActionListener(e -> {
+            javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
+            selector.setMultiSelectionEnabled(true);
+            selector.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                    "Imágenes JPG, JPEG o PNG", "jpg", "jpeg", "png"));
+            if (selector.showOpenDialog(dialogo) != javax.swing.JFileChooser.APPROVE_OPTION) {
+                return;
+            }
+            agregarEvidencias.accept(selector.getSelectedFiles());
+        });
+
+        javax.swing.JPanel contenido = new javax.swing.JPanel();
+        contenido.setLayout(new javax.swing.BoxLayout(contenido, javax.swing.BoxLayout.Y_AXIS));
+        contenido.setBackground(new java.awt.Color(239, 246, 255));
+        contenido.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 16, 12, 16));
+
+        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(12, 0));
+        encabezado.setBackground(new java.awt.Color(13, 61, 108));
+        encabezado.setBorder(javax.swing.BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        encabezado.add(new javax.swing.JLabel(iconoDocumentoAdjunto(java.awt.Color.WHITE)),
+                java.awt.BorderLayout.WEST);
+        javax.swing.JPanel textosEncabezado = new javax.swing.JPanel();
+        textosEncabezado.setOpaque(false);
+        textosEncabezado.setLayout(new javax.swing.BoxLayout(textosEncabezado, javax.swing.BoxLayout.Y_AXIS));
+        javax.swing.JLabel titulo = new javax.swing.JLabel("REGISTRAR INCIDENCIA");
+        titulo.setForeground(java.awt.Color.WHITE);
+        titulo.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 22));
+        javax.swing.JLabel subtitulo = new javax.swing.JLabel(
+                "Registra una incidencia relacionada con un producto de la orden.");
+        subtitulo.setForeground(new java.awt.Color(220, 235, 250));
+        textosEncabezado.add(titulo);
+        textosEncabezado.add(subtitulo);
+        encabezado.add(textosEncabezado, java.awt.BorderLayout.CENTER);
+        contenido.add(encabezado);
+        contenido.add(javax.swing.Box.createVerticalStrut(10));
+
+        javax.swing.JPanel informacion = crearSeccionIncidencia("Información de la incidencia",
+                iconoDocumento(COLOR_AZUL_OSCURO));
+        javax.swing.JPanel formulario = new javax.swing.JPanel(new java.awt.GridBagLayout());
+        formulario.setOpaque(false);
+        java.awt.GridBagConstraints restricciones = new java.awt.GridBagConstraints();
+        restricciones.insets = new java.awt.Insets(4, 8, 4, 8);
+        restricciones.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        restricciones.anchor = java.awt.GridBagConstraints.WEST;
         agregarCampoIncidencia(formulario, restricciones, 0, "Tipo de incidencia:", tipo);
         agregarCampoIncidencia(formulario, restricciones, 1, "Fecha de incidencia:", fecha);
         agregarCampoIncidencia(formulario, restricciones, 2, "Producto:", producto);
         agregarCampoIncidencia(formulario, restricciones, 3, "Cantidad con incidencia:", cantidad);
         agregarCampoIncidencia(formulario, restricciones, 4, "Descripción de la incidencia:", scrollDescripcion);
-        contenido.add(formulario, java.awt.BorderLayout.CENTER);
+        restricciones.gridx = 1;
+        restricciones.gridy = 5;
+        restricciones.weightx = 1;
+        formulario.add(contadorDescripcion, restricciones);
+        informacion.add(formulario, java.awt.BorderLayout.CENTER);
+        contenido.add(informacion);
+        contenido.add(javax.swing.Box.createVerticalStrut(10));
 
-        javax.swing.JPanel botones = new javax.swing.JPanel(
-                new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
+        javax.swing.JPanel evidencia = crearSeccionIncidencia("Evidencia fotográfica",
+                iconoDocumentoAdjunto(COLOR_AZUL_OSCURO));
+        javax.swing.JPanel zonaArchivos = new javax.swing.JPanel(new java.awt.BorderLayout(8, 8));
+        zonaArchivos.setOpaque(false);
+        javax.swing.JPanel carga = new javax.swing.JPanel();
+        carga.setLayout(new javax.swing.BoxLayout(carga, javax.swing.BoxLayout.Y_AXIS));
+        carga.setOpaque(false);
+        carga.setBorder(javax.swing.BorderFactory.createDashedBorder(
+                new java.awt.Color(125, 174, 230), 1, 5, 3, true));
+        javax.swing.JLabel instruccion = new javax.swing.JLabel(
+                "<html><center><font size='5'>⇧</font><br>Arrastra y suelta la(s) foto(s) aquí<br>o</center></html>");
+        instruccion.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
+        seleccionarArchivos.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
+        carga.add(javax.swing.Box.createVerticalGlue());
+        carga.add(instruccion);
+        carga.add(javax.swing.Box.createVerticalStrut(6));
+        carga.add(seleccionarArchivos);
+        carga.add(javax.swing.Box.createVerticalStrut(6));
+        javax.swing.JLabel formatos = new javax.swing.JLabel("Formatos: JPG, JPEG, PNG  |  Tamaño máximo: 5 MB por archivo");
+        formatos.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 10));
+        formatos.setAlignmentX(java.awt.Component.CENTER_ALIGNMENT);
+        carga.add(formatos);
+        carga.add(javax.swing.Box.createVerticalGlue());
+        javax.swing.TransferHandler manejadorArchivos = new javax.swing.TransferHandler() {
+            @Override
+            public boolean canImport(javax.swing.JComponent componente,
+                    java.awt.datatransfer.DataFlavor[] sabores) {
+                for (java.awt.datatransfer.DataFlavor sabor : sabores) {
+                    if (java.awt.datatransfer.DataFlavor.javaFileListFlavor.equals(sabor)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public boolean importData(javax.swing.JComponent componente,
+                    java.awt.datatransfer.Transferable transferencia) {
+                if (!transferencia.isDataFlavorSupported(
+                        java.awt.datatransfer.DataFlavor.javaFileListFlavor)) {
+                    return false;
+                }
+                try {
+                    @SuppressWarnings("unchecked")
+                    java.util.List<File> archivos = (java.util.List<File>) transferencia.getTransferData(
+                            java.awt.datatransfer.DataFlavor.javaFileListFlavor);
+                    agregarEvidencias.accept(archivos.toArray(new File[0]));
+                    return true;
+                } catch (java.awt.datatransfer.UnsupportedFlavorException | IOException ex) {
+                    logger.log(java.util.logging.Level.WARNING,
+                            "No se pudieron cargar archivos arrastrados como evidencia.", ex);
+                    JOptionPane.showMessageDialog(dialogo,
+                            "No se pudieron cargar los archivos arrastrados.",
+                            "Evidencia fotográfica", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            }
+        };
+        carga.setTransferHandler(manejadorArchivos);
+        instruccion.setTransferHandler(manejadorArchivos);
+        formatos.setTransferHandler(manejadorArchivos);
+        seleccionarArchivos.setTransferHandler(manejadorArchivos);
+        zonaArchivos.add(carga, java.awt.BorderLayout.CENTER);
+        javax.swing.JPanel adjuntos = new javax.swing.JPanel(new java.awt.BorderLayout(0, 6));
+        adjuntos.setBackground(java.awt.Color.WHITE);
+        adjuntos.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(170, 198, 230)),
+                javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        adjuntos.add(contadorEvidencias, java.awt.BorderLayout.NORTH);
+        adjuntos.add(new javax.swing.JScrollPane(listaEvidencias), java.awt.BorderLayout.CENTER);
+        zonaArchivos.add(adjuntos, java.awt.BorderLayout.EAST);
+        evidencia.add(zonaArchivos, java.awt.BorderLayout.CENTER);
+        contenido.add(evidencia);
+        contenido.add(javax.swing.Box.createVerticalStrut(10));
+
+        javax.swing.JButton guardar = new javax.swing.JButton("GUARDAR INCIDENCIA");
         javax.swing.JButton cancelar = new javax.swing.JButton("CANCELAR");
+        guardar.setEnabled(!productos.isEmpty());
         prepararBoton(guardar, "GUARDAR INCIDENCIA", null, java.awt.Color.WHITE, COLOR_AZUL, COLOR_AZUL);
+        prepararBoton(cancelar, "CANCELAR", iconoCerrarX(COLOR_AZUL_OSCURO),
+                COLOR_AZUL_OSCURO, java.awt.Color.WHITE, COLOR_AZUL_OSCURO);
         producto.addActionListener(e -> {
             if (producto.getSelectedIndex() >= 0) {
                 int maximo = Integer.parseInt(productos.get(producto.getSelectedIndex())[2]);
@@ -4277,7 +4544,9 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 return;
             }
             try {
-                guardarIncidencia(noOrden, fecha.getText().trim(), productoSeleccionado[0],
+                String fechaTexto = fecha.getDate() == null
+                        ? "" : new java.text.SimpleDateFormat("dd/MM/yyyy").format(fecha.getDate());
+                guardarIncidencia(noOrden, fechaTexto, productoSeleccionado[0],
                         productoSeleccionado[1], cantidadIncidencia, String.valueOf(tipo.getSelectedItem()),
                         descripcion.getText().trim());
                 cargarIncidenciasEnTabla(noOrden, modeloIncidencias, tarjetaIncidencias);
@@ -4288,16 +4557,37 @@ public class PROVEEDORES extends javax.swing.JFrame {
                 mostrarError("No se pudo guardar la incidencia.", ex);
             }
         });
+        javax.swing.JPanel botones = new javax.swing.JPanel(
+                new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
+        botones.setOpaque(false);
         botones.add(cancelar);
         botones.add(guardar);
         contenido.add(botones, java.awt.BorderLayout.SOUTH);
 
         dialogo.setContentPane(contenido);
-        dialogo.setSize(720, 520);
-        dialogo.setResizable(false);
+        dialogo.setSize(980, 720);
+        dialogo.setMinimumSize(new java.awt.Dimension(820, 620));
+        dialogo.setResizable(true);
         dialogo.setLocationRelativeTo(null);
         dialogo.setVisible(true);
     }//mostrarFormularioIncidencia
+
+    private javax.swing.JPanel crearSeccionIncidencia(String titulo, javax.swing.Icon icono) {
+        javax.swing.JPanel seccion = new javax.swing.JPanel(new java.awt.BorderLayout(0, 8));
+        seccion.setBackground(new java.awt.Color(248, 251, 255));
+        seccion.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createLineBorder(new java.awt.Color(210, 224, 242)),
+                javax.swing.BorderFactory.createEmptyBorder(8, 10, 10, 10)));
+        javax.swing.JPanel encabezado = new javax.swing.JPanel(new java.awt.BorderLayout(8, 0));
+        encabezado.setOpaque(false);
+        encabezado.add(new javax.swing.JLabel(icono), java.awt.BorderLayout.WEST);
+        javax.swing.JLabel etiqueta = new javax.swing.JLabel(titulo);
+        etiqueta.setForeground(COLOR_AZUL_OSCURO);
+        etiqueta.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+        encabezado.add(etiqueta, java.awt.BorderLayout.CENTER);
+        seccion.add(encabezado, java.awt.BorderLayout.NORTH);
+        return seccion;
+    }
 
     private void agregarCampoIncidencia(javax.swing.JPanel formulario,
             java.awt.GridBagConstraints restricciones, int fila, String etiqueta,
@@ -4793,6 +5083,18 @@ public class PROVEEDORES extends javax.swing.JFrame {
     }//ocultarColumnasProductos
 
     private boolean recibirMercancia(String noOrden, javax.swing.table.DefaultTableModel modeloProductos) {
+        if (!ordenAutorizada(noOrden)) {
+            JOptionPane.showMessageDialog(this,
+                    "La orden " + noOrden + " aún no está autorizada y no puede recibir mercancía.",
+                    "Orden no autorizada", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        if (ordenDesactivada(noOrden)) {
+            JOptionPane.showMessageDialog(this,
+                    "La orden " + noOrden + " está cancelada y no puede recibir mercancía.",
+                    "Orden cancelada", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
         if (modeloProductos.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "La orden no tiene productos para recibir.");
             return false;
@@ -5005,6 +5307,43 @@ public class PROVEEDORES extends javax.swing.JFrame {
         }
         return tieneCantidad ? null : "Captura al menos una cantidad en la columna RECIBIR AHORA.";
     }//validarCantidadesARecibir
+
+    private boolean esOrdenCancelada(String estado) {
+        return "CANCELADA".equalsIgnoreCase(estado)
+                || "DESACTIVADA".equalsIgnoreCase(estado);
+    }
+
+    private boolean ordenDesactivada(String noOrden) {
+        File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
+        try (FileInputStream fis = new FileInputStream(archivoOrdenes);
+                Workbook libro = new XSSFWorkbook(fis)) {
+            for (Row fila : libro.getSheetAt(0)) {
+                if (fila.getRowNum() > 0 && noOrden.equalsIgnoreCase(leerCelda(fila, 0))) {
+                    return esOrdenCancelada(leerCelda(fila, 23));
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo consultar el estado de la orden " + noOrden + ".", ex);
+        }
+        return false;
+    }
+
+    private boolean ordenAutorizada(String noOrden) {
+        File archivoOrdenes = new File(ORDENES_FILE_ABSOLUTE);
+        try (FileInputStream fis = new FileInputStream(archivoOrdenes);
+                Workbook libro = new XSSFWorkbook(fis)) {
+            for (Row fila : libro.getSheetAt(0)) {
+                if (fila.getRowNum() > 0 && noOrden.equalsIgnoreCase(leerCelda(fila, 0))) {
+                    return "AUTORIZADA".equalsIgnoreCase(leerCelda(fila, 28));
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo consultar la autorización de la orden " + noOrden + ".", ex);
+        }
+        return false;
+    }
 
     private boolean hayPendienteRecibir(javax.swing.table.DefaultTableModel modeloProductos) {
         for (int fila = 0; fila < modeloProductos.getRowCount(); fila++) {

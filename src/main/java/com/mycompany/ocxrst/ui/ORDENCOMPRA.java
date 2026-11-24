@@ -50,6 +50,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.Key;
 import java.security.KeyStore;
@@ -80,6 +81,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private static final String RUTA_METODOPAGO = AppConfig.metodoPagoFile().getAbsolutePath();
     private static final String RUTA_CFDI = AppConfig.cfdiFile().getAbsolutePath();
     private static final String RUTA_TIPOMONEDA = AppConfig.tipoMonedaFile().getAbsolutePath();
+    private static final String RUTA_MODIFICACIONESOC =
+            AppConfig.resolveBaseFile("MODIFICACIONESOC.xlsx").getAbsolutePath();
     private static final OrdenCompraRepository ORDEN_COMPRA_REPOSITORY = new OrdenCompraRepository();
     private static final ProductoProveedorRepository PRODUCTO_PROVEEDOR_REPOSITORY
             = new ProductoProveedorRepository();
@@ -103,17 +106,23 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private static final int COLUMNA_AUTORIZACION_ESTADO = 28;
     private static final int COLUMNA_AUTORIZADO_POR = 29;
     private static final int COLUMNA_FECHA_AUTORIZACION = 30;
+    private static final int COLUMNA_MOD_ESTADO = 6;
+    private static final int COLUMNA_MOD_SOLICITANTE = 7;
+    private static final int COLUMNA_MOD_FECHA = 8;
+    private static final int COLUMNA_MOD_RESPUESTA = 9;
+    private static final int COLUMNA_MOD_RESPONDIO_POR = 10;
 
     // Caché de inventario: código -> "código | descripción"
     private final java.util.List<String[]> cacheInventario = new java.util.ArrayList<>();
     private final javax.swing.JPopupMenu popupProductos = new javax.swing.JPopupMenu();
 
-    // Caché de proveedores: id -> "id | nombre | activo"
+    // Caché de proveedores: id -> "id | nombre | activo | alta autorizada"
     private final java.util.List<String[]> cacheProveedores = new java.util.ArrayList<>();
     private final javax.swing.JPopupMenu popupProveedores = new javax.swing.JPopupMenu();
     private boolean seleccionandoProveedor = false;
     private boolean modoCrear = false;
     private String estadoOrdenCargada;
+    private String estadoEdicionOriginal;
     private javax.swing.JButton jButtonDesactivar;
     private javax.swing.JPanel panelNavegacionOrdenes;
     private javax.swing.JButton botonPrimeraOrden;
@@ -128,6 +137,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private javax.swing.JPanel panelBusquedaOrdenes;
     private javax.swing.JPanel contenedorVista;
     private javax.swing.JLabel etiquetaTituloVentana;
+    private javax.swing.JPanel barraTituloVentana;
+    private javax.swing.JButton botonCerrarVentana;
     private File ultimoPdfGenerado;
     private java.awt.Point posicionArrastreVentana;
 
@@ -469,11 +480,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private void configurarMarcoPersonalizado() {
         javax.swing.JPanel raiz = new javax.swing.JPanel(new java.awt.BorderLayout());
         raiz.setBackground(EstiloAplicacion.FONDO_PANTALLA);
-        raiz.setBorder(javax.swing.BorderFactory.createLineBorder(
-                new java.awt.Color(28, 82, 132)));
+        raiz.setBorder(null);
         contenedorVista = new javax.swing.JPanel(new java.awt.BorderLayout());
         contenedorVista.setOpaque(false);
-        raiz.add(crearBarraTitulo(), java.awt.BorderLayout.NORTH);
+        barraTituloVentana = crearBarraTitulo();
+        raiz.add(barraTituloVentana, java.awt.BorderLayout.NORTH);
         raiz.add(contenedorVista, java.awt.BorderLayout.CENTER);
         setContentPane(raiz);
     }
@@ -492,9 +503,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         javax.swing.JPanel controles = new javax.swing.JPanel(
                 new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 2, 0));
         controles.setOpaque(false);
-        javax.swing.JButton cerrar = crearBotonMarco("X", "Cerrar ventana");
-        cerrar.addActionListener(evento -> dispose());
-        controles.add(cerrar);
+        botonCerrarVentana = crearBotonMarco("X", "Cerrar ventana");
+        botonCerrarVentana.setVisible(false);
+        botonCerrarVentana.addActionListener(evento -> dispose());
+        controles.add(botonCerrarVentana);
         barra.add(controles, java.awt.BorderLayout.EAST);
 
         java.awt.event.MouseAdapter arrastre = new java.awt.event.MouseAdapter() {
@@ -545,6 +557,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     public ORDENCOMPRA(java.util.List<String[]> productosIniciales) {
         this();
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        botonCerrarVentana.setVisible(true);
         jButton6.setVisible(false);
         abrirNuevaOrden();
         if (productosIniciales == null) {
@@ -848,6 +861,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         prepararBotonCabecera(jButton1, "IMPRIMIR", java.awt.Color.WHITE, new java.awt.Color(28, 82, 132));
         prepararBotonCabecera(jButtonAutorizar, "AUTORIZAR",
                 new java.awt.Color(34, 139, 94), java.awt.Color.WHITE);
+        jButton1.setVisible(false);
+        jButtonAutorizar.setVisible(false);
         actualizarBotonAutorizar();
         ajustarTamanoPanelAlContenido();
         pack();
@@ -903,6 +918,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             panelBusquedaOrdenes = crearPanelBusquedaOrdenes();
         }
         mostrarVistaInterna(panelBusquedaOrdenes);
+        barraTituloVentana.setVisible(false);
         setTitle("DIRECTORIO DE ORDENES DE COMPRA");
         setSize(1000, 680);
         setMinimumSize(new java.awt.Dimension(850, 540));
@@ -1151,11 +1167,14 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         javax.swing.JButton nueva = botonBusqueda("Nueva orden de compra", true);
         nueva.addActionListener(e -> abrirNuevaOrden());
+        javax.swing.JButton historial = botonBusqueda("Historial de compras", false);
+        historial.addActionListener(e -> PROVEEDORES.mostrarHistorialDesdeOrdenes(this));
         javax.swing.JButton actualizar = botonBusqueda("Actualizar", false);
         actualizar.addActionListener(e -> cargarOrdenesEnBusqueda());
         javax.swing.JPanel acciones = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 5));
         acciones.setOpaque(false);
         acciones.add(nueva);
+        acciones.add(historial);
         acciones.add(actualizar);
         encabezado.add(acciones, java.awt.BorderLayout.EAST);
 
@@ -1229,8 +1248,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         tabla.getColumnModel().getColumn(2).setPreferredWidth(220);
         tabla.getColumnModel().getColumn(5).setPreferredWidth(110);
         tabla.getColumnModel().getColumn(6).setPreferredWidth(105);
-        tabla.getColumnModel().getColumn(7).setPreferredWidth(80);
+        tabla.getColumnModel().getColumn(7).setPreferredWidth(150);
         final int[] celdaAccionHover = {-1, -1};
+        final java.util.Map<String, String> accionesOrdenes = new java.util.HashMap<>();
         tabla.getColumnModel().getColumn(6).setCellRenderer((tablaActual, valor, seleccionado, tieneFoco, fila, columna) -> {
             javax.swing.JLabel estadoCelda = new javax.swing.JLabel(String.valueOf(valor));
             estadoCelda.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -1242,17 +1262,79 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             return estadoCelda;
         });
         tabla.getColumnModel().getColumn(7).setCellRenderer((tablaActual, valor, seleccionado, tieneFoco, fila, columna) -> {
+            String numero = String.valueOf(tablaActual.getValueAt(fila, 0));
+            String accion = accionesOrdenes.getOrDefault(numero, "EDITAR");
+            if ("SOLICITAR EDICIÓN".equals(accion)) {
+                boolean verHover = fila == celdaAccionHover[0] && celdaAccionHover[1] == 0;
+                javax.swing.JLabel enlaceVer = new javax.swing.JLabel(
+                        "<html><font color='#1F70B8'>"
+                        + (verHover ? "<u>VER</u>" : "VER")
+                        + "</font></html>");
+                enlaceVer.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                enlaceVer.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
+                enlaceVer.setForeground(new java.awt.Color(28, 82, 132));
+                enlaceVer.setOpaque(true);
+                enlaceVer.setBackground(seleccionado
+                        ? tablaActual.getSelectionBackground()
+                        : (fila % 2 == 0 ? java.awt.Color.WHITE : new java.awt.Color(248, 249, 251)));
+                return enlaceVer;
+            }
+            boolean solicitudAccion = "SOLICITUD ENVIADA".equals(accion)
+                    || "SOLICITUD RECHAZADA".equals(accion)
+                    || "AUTORIZAR EDICIÓN".equals(accion);
+            if (solicitudAccion) {
+                boolean verHover = fila == celdaAccionHover[0] && celdaAccionHover[1] == 0;
+                boolean accionHover = fila == celdaAccionHover[0] && celdaAccionHover[1] == 1;
+                String ver = verHover ? "<u>VER</u>" : "VER";
+                String textoAccion = accionHover ? "<u>" + accion + "</u>" : accion;
+                javax.swing.JLabel enlaceSolicitud = new javax.swing.JLabel(
+                        "<html><font color='#1F70B8'>" + ver
+                        + "&nbsp;&nbsp;|&nbsp;&nbsp;" + textoAccion + "</font></html>");
+                enlaceSolicitud.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                enlaceSolicitud.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
+                enlaceSolicitud.setForeground(new java.awt.Color(28, 82, 132));
+                enlaceSolicitud.setOpaque(true);
+                enlaceSolicitud.setBackground(seleccionado
+                        ? tablaActual.getSelectionBackground()
+                        : (fila % 2 == 0 ? java.awt.Color.WHITE : new java.awt.Color(248, 249, 251)));
+                return enlaceSolicitud;
+            }
+            if (!"EDITAR".equals(accion)) {
+                boolean hover = fila == celdaAccionHover[0];
+                javax.swing.JPanel celdaAccion = new javax.swing.JPanel(
+                        new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 5));
+                celdaAccion.setOpaque(true);
+                celdaAccion.setBackground(seleccionado
+                        ? tablaActual.getSelectionBackground()
+                        : (fila % 2 == 0 ? java.awt.Color.WHITE : new java.awt.Color(248, 249, 251)));
+                javax.swing.JLabel pendiente = new javax.swing.JLabel(
+                        "<html><div style='text-align:center'>"
+                        + (hover ? "<u>" + accion + "</u>" : accion)
+                        + "</div></html>");
+                pendiente.setForeground(new java.awt.Color(196, 118, 0));
+                pendiente.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
+                pendiente.setOpaque(true);
+                pendiente.setBackground(new java.awt.Color(255, 240, 219));
+                pendiente.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                        javax.swing.BorderFactory.createLineBorder(new java.awt.Color(255, 240, 219)),
+                        javax.swing.BorderFactory.createEmptyBorder(3, 8, 3, 8)));
+                celdaAccion.add(pendiente);
+                return celdaAccion;
+            }
             javax.swing.JLabel enlace = new javax.swing.JLabel();
-            boolean hover = fila == celdaAccionHover[0] && columna == 7;
+            boolean verHover = fila == celdaAccionHover[0] && celdaAccionHover[1] == 0;
+            boolean editarHover = fila == celdaAccionHover[0] && celdaAccionHover[1] == 1;
             java.awt.Component celdaBase = tablaActual.getDefaultRenderer(Object.class)
                     .getTableCellRendererComponent(tablaActual,
                             tablaActual.getValueAt(fila, 0), seleccionado, tieneFoco, fila, 0);
-            enlace.setText(hover ? "<html><u><font color='#1F70B8'>VER</font></u></html>" : "VER");
+            String ver = verHover ? "<u>VER</u>" : "VER";
+            String editar = editarHover ? "<u>EDITAR</u>" : "EDITAR";
+            enlace.setText("<html><font color='#1F70B8'>" + ver
+                    + "&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;" + editar
+                    + "</font></html>");
             enlace.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-            enlace.setFont(tablaActual.getFont());
-            enlace.setForeground(seleccionado
-                    ? tablaActual.getSelectionForeground()
-                    : new java.awt.Color(28, 82, 132));
+            enlace.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 10));
+            enlace.setForeground(new java.awt.Color(28, 82, 132));
             enlace.setOpaque(true);
             enlace.setBackground(celdaBase.getBackground());
             return enlace;
@@ -1263,7 +1345,43 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 int columna = tabla.columnAtPoint(e.getPoint());
                 if (fila < 0 || columna != 7) return;
                 String numero = String.valueOf(modeloBusqueda.getValueAt(fila, 0));
-                abrirOrdenDesdeBusqueda(numero, false);
+                java.awt.Rectangle limites = tabla.getCellRect(fila, columna, false);
+                String accion = accionesOrdenes.getOrDefault(numero, "EDITAR");
+                if ("PENDIENTE DE AUTORIZAR".equals(accion)) {
+                    abrirOrdenDesdeBusqueda(numero, false);
+                    autorizarOrden();
+                    return;
+                }
+                if ("SOLICITAR EDICIÓN".equals(accion)) {
+                    abrirPdfOrdenDesdeBusqueda(numero);
+                    return;
+                }
+                boolean editar = e.getX() >= limites.x + limites.width / 2;
+                if ("AUTORIZAR EDICIÓN".equals(accion) && editar) {
+                    autorizarEdicionOrden(numero);
+                    return;
+                }
+                if ("SOLICITUD RECHAZADA".equals(accion) && editar) {
+                    mostrarRespuestaEdicion(numero);
+                    return;
+                }
+                if ("SOLICITUD ENVIADA".equals(accion) && editar) {
+                    JOptionPane.showMessageDialog(tabla,
+                            "La solicitud de edición ya fue enviada al administrador.",
+                            "Solicitud pendiente", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                if ("SOLICITAR EDICIÓN".equals(accion)
+                        || "AUTORIZAR EDICIÓN".equals(accion)
+                        || "SOLICITUD ENVIADA".equals(accion)) {
+                    abrirPdfOrdenDesdeBusqueda(numero);
+                    return;
+                }
+                if (editar) {
+                    abrirOrdenDesdeBusqueda(numero, true);
+                } else {
+                    abrirPdfOrdenDesdeBusqueda(numero);
+                }
             }
 
             @Override public void mouseExited(java.awt.event.MouseEvent e) {
@@ -1280,8 +1398,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 int filaAnterior = celdaAccionHover[0];
                 int columnaAnterior = celdaAccionHover[1];
                 if (fila >= 0 && columna == 7) {
+                    java.awt.Rectangle limites = tabla.getCellRect(fila, columna, false);
+                    String numero = String.valueOf(modeloBusqueda.getValueAt(fila, 0));
                     celdaAccionHover[0] = fila;
-                    celdaAccionHover[1] = columna;
+                    String accionHover = accionesOrdenes.getOrDefault(numero, "EDITAR");
+                    celdaAccionHover[1] = "PENDIENTE DE AUTORIZAR".equals(accionHover)
+                            || "SOLICITAR EDICIÓN".equals(accionHover)
+                            ? 0 : (e.getX() < limites.x + limites.width / 2 ? 0 : 1);
                     tabla.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
                 } else {
                     celdaAccionHover[0] = -1;
@@ -1291,6 +1414,80 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 if (filaAnterior != celdaAccionHover[0] || columnaAnterior != celdaAccionHover[1]) {
                     tabla.repaint();
                 }
+            }
+        });
+        javax.swing.JPopupMenu menuContextual = new javax.swing.JPopupMenu();
+        javax.swing.JMenuItem solicitarEdicion = new javax.swing.JMenuItem("SOLICITAR EDICIÓN");
+        solicitarEdicion.addActionListener(e -> {
+            int filaSeleccionada = tabla.getSelectedRow();
+            if (filaSeleccionada < 0) {
+                return;
+            }
+            String numero = String.valueOf(modeloBusqueda.getValueAt(filaSeleccionada, 0));
+            solicitarEdicionOrden(numero);
+        });
+        javax.swing.JMenuItem cancelarOrden = new javax.swing.JMenuItem("CANCELAR");
+        cancelarOrden.addActionListener(e -> {
+            int filaSeleccionada = tabla.getSelectedRow();
+            if (filaSeleccionada >= 0) {
+                cancelarOrdenDesdeBusqueda(String.valueOf(
+                        modeloBusqueda.getValueAt(filaSeleccionada, 0)));
+            }
+        });
+        javax.swing.JMenuItem recibirOrden = new javax.swing.JMenuItem("RECIBIR");
+        recibirOrden.addActionListener(e -> {
+            int filaSeleccionada = tabla.getSelectedRow();
+            if (filaSeleccionada >= 0) {
+                PROVEEDORES.mostrarRecepcionDesdeOrden(this,
+                        String.valueOf(modeloBusqueda.getValueAt(filaSeleccionada, 0)));
+            }
+        });
+        javax.swing.JMenuItem abonarOrden = new javax.swing.JMenuItem("ABONAR");
+        abonarOrden.addActionListener(e -> {
+            int filaSeleccionada = tabla.getSelectedRow();
+            if (filaSeleccionada >= 0) {
+                PROVEEDORES.mostrarAbonoDesdeOrden(this,
+                        String.valueOf(modeloBusqueda.getValueAt(filaSeleccionada, 0)));
+            }
+        });
+        menuContextual.add(solicitarEdicion);
+        menuContextual.addSeparator();
+        menuContextual.add(cancelarOrden);
+        menuContextual.add(recibirOrden);
+        menuContextual.add(abonarOrden);
+        tabla.addMouseListener(new java.awt.event.MouseAdapter() {
+            private void mostrarMenuContextual(java.awt.event.MouseEvent evento) {
+                if (!evento.isPopupTrigger()) {
+                    return;
+                }
+                int fila = tabla.rowAtPoint(evento.getPoint());
+                if (fila < 0) {
+                    return;
+                }
+                tabla.setRowSelectionInterval(fila, fila);
+                String numero = String.valueOf(modeloBusqueda.getValueAt(fila, 0));
+                boolean puedeSolicitarEdicion = "SOLICITAR EDICIÓN".equals(
+                        accionesOrdenes.getOrDefault(numero, "EDITAR"));
+                String accionOrden = accionesOrdenes.getOrDefault(numero, "EDITAR");
+                boolean cancelada = "CANCELADA".equals(accionOrden)
+                        || "DESACTIVADA".equals(accionOrden);
+                boolean autorizada = estaAutorizadaOrden(numero);
+                if (!autorizada) {
+                    return;
+                }
+                solicitarEdicion.setVisible(autorizada && puedeSolicitarEdicion);
+                cancelarOrden.setVisible(autorizada && !cancelada);
+                recibirOrden.setVisible(autorizada && !cancelada);
+                abonarOrden.setVisible(autorizada && !cancelada);
+                menuContextual.show(tabla, evento.getX(), evento.getY());
+            }
+
+            @Override public void mousePressed(java.awt.event.MouseEvent evento) {
+                mostrarMenuContextual(evento);
+            }
+
+            @Override public void mouseReleased(java.awt.event.MouseEvent evento) {
+                mostrarMenuContextual(evento);
             }
         });
         javax.swing.JLabel total = new javax.swing.JLabel();
@@ -1306,13 +1503,15 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
         java.beans.PropertyChangeListener actualizarTabla = e -> cargarOrdenesEnTabla(
                 buscar, fechaInicio, fechaFin, estado, modeloBusqueda, total,
-                totalOrdenesResumen, pendientesResumen, procesoResumen, importeResumen);
+                totalOrdenesResumen, pendientesResumen, procesoResumen, importeResumen,
+                accionesOrdenes);
         buscar.getDocument().addDocumentListener(documentListenerBusqueda(actualizarTabla));
         fechaInicio.addPropertyChangeListener("date", actualizarTabla);
         fechaFin.addPropertyChangeListener("date", actualizarTabla);
         estado.addActionListener(e -> actualizarTabla.propertyChange(null));
         fondo.putClientProperty("controlesBusqueda", new Object[]{buscar, fechaInicio, fechaFin, estado,
-            modeloBusqueda, total, totalOrdenesResumen, pendientesResumen, procesoResumen, importeResumen});
+            modeloBusqueda, total, totalOrdenesResumen, pendientesResumen, procesoResumen, importeResumen,
+            accionesOrdenes});
         return fondo;
     }
 
@@ -1627,7 +1826,80 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 (javax.swing.JComboBox<?>) controles[3],
                 (javax.swing.table.DefaultTableModel) controles[4], (javax.swing.JLabel) controles[5],
                 (javax.swing.JLabel) controles[6], (javax.swing.JLabel) controles[7],
-                (javax.swing.JLabel) controles[8], (javax.swing.JLabel) controles[9]);
+                (javax.swing.JLabel) controles[8], (javax.swing.JLabel) controles[9],
+                (java.util.Map<String, String>) controles[10]);
+    }
+
+    private void cancelarOrdenDesdeBusqueda(String numero) {
+        File archivo = new File(RUTA_REGISTROC);
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            Sheet hoja = libro.getSheetAt(0);
+            Row orden = null;
+            for (Row fila : hoja) {
+                if (fila.getRowNum() > 0
+                        && numero.equals(dataFormatter.formatCellValue(fila.getCell(0)).trim())) {
+                    orden = fila;
+                    break;
+                }
+            }
+            if (orden == null) {
+                throw new IOException("No se encontró la orden " + numero + ".");
+            }
+            String abonado = dataFormatter.formatCellValue(orden.getCell(22)).trim();
+            String estadoRecepcion = dataFormatter.formatCellValue(orden.getCell(24)).trim();
+            boolean tieneAbonos = CalculoOrdenService.parseNumero(abonado) > 0;
+            boolean tieneRecepcion = "PARCIAL".equalsIgnoreCase(estadoRecepcion)
+                    || "SI".equalsIgnoreCase(estadoRecepcion);
+            if (tieneAbonos || tieneRecepcion) {
+                String motivo = tieneAbonos && tieneRecepcion
+                        ? "ya tiene abonos y mercancía recibida"
+                        : (tieneAbonos ? "ya tiene abonos registrados"
+                        : "ya tiene mercancía recibida");
+                JOptionPane.showMessageDialog(this,
+                        "La orden " + numero + " no se puede cancelar porque " + motivo + ".",
+                        "Cancelación no disponible", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int respuesta = JOptionPane.showConfirmDialog(this,
+                    "¿Deseas cancelar la orden " + numero + "?\n"
+                    + "Después de cancelarla no podrá recibirse ni abonarse.",
+                    "Cancelar orden", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (respuesta != JOptionPane.YES_OPTION) {
+                return;
+            }
+            setCellString(orden, 23, "CANCELADA");
+            ORDEN_COMPRA_REPOSITORY.guardarWorkbook(libro, archivo);
+            registrarActividad("Orden de compra cancelada", numero, nombreUsuarioSesion());
+            cargarOrdenesEnBusqueda();
+            JOptionPane.showMessageDialog(this,
+                    "La orden " + numero + " fue cancelada correctamente.",
+                    "Orden cancelada", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo cancelar la orden " + numero + ".", ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo cancelar la orden:\n" + ex.getMessage(),
+                    "Cancelar orden", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private boolean estaAutorizadaOrden(String numero) {
+        File archivo = new File(RUTA_REGISTROC);
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            for (Row fila : libro.getSheetAt(0)) {
+                if (fila.getRowNum() > 0
+                        && numero.equals(dataFormatter.formatCellValue(fila.getCell(0)).trim())) {
+                    return "AUTORIZADA".equalsIgnoreCase(
+                            dataFormatter.formatCellValue(
+                                    fila.getCell(COLUMNA_AUTORIZACION_ESTADO)).trim());
+                }
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo consultar la autorización de la orden " + numero + ".", ex);
+        }
+        return false;
     }
 
     private void cargarOrdenesEnTabla(javax.swing.JTextField buscar,
@@ -1635,8 +1907,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             com.toedter.calendar.JDateChooser fechaFin, javax.swing.JComboBox<?> estadoFiltro,
             javax.swing.table.DefaultTableModel modelo, javax.swing.JLabel total,
             javax.swing.JLabel totalResumen, javax.swing.JLabel pendientesResumen,
-            javax.swing.JLabel procesoResumen, javax.swing.JLabel importeResumen) {
+            javax.swing.JLabel procesoResumen, javax.swing.JLabel importeResumen,
+            java.util.Map<String, String> accionesOrdenes) {
         modelo.setRowCount(0);
+        accionesOrdenes.clear();
         String texto = buscar.getText().trim().toLowerCase(java.util.Locale.ROOT);
         java.util.Date inicio = fechaInicio.getDate();
         java.util.Date fin = fechaFin.getDate();
@@ -1662,7 +1936,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                             && "PENDIENTE".equalsIgnoreCase(estadoEntrega)) {
                         estadoAutorizacion = "PENDIENTE";
                     }
-                    String estado = estadoAutorizacion.isEmpty() ? estadoEntrega : estadoAutorizacion;
+                    String estado = ("CANCELADA".equalsIgnoreCase(estadoEntrega)
+                            || "DESACTIVADA".equalsIgnoreCase(estadoEntrega))
+                            ? estadoEntrega
+                            : (estadoAutorizacion.isEmpty() ? estadoEntrega : estadoAutorizacion);
                     java.util.Date fechaOrden = leerFechaCelda(fila.getCell(1));
                     String datos = (numero + " " + proveedor + " " + solicitante + " " + proyecto).toLowerCase(java.util.Locale.ROOT);
                     if (!texto.isEmpty() && !datos.contains(texto)) continue;
@@ -1670,6 +1947,29 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     if (fin != null && (fechaOrden == null || fechaOrden.after(fin))) continue;
                     if (!"Todos".equals(estadoSeleccionado)
                             && !estado.equalsIgnoreCase(estadoSeleccionado)) continue;
+                    String autorizador = dataFormatter.formatCellValue(fila.getCell(16)).trim();
+                    boolean puedeAutorizar = SesionActual.esAdministrador()
+                            || autorizador.equalsIgnoreCase(nombreUsuarioSesion());
+                    String estadoEdicion = obtenerSolicitudEdicion(numero)[0];
+                    String accion = "EDITAR";
+                    if ("CANCELADA".equalsIgnoreCase(estado)
+                            || "DESACTIVADA".equalsIgnoreCase(estado)) {
+                        accion = "CANCELADA";
+                    } else if ("PENDIENTE".equalsIgnoreCase(estadoAutorizacion) && puedeAutorizar) {
+                        accion = "PENDIENTE DE AUTORIZAR";
+                    } else if ("PENDIENTE".equalsIgnoreCase(estadoEdicion)
+                            && SesionActual.esAdministrador()) {
+                        accion = "AUTORIZAR EDICIÓN";
+                    } else if ("PENDIENTE".equalsIgnoreCase(estadoEdicion)) {
+                        accion = "SOLICITUD ENVIADA";
+                    } else if ("RECHAZADA".equalsIgnoreCase(estadoEdicion)
+                            && !SesionActual.esAdministrador()) {
+                        accion = "SOLICITUD RECHAZADA";
+                    } else if (!SesionActual.esAdministrador()
+                            && !"AUTORIZADA".equalsIgnoreCase(estadoEdicion)) {
+                        accion = "SOLICITAR EDICIÓN";
+                    }
+                    accionesOrdenes.put(numero, accion);
                     modelo.addRow(new Object[]{numero, fecha, proveedor, solicitante, proyecto,
                         totalOrden, estado.isEmpty() ? "Borrador" : estado, "VER"});
                     if ("PENDIENTE".equalsIgnoreCase(estadoAutorizacion)) pendientes++;
@@ -1700,6 +2000,290 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         return id;
     }
 
+    private void solicitarEdicionOrden(String numero) {
+        javax.swing.JTextArea motivo = new javax.swing.JTextArea(4, 34);
+        motivo.setLineWrap(true);
+        motivo.setWrapStyleWord(true);
+        javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout(0, 8));
+        panel.add(new javax.swing.JLabel(
+                "Indica el motivo por el que solicitas editar la orden " + numero + ":"),
+                java.awt.BorderLayout.NORTH);
+        panel.add(new javax.swing.JScrollPane(motivo), java.awt.BorderLayout.CENTER);
+        int respuesta = JOptionPane.showConfirmDialog(this, panel,
+                "Solicitar edición", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (respuesta != JOptionPane.YES_OPTION) {
+            return;
+        }
+        String motivoTexto = motivo.getText().trim();
+        if (motivoTexto.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Debes indicar el motivo de la solicitud.",
+                    "Solicitud incompleta", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (actualizarSolicitudEdicion(numero, "PENDIENTE", nombreUsuarioSesion(), motivoTexto, "")) {
+            JOptionPane.showMessageDialog(this,
+                    "Solicitud registrada.\n\n"
+                    + "Orden: " + numero + "\n"
+                    + "Solicitante: " + nombreUsuarioSesion() + "\n"
+                    + "Motivo: " + motivoTexto,
+                    "Solicitud de edición", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void autorizarEdicionOrden(String numero) {
+        if (!SesionActual.esAdministrador()) {
+            JOptionPane.showMessageDialog(this,
+                    "Solo un administrador puede autorizar la edición.",
+                    "Autorización no permitida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String[] solicitud = obtenerSolicitudEdicion(numero);
+        int respuesta = JOptionPane.showConfirmDialog(this,
+                "Orden: " + numero + "\n"
+                + "Solicitante: " + solicitud[0] + "\n"
+                + "Fecha: " + solicitud[1] + "\n"
+                + "Motivo: " + solicitud[2] + "\n\n"
+                + "¿Autorizar la edición?",
+                "Autorizar edición", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (respuesta == JOptionPane.NO_OPTION) {
+            javax.swing.JTextArea razon = new javax.swing.JTextArea(4, 34);
+            razon.setLineWrap(true);
+            razon.setWrapStyleWord(true);
+            javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout(0, 8));
+            panel.add(new javax.swing.JLabel(
+                    "Indica la razón por la que rechazas esta solicitud:"), java.awt.BorderLayout.NORTH);
+            panel.add(new javax.swing.JScrollPane(razon), java.awt.BorderLayout.CENTER);
+            int respuestaRazon = JOptionPane.showConfirmDialog(this, panel,
+                    "Rechazar solicitud", JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (respuestaRazon != JOptionPane.OK_OPTION || razon.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Debes indicar la razón del rechazo.",
+                        "Rechazo incompleto", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            actualizarSolicitudEdicion(numero, "RECHAZADA", nombreUsuarioSesion(),
+                    solicitud[2], razon.getText().trim());
+            return;
+        }
+        if (respuesta != JOptionPane.YES_OPTION) {
+            return;
+        }
+        if (actualizarSolicitudEdicion(numero, "AUTORIZADA", nombreUsuarioSesion(),
+                solicitud[2], "")) {
+            JOptionPane.showMessageDialog(this,
+                    "La solicitud fue autorizada.\n"
+                    + "El usuario solicitante verá el botón GUARDAR CAMBIOS al consultar la orden.",
+                    "Edición autorizada", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private String[] obtenerSolicitudEdicion(String numero) {
+        String[] datos = {"No disponible", "No disponible", "No se registró un motivo.", "", "", ""};
+        File archivo = new File(RUTA_MODIFICACIONESOC);
+        if (!archivo.isFile()) return datos;
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (int i = hoja.getLastRowNum(); i >= 1; i--) {
+                Row fila = hoja.getRow(i);
+                if (fila == null || !numero.equals(dataFormatter.formatCellValue(fila.getCell(1)).trim())
+                        || !"SOLICITUD EDICIÓN".equalsIgnoreCase(
+                                dataFormatter.formatCellValue(fila.getCell(3)).trim())) {
+                    continue;
+                }
+                datos[0] = dataFormatter.formatCellValue(fila.getCell(2)).trim();
+                datos[1] = dataFormatter.formatCellValue(fila.getCell(0)).trim();
+                datos[2] = dataFormatter.formatCellValue(fila.getCell(4)).trim();
+                datos[5] = dataFormatter.formatCellValue(fila.getCell(COLUMNA_MOD_SOLICITANTE)).trim();
+                datos[3] = dataFormatter.formatCellValue(fila.getCell(COLUMNA_MOD_RESPUESTA)).trim();
+                datos[4] = dataFormatter.formatCellValue(
+                        fila.getCell(COLUMNA_MOD_RESPONDIO_POR)).trim();
+                break;
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo leer el reporte de solicitud de edición.", ex);
+        }
+        return datos;
+    }
+
+    private void mostrarRespuestaEdicion(String numero) {
+        String[] solicitud = obtenerSolicitudEdicion(numero);
+        JOptionPane.showMessageDialog(this,
+                "COMUNICADO DE SOLICITUD DE EDICIÓN\n\n"
+                + "Orden: " + numero + "\n"
+                + "Solicitante: " + solicitud[0] + "\n"
+                + "Estado: RECHAZADA\n"
+                + "Respondió: " + (solicitud[4].isEmpty() ? "Administrador" : solicitud[4]) + "\n\n"
+                + "Motivo de la solicitud:\n" + solicitud[2] + "\n\n"
+                + "Razón del rechazo:\n"
+                + (solicitud[3].isEmpty()
+                        ? "El administrador no registró una razón."
+                        : solicitud[3]),
+                "Comunicado de edición", JOptionPane.INFORMATION_MESSAGE);
+        limpiarRespuestaEdicion(numero);
+    }
+
+    private void limpiarRespuestaEdicion(String numero) {
+        File archivo = new File(RUTA_MODIFICACIONESOC);
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            Sheet hoja = libro.getSheetAt(0);
+            for (int i = hoja.getLastRowNum(); i >= 1; i--) {
+                Row fila = hoja.getRow(i);
+                if (fila == null || !numero.equals(dataFormatter.formatCellValue(fila.getCell(1)).trim())
+                        || !"SOLICITUD EDICIÓN".equalsIgnoreCase(
+                                dataFormatter.formatCellValue(fila.getCell(3)).trim())) {
+                    continue;
+                }
+                setCellString(fila, COLUMNA_MOD_ESTADO, "NOTIFICADA");
+                ORDEN_COMPRA_REPOSITORY.guardarWorkbook(libro, archivo);
+                cargarOrdenesEnBusqueda();
+                return;
+            }
+        } catch (IOException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo habilitar una nueva solicitud de edición.", ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo habilitar una nueva solicitud:\n" + ex.getMessage(),
+                    "Solicitud de edición", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private boolean actualizarSolicitudEdicion(
+            String numero, String estado, String usuario, String motivo, String respuesta) {
+        File archivo = new File(RUTA_MODIFICACIONESOC);
+        try (Workbook libro = abrirTablaModificaciones()) {
+            Sheet hoja = libro.getSheetAt(0);
+            Row fila = buscarUltimaSolicitud(hoja, numero);
+            if ("PENDIENTE".equalsIgnoreCase(estado)) {
+                fila = hoja.createRow(hoja.getLastRowNum() + 1);
+                fila.createCell(0).setCellValue(
+                        new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date()));
+                fila.createCell(1).setCellValue(numero);
+                fila.createCell(2).setCellValue(usuario);
+                fila.createCell(3).setCellValue("SOLICITUD EDICIÓN");
+                fila.createCell(4).setCellValue(motivo);
+            } else if (fila != null) {
+                setCellString(fila, COLUMNA_MOD_ESTADO, estado);
+                setCellString(fila, COLUMNA_MOD_RESPUESTA, respuesta);
+                setCellString(fila, COLUMNA_MOD_RESPONDIO_POR, usuario);
+            } else {
+                throw new IOException("No se encontró la solicitud de la orden " + numero + ".");
+            }
+            setCellString(fila, COLUMNA_MOD_ESTADO, estado);
+            setCellString(fila, COLUMNA_MOD_FECHA,
+                    new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date()));
+            if ("PENDIENTE".equalsIgnoreCase(estado)) {
+                setCellString(fila, COLUMNA_MOD_RESPUESTA, "");
+                setCellString(fila, COLUMNA_MOD_RESPONDIO_POR, "");
+            }
+            ORDEN_COMPRA_REPOSITORY.guardarWorkbook(libro, archivo);
+                registrarActividad("PENDIENTE".equalsIgnoreCase(estado)
+                        ? "Solicitud de edición de orden"
+                        : ("RECHAZADA".equalsIgnoreCase(estado)
+                        ? "Solicitud de edición rechazada"
+                        : "Edición de orden autorizada"),
+                        numero, usuario);
+                cargarOrdenesEnBusqueda();
+                return true;
+        } catch (Exception ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo actualizar la solicitud de edición.", ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo actualizar la solicitud:\n" + ex.getMessage(),
+                    "Solicitud de edición", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private Workbook abrirTablaModificaciones() throws IOException {
+        File archivo = new File(RUTA_MODIFICACIONESOC);
+        Workbook libro = archivo.exists()
+                ? ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)
+                : ORDEN_COMPRA_REPOSITORY.abrirOCrearWorkbook(archivo, "MODIFICACIONESOC");
+        Sheet hoja = libro.getSheetAt(0);
+        String[] encabezados = {"FECHA", "NOORDEN", "USUARIO", "TIPO",
+            "MOTIVO_SOLICITUD", "DETALLE", "ESTADO", "SOLICITADO_POR",
+            "FECHA_RESPUESTA", "RESPUESTA", "RESPONDIO_POR"};
+        Row encabezado = hoja.getRow(0);
+        if (encabezado == null) {
+            encabezado = hoja.createRow(0);
+        }
+        for (int i = 0; i < encabezados.length; i++) {
+            setCellString(encabezado, i, encabezados[i]);
+        }
+        return libro;
+    }
+
+    private Row buscarUltimaSolicitud(Sheet hoja, String numero) {
+        for (int i = hoja.getLastRowNum(); i >= 1; i--) {
+            Row fila = hoja.getRow(i);
+            if (fila != null && numero.equals(dataFormatter.formatCellValue(fila.getCell(1)).trim())
+                    && "SOLICITUD EDICIÓN".equalsIgnoreCase(
+                            dataFormatter.formatCellValue(fila.getCell(3)).trim())) {
+                return fila;
+            }
+        }
+        return null;
+    }
+
+    private void marcarSolicitudEdicionConcluida(String numero) throws IOException {
+        File archivo = new File(RUTA_MODIFICACIONESOC);
+        if (!archivo.isFile()) return;
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            Row fila = buscarUltimaSolicitud(libro.getSheetAt(0), numero);
+            if (fila != null) {
+                setCellString(fila, COLUMNA_MOD_ESTADO, "CONCLUIDA");
+                setCellString(fila, COLUMNA_MOD_FECHA,
+                        new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date()));
+                ORDEN_COMPRA_REPOSITORY.guardarWorkbook(libro, archivo);
+            }
+        }
+    }
+
+    private void abrirPdfOrdenDesdeBusqueda(String numero) {
+        File archivoRegistro = new File(RUTA_REGISTROC);
+        try (Workbook libro = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivoRegistro)) {
+            for (Row fila : libro.getSheetAt(0)) {
+                if (fila.getRowNum() == 0
+                        || !numero.equals(dataFormatter.formatCellValue(fila.getCell(0)).trim())) {
+                    continue;
+                }
+                java.util.Date fecha = leerFechaCelda(fila.getCell(1));
+                if (fecha == null) {
+                    throw new IOException("La orden no tiene una fecha válida para localizar su PDF.");
+                }
+                String idProveedor = dataFormatter.formatCellValue(fila.getCell(4)).trim();
+                String proveedor = nombreProveedor(idProveedor);
+                java.time.LocalDate fechaOrden = fecha.toInstant()
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                Path carpeta = DIRECTORIO_PDF_ORDENES
+                        .resolve(String.valueOf(fechaOrden.getYear()))
+                        .resolve(String.format("%02d", fechaOrden.getMonthValue()))
+                        .resolve("OC-" + sanitizarNombreRuta(numero)
+                                + "-" + sanitizarNombreRuta(proveedor))
+                        .normalize();
+                File archivoPDF = carpeta.resolve("Orden de compra.pdf").toFile();
+                if (!archivoPDF.isFile()) {
+                    throw new IOException("No se encontró el PDF de la orden en:\n"
+                            + archivoPDF.getAbsolutePath());
+                }
+                ultimoPdfGenerado = archivoPDF;
+                actualizarEstadoBotonFirma();
+                abrirPdf(archivoPDF);
+                return;
+            }
+            throw new IOException("No se encontró la orden " + numero + ".");
+        } catch (IOException | RuntimeException ex) {
+            logger.log(java.util.logging.Level.WARNING,
+                    "No se pudo abrir el PDF de la orden " + numero, ex);
+            JOptionPane.showMessageDialog(this,
+                    "No se pudo abrir el PDF:\n" + ex.getMessage(),
+                    "PDF no disponible", JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
     private void abrirNuevaOrden() {
         mostrarFormulario();
         estadoOrdenCargada = null;
@@ -1711,6 +2295,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     private void mostrarFormulario() {
         mostrarVistaInterna(desplazamientoFormulario);
+        barraTituloVentana.setVisible(true);
         setTitle("NUEVA ORDEN DE COMPRA");
         ajustarTamanoVentanaFormulario();
         contenedorVista.revalidate();
@@ -1720,6 +2305,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     private void abrirOrdenDesdeBusqueda(String numero, boolean editar) {
         cargarOrdenPorNumero(Integer.parseInt(numero));
         mostrarVistaInterna(desplazamientoFormulario);
+        barraTituloVentana.setVisible(true);
         setTitle("ORDEN DE COMPRA " + numero);
         ajustarTamanoVentanaFormulario();
         if (editar) activarEdicionOrden();
@@ -2341,6 +2927,10 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                                 limpiarDatosProveedor("Proveedor inactivo");
                                 return;
                             }
+                            if (!proveedorAutorizado(row)) {
+                                limpiarDatosProveedor("Proveedor pendiente de autorización");
+                                return;
+                            }
 
                             String nombre = obtenerTextoCelda(row.getCell(1));
                             String RFC = obtenerTextoCelda(row.getCell(2));
@@ -2473,7 +3063,12 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 String id     = obtenerTextoCelda(row.getCell(0));
                 String nombre = obtenerTextoCelda(row.getCell(1));
                 if (!id.isEmpty()) {
-                    cacheProveedores.add(new String[]{id, nombre, proveedorActivo(row) ? "1" : "0"});
+                    cacheProveedores.add(new String[]{
+                        id,
+                        nombre,
+                        proveedorActivo(row) ? "1" : "0",
+                        proveedorAutorizado(row) ? "1" : "0"
+                    });
                 }
             }
         } catch (Exception e) {
@@ -2483,6 +3078,23 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
 
     private boolean proveedorActivo(Row row) {
         return "1".equals(ProveedorService.normalizarEstado(obtenerTextoCelda(row.getCell(11))));
+    }
+
+    private boolean proveedorAutorizado(Row row) {
+        return "AUTORIZADO".equalsIgnoreCase(obtenerTextoCelda(row.getCell(21)).trim());
+    }
+
+    private boolean proveedorAutorizadoSeleccionado() {
+        String idBuscado = jTextField1.getText().trim();
+        if (idBuscado.isEmpty()) {
+            return false;
+        }
+        for (String[] proveedor : cacheProveedores) {
+            if (idBuscado.equalsIgnoreCase(proveedor[0])) {
+                return proveedor.length > 3 && "1".equals(proveedor[3]);
+            }
+        }
+        return false;
     }
 
     private void limpiarDatosProveedor(String mensaje) {
@@ -2507,7 +3119,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 String etiqueta = prov[0] + "  |  " + prov[1];
                 javax.swing.JMenuItem item = new javax.swing.JMenuItem(etiqueta);
                 boolean activo = prov.length < 3 || "1".equals(prov[2]);
-                if (!activo) {
+                boolean autorizado = prov.length < 4 || "1".equals(prov[3]);
+                if (!activo || !autorizado) {
                     item.setForeground(java.awt.Color.GRAY);
                     item.setEnabled(false);
                 }
@@ -3064,6 +3677,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private PDFORDENCOMPRA.DatosOrden construirDatosPDF() throws IOException {
+        return construirDatosPDF(true);
+    }
+
+    private PDFORDENCOMPRA.DatosOrden construirDatosPDF(boolean incluirFirmaAutorizador)
+            throws IOException {
         PDFORDENCOMPRA.DatosOrden datos = new PDFORDENCOMPRA.DatosOrden();
         datos.documento = jLabel5.getText();
         datos.numeroOrden = jTextField6.getText().trim();
@@ -3092,7 +3710,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         datos.elaboro = valorCombo(jComboBox4);
         datos.firmaElaboro = obtenerRutaFirma(datos.elaboro);
         datos.autorizo = valorCombo(jComboBox5);
-        datos.firmaAutorizo = obtenerRutaFirma(datos.autorizo);
+        datos.firmaAutorizo = incluirFirmaAutorizador
+                ? obtenerRutaFirma(datos.autorizo) : "";
         datos.subtotalTexto = jLabel23.getText();
         datos.ivaTexto = jLabel24.getText();
         datos.totalTexto = jLabel25.getText();
@@ -3934,7 +4553,8 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                 jTextField5.getText(),
                 textoSeleccionado(jComboBox4),
                 textoSeleccionado(jComboBox5),
-                tieneProductos));
+                tieneProductos,
+                proveedorAutorizadoSeleccionado()));
     }
 
     private String textoSeleccionado(javax.swing.JComboBox<?> combo) {
@@ -3961,6 +4581,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private static final String RUTA_REGISTROC = AppConfig.registroCFile().getAbsolutePath();
+    private static final Path DIRECTORIO_PDF_ORDENES = Path.of("C:\\RST_DATA\\ALTASORDENESCOMPRA");
 
     private static final String RUTA_INTORDENDECOMPRA = AppConfig.intOrdenCompraFile().getAbsolutePath();
     private static final int COLUMNA_OBSERVACIONES_ORDEN = 27;
@@ -4015,6 +4636,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         if (encabezado == null) {
             encabezado = sheet.createRow(0);
         }
+        eliminarColumnasEdicionDeRegistro(sheet, encabezado);
         encabezado.getCell(11, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue("FECHA_ENTREGA");
         encabezado.getCell(12, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue("DIAS_PAGO");
         if (encabezado.getCell(22, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null) {
@@ -4036,6 +4658,21 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         encabezado.getCell(COLUMNA_FECHA_AUTORIZACION, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
                 .setCellValue("FECHA_AUTORIZACION");
     }//asegurarEncabezadosAbonadoEstatus
+
+    private void eliminarColumnasEdicionDeRegistro(Sheet sheet, Row encabezado) {
+        String encabezadoEdicion = dataFormatter.formatCellValue(encabezado.getCell(31)).trim();
+        if (!encabezadoEdicion.startsWith("EDICION_")) {
+            return;
+        }
+        for (Row fila : sheet) {
+            for (int columna = 31; columna <= 36; columna++) {
+                org.apache.poi.ss.usermodel.Cell celda = fila.getCell(columna);
+                if (celda != null) {
+                    fila.removeCell(celda);
+                }
+            }
+        }
+    }
 
     private void actualizarBotonAutorizar() {
         if (jButtonAutorizar == null) {
@@ -4124,11 +4761,13 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new java.util.Date()));
             ORDEN_COMPRA_REPOSITORY.guardarWorkbook(libro, archivo);
             jComboBox5.setSelectedItem(autorizador);
+            File archivoPDF = generarPDFOrden(true);
             registrarActividad("Orden de compra autorizada", numero, autorizador);
             actualizarBotonAutorizar();
             PRINCIPAL.actualizarAlarmasEnTiempoReal();
             JOptionPane.showMessageDialog(this,
-                    "La orden " + numero + " fue autorizada correctamente.",
+                    "La orden " + numero + " fue autorizada correctamente.\n\n"
+                    + "PDF actualizado en:\n" + archivoPDF.getAbsolutePath(),
                     "Autorización completada", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
             logger.log(java.util.logging.Level.WARNING, "No se pudo autorizar la orden.", ex);
@@ -4175,9 +4814,11 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             return false;
         }
 
+        File archivoPDF;
         Workbook wb;
         Sheet sheet;
         try {
+            archivoPDF = generarPDFAutomatico();
             if (archivo.exists()) {
                 wb = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo);
                 sheet = wb.getSheetAt(0);
@@ -4283,7 +4924,9 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             registrarActividad("Orden de compra creada", jTextField6.getText().trim(), elaboro);
             PRINCIPAL.actualizarAlarmasEnTiempoReal();
             JOptionPane.showMessageDialog(this,
-                    "Orden de compra No. " + jTextField6.getText().trim() + " guardada correctamente.",
+                    "Orden de compra No. " + jTextField6.getText().trim()
+                    + " guardada correctamente.\n\nPDF generado en:\n"
+                    + archivoPDF.getAbsolutePath(),
                     "Guardado exitoso", JOptionPane.INFORMATION_MESSAGE);
             salirDeOrden();
             return true;
@@ -4295,6 +4938,39 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
                     "Advertencia", JOptionPane.WARNING_MESSAGE);
             return false;
         }
+    }
+
+    private File generarPDFAutomatico() throws IOException {
+        return generarPDFOrden(false);
+    }
+
+    private File generarPDFOrden(boolean incluirFirmaAutorizador) throws IOException {
+        java.time.LocalDate fechaOrden = jDateChooser2.getDate() == null
+                ? java.time.LocalDate.now()
+                : jDateChooser2.getDate().toInstant()
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        Path periodo = DIRECTORIO_PDF_ORDENES.resolve(String.valueOf(fechaOrden.getYear()))
+                .resolve(String.format("%02d", fechaOrden.getMonthValue()));
+        String nombreCarpeta = "OC-" + sanitizarNombreRuta(jTextField6.getText())
+                + "-" + sanitizarNombreRuta(jLabel8.getText());
+        Path carpetaOrden = periodo.resolve(nombreCarpeta).normalize();
+        if (!carpetaOrden.startsWith(DIRECTORIO_PDF_ORDENES)) {
+            throw new IOException("La carpeta de destino de la orden no es válida.");
+        }
+        Files.createDirectories(carpetaOrden);
+        File archivoPDF = carpetaOrden.resolve("Orden de compra.pdf").toFile();
+        PDFORDENCOMPRA.generar(archivoPDF, construirDatosPDF(incluirFirmaAutorizador));
+        ultimoPdfGenerado = archivoPDF;
+        actualizarEstadoBotonFirma();
+        return archivoPDF;
+    }
+
+    private String sanitizarNombreRuta(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        return valor.trim().replaceAll("[<>:\"/\\\\|?*\\p{Cntrl}]", "_")
+                .replaceAll("[. ]+$", "");
     }
 
     private void registrarProductosEnOrdenCompra() {
@@ -4324,6 +5000,20 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             return false;
         }
 
+        String estadoActual = capturarEstadoFormulario();
+        if (java.util.Objects.equals(estadoEdicionOriginal, estadoActual)) {
+            JOptionPane.showMessageDialog(this,
+                    "No se detectaron modificaciones en la orden.",
+                    "Sin cambios", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+        int confirmar = JOptionPane.showConfirmDialog(this,
+                "Se detectaron cambios en la orden.\n¿Estás seguro de guardar los cambios realizados?",
+                "Confirmar cambios", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (confirmar != JOptionPane.YES_OPTION) {
+            return false;
+        }
+
         String errorValidacion = validarCampos();
         if (errorValidacion != null) {
             JOptionPane.showMessageDialog(this, errorValidacion,
@@ -4338,6 +5028,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
 
         try (Workbook wb = ORDEN_COMPRA_REPOSITORY.abrirWorkbook(archivo)) {
+            boolean ordenAutorizada = ordenEstaAutorizada();
 
             Sheet sheet = wb.getSheetAt(0);
             asegurarEncabezadosAbonadoEstatus(sheet);
@@ -4412,14 +5103,20 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             setCellString(rowToUpdate, 21, jLabel25.getText());
             // Las observaciones no deben sobrescribir el estado de recepción.
             setCellString(rowToUpdate, COLUMNA_OBSERVACIONES_ORDEN, jTextAreaObservaciones.getText().trim());
+            String[] solicitudActual = obtenerSolicitudEdicion(noOrden);
+            String motivoSolicitud = solicitudActual[2];
 
             ORDEN_COMPRA_REPOSITORY.guardarWorkbook(wb, archivo);
+            marcarSolicitudEdicionConcluida(noOrden);
+            registrarModificacionOrden(noOrden, motivoSolicitud);
 
+            File archivoPDF = generarPDFOrden(ordenAutorizada);
             guardarTablaEnIntOrden(noOrden);
             PRINCIPAL.actualizarAlarmasEnTiempoReal();
 
             JOptionPane.showMessageDialog(this,
-                    "Orden № " + noOrden + " actualizada correctamente.",
+                    "Orden № " + noOrden + " actualizada correctamente.\n\n"
+                    + "PDF actualizado en:\n" + archivoPDF.getAbsolutePath(),
                     "Guardar Cambios", JOptionPane.INFORMATION_MESSAGE);
             setModoSoloLectura(true);
                 actualizarBotonesEdicion(true, false);
@@ -4438,6 +5135,26 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         org.apache.poi.ss.usermodel.Cell cell = row.getCell(col);
         if (cell == null) cell = row.createCell(col);
         cell.setCellValue(value != null ? value : "");
+    }
+
+    private void registrarModificacionOrden(String numeroOrden, String motivoSolicitud)
+            throws IOException {
+        File archivo = new File(RUTA_MODIFICACIONESOC);
+        try (Workbook libro = abrirTablaModificaciones()) {
+            Sheet hoja = libro.getSheetAt(0);
+            Row registro = hoja.createRow(hoja.getLastRowNum() + 1);
+            registro.createCell(0).setCellValue(
+                    new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new java.util.Date()));
+            registro.createCell(1).setCellValue(numeroOrden);
+            registro.createCell(2).setCellValue(nombreUsuarioSesion());
+            registro.createCell(3).setCellValue("MODIFICACIÓN DE ORDEN DE COMPRA");
+            registro.createCell(4).setCellValue(
+                    motivoSolicitud.isEmpty() ? "Modificación realizada por administrador" : motivoSolicitud);
+            registro.createCell(5).setCellValue(
+                    "Cambios confirmados y guardados en REGISTROC.xlsx; PDF actualizado.");
+            registro.createCell(6).setCellValue("CONCLUIDA");
+            ORDEN_COMPRA_REPOSITORY.guardarWorkbook(libro, archivo);
+        }
     }
 
     private void escribirFechaCelda(Workbook workbook, Row row, int columna, java.util.Date fecha) {
@@ -5007,6 +5724,7 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
     }
 
     private void activarEdicionOrden() {
+        estadoEdicionOriginal = capturarEstadoFormulario();
         setModoSoloLectura(false);
         actualizarBotonesEdicion(true, true);
     }
@@ -5023,12 +5741,44 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
         }
     }
 
+    private String capturarEstadoFormulario() {
+        StringBuilder estado = new StringBuilder();
+        estado.append(jTextField1.getText().trim()).append('|')
+                .append(jTextField2.getText().trim()).append('|')
+                .append(jTextField3.getText().trim()).append('|')
+                .append(jTextField4.getText().trim()).append('|')
+                .append(jTextField5.getText().trim()).append('|')
+                .append(jTextAreaObservaciones.getText().trim()).append('|')
+                .append(jDateChooser2.getDate()).append('|')
+                .append(jDateChooserEntrega.getDate()).append('|')
+                .append(jDateChooserPago.getDate()).append('|');
+        javax.swing.JComboBox<?>[] combos = {
+            jComboBox1, jComboBox2, jComboBox3, jComboBox4,
+            jComboBox5, jComboBox6, jComboBox7, jComboBox8
+        };
+        for (javax.swing.JComboBox<?> combo : combos) {
+            estado.append(combo.getSelectedItem()).append('|');
+        }
+        estado.append(jCheckBoxIVA != null && jCheckBoxIVA.isSelected()).append('|')
+                .append(jCheckBoxDescuento != null && jCheckBoxDescuento.isSelected()).append('|')
+                .append(jTextFieldDescuentoPct != null ? jTextFieldDescuentoPct.getText().trim() : "").append('|')
+                .append(jCheckBoxISR != null && jCheckBoxISR.isSelected()).append('|')
+                .append(jTextFieldISRPercent != null ? jTextFieldISRPercent.getText().trim() : "").append('|');
+        for (int fila = 0; fila < jTable1.getRowCount(); fila++) {
+            for (int columna = 0; columna < jTable1.getColumnCount(); columna++) {
+                estado.append(jTable1.getValueAt(fila, columna)).append('|');
+            }
+        }
+        return estado.toString();
+    }
+
     private void actualizarBotonesEdicion(boolean ordenCargada, boolean editando) {
-        boolean habilitar = esAdministrador() && ordenCargada;
+        boolean edicionAutorizada = ordenCargada && ordenTieneEdicionAutorizadaParaSesion();
+        boolean habilitar = ordenCargada && (esAdministrador() || edicionAutorizada);
         if (jButtonEditar != null) {
-            jButtonEditar.setVisible(true);
+            jButtonEditar.setVisible(esAdministrador() || edicionAutorizada);
             jButtonEditar.setEnabled(habilitar);
-            if (habilitar && editando) {
+            if (habilitar && (editando || edicionAutorizada)) {
                 jButtonEditar.setText("GUARDAR CAMBIOS");
                 jButtonEditar.setBackground(new java.awt.Color(0, 128, 0));
             } else {
@@ -5037,6 +5787,16 @@ public class ORDENCOMPRA extends javax.swing.JFrame {
             }
         }
     }
+
+        private boolean ordenTieneEdicionAutorizadaParaSesion() {
+            if (SesionActual.esAdministrador() || estadoOrdenCargada == null
+                    || jTextField6 == null || jTextField6.getText().trim().isEmpty()) {
+                return false;
+            }
+            String[] solicitud = obtenerSolicitudEdicion(jTextField6.getText().trim());
+            return "AUTORIZADA".equalsIgnoreCase(solicitud[0])
+                    && solicitud[5].equalsIgnoreCase(nombreUsuarioSesion());
+        }
 
     /** Habilita o deshabilita la edición de todos los campos del formulario */
     private void setModoSoloLectura(boolean soloLectura) {

@@ -57,6 +57,39 @@ public final class AutenticacionService {
         return Optional.empty();
     }
 
+    public Optional<Usuario> buscarPorUsuario(String usuario) {
+        File archivo = AppConfig.resolveBaseFile("USUARIOS.xlsx");
+        if (!archivo.exists()) {
+            return Optional.empty();
+        }
+
+        try (FileInputStream entrada = new FileInputStream(archivo);
+                Workbook libro = new XSSFWorkbook(entrada)) {
+            return buscarPorUsuario(libro, usuario);
+        } catch (IOException ex) {
+            throw new IllegalStateException("No se pudo leer el archivo de usuarios.", ex);
+        }
+    }
+
+    public Optional<Usuario> buscarPorUsuario(Workbook libro, String usuario) {
+        if (libro == null || usuario == null || libro.getNumberOfSheets() == 0) {
+            return Optional.empty();
+        }
+
+        for (int indice = 1; indice <= libro.getSheetAt(0).getLastRowNum(); indice++) {
+            Row fila = libro.getSheetAt(0).getRow(indice);
+            if (fila == null) {
+                continue;
+            }
+
+            String usuarioExcel = usuarioRepository.leerCelda(fila, 0);
+            if (usuario.equals(usuarioExcel)) {
+                return Optional.of(new Usuario(usuarioExcel, usuarioRepository.leerCelda(fila, 2)));
+            }
+        }
+        return Optional.empty();
+    }
+
     public String obtenerNombre(Workbook libro, String usuario, String contrasena) {
         return autenticar(libro, usuario, contrasena)
                 .map(Usuario::getNombre)

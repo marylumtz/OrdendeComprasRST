@@ -12,6 +12,7 @@ com\mycompany\ocxrst\service\InventarioService.class
 com\mycompany\ocxrst\ui\PROVEEDORES$8.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$10.class
 com\mycompany\ocxrst\ui\ORDENCOMPRA$20.class
+com\mycompany\ocxrst\ui\PROVEEDORES$27.class
 com\mycompany\ocxrst\ui\TERMINOS.class
 com\mycompany\ocxrst\config\AppConfig.class
 com\mycompany\ocxrst\service\CalculoOrdenService$Resultado.class
@@ -65,6 +66,7 @@ com\mycompany\ocxrst\repository\InventarioRepository.class
 com\mycompany\ocxrst\ui\NUEVATAREA$IconoTarea.class
 com\mycompany\ocxrst\ui\PROVEEDORES$5.class
 com\mycompany\ocxrst\reporting\PDFORDENCOMPRA$Producto.class
+com\mycompany\ocxrst\ui\PROVEEDORES$26.class
 com\mycompany\ocxrst\service\UsuarioService.class
 com\mycompany\ocxrst\ui\PRINCIPAL$IconoMenu.class
 com\mycompany\ocxrst\ui\PRINCIPAL.class
@@ -132,6 +134,7 @@ com\mycompany\ocxrst\ui\PRINCIPAL$3.class
 com\mycompany\ocxrst\ui\ENTRADAINVENTARIO$TipoMovimiento.class
 com\mycompany\ocxrst\repository\ProveedorRepository.class
 com\mycompany\ocxrst\ui\INVENTARIOS.class
+com\mycompany\ocxrst\ui\ORDENCOMPRA$29.class
 com\mycompany\ocxrst\ui\INVENTARIOS$8.class
 com\mycompany\ocxrst\ui\PROVEEDORES$11.class
 com\mycompany\ocxrst\ui\SOLICITUDAYUDA$1.class

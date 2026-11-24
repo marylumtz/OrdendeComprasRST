@@ -18,6 +18,8 @@ public final class OrdenCompraValidator {
                 || datos.proveedorNombre().equals("Proveedor no encontrado")
                 || datos.proveedorNombre().equals("Error")) {
             faltantes.add("• PROVEEDOR (ID no encontrado, verifique el dato)");
+        } else if (!datos.proveedorAutorizado()) {
+            faltantes.add("• PROVEEDOR (el alta aún no ha sido autorizada)");
         }
 
         if (datos.fecha() == null) {
@@ -120,6 +122,7 @@ public final class OrdenCompraValidator {
             String tipoCambio,
             String elaboro,
             String autorizo,
-            boolean tieneProductos) {
+            boolean tieneProductos,
+            boolean proveedorAutorizado) {
     }
 }

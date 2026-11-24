@@ -27,7 +27,7 @@ public class ADJUNTOS extends JFrame {
     private static final Color AZUL = new Color(28, 82, 132);
     private static final Color AZUL_ACCION = new Color(31, 112, 184);
     private static final Path CARPETA_ADJUNTOS = Paths.get(
-            "C:\\OCXRST\\OrdendeComprasRST\\MESATRABAJO\\Adjuntos");
+            "C:\\RST_DATA\\ALTASPROVEEDOR");
     private final DefaultListModel<String> modelo = new DefaultListModel<>();
     private final JList<String> lista = new JList<>(modelo);
     private final JLabel estado = new JLabel();

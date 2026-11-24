@@ -53,6 +53,14 @@ public class INICIARSESION extends javax.swing.JFrame {
         EstiloAplicacion.aplicarEstiloBotonesRestoPantallas(getContentPane());
         EstiloAplicacion.aplicarTipografia(getContentPane());
         EstiloAplicacion.aplicarEstiloCamposTexto(getContentPane());
+        seleccionarTextoAlHacerClic(jTextField1);
+        seleccionarTextoAlHacerClic(jPasswordField1);
+        jPasswordField1.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                actualizarNombreUsuarioMostrado();
+            }
+        });
         java.awt.EventQueue.invokeLater(() -> jTextField1.requestFocusInWindow());
     
     }
@@ -135,6 +143,7 @@ public class INICIARSESION extends javax.swing.JFrame {
         salir = new javax.swing.JButton();
         LOGO = new javax.swing.JLabel();
         lblBienvenido = new javax.swing.JLabel();
+        lblUsuario = new javax.swing.JLabel();
         lblSubtitulo = new javax.swing.JLabel();
         lblTagline = new javax.swing.JLabel();
         lblFooter = new javax.swing.JLabel();
@@ -163,16 +172,22 @@ public class INICIARSESION extends javax.swing.JFrame {
         lblBienvenido.setText("Bienvenido");
         getContentPane().add(lblBienvenido, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 42, 290, 40));
 
+        lblUsuario.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        lblUsuario.setForeground(colorTitulo);
+        lblUsuario.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblUsuario.setText(" ");
+        getContentPane().add(lblUsuario, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 77, 290, 22));
+
         lblSubtitulo.setFont(new java.awt.Font("Segoe UI", 0, 13));
         lblSubtitulo.setForeground(colorSubtitulo);
         lblSubtitulo.setText("Accede a tu cuenta para continuar");
-        getContentPane().add(lblSubtitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 85, 300, 20));
+        getContentPane().add(lblSubtitulo, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 102, 300, 20));
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         jLabel4.setForeground(colorEtiquetaCampo);
         jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel4.setText("USUARIO");
-        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 125, 200, 16));
+        getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 142, 200, 16));
 
         jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jTextField1.setAutoscrolls(false);
@@ -180,19 +195,19 @@ public class INICIARSESION extends javax.swing.JFrame {
         jTextField1.setBackground(new java.awt.Color(255, 255, 255));
         jTextField1.setDoubleBuffered(true);
         jTextField1.addActionListener(this::jTextField1ActionPerformed);
-        getContentPane().add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 143, 290, 36));
+        getContentPane().add(jTextField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 160, 290, 36));
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         jLabel3.setForeground(colorEtiquetaCampo);
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel3.setText("CONTRASEÑA");
-        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 190, 200, 16));
+        getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 207, 200, 16));
 
         jPasswordField1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         jPasswordField1.setBorder(bordeCampo);
         jPasswordField1.setBackground(new java.awt.Color(255, 255, 255));
         jPasswordField1.addActionListener(this::jPasswordField1ActionPerformed);
-        getContentPane().add(jPasswordField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 208, 290, 36));
+        getContentPane().add(jPasswordField1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 225, 290, 36));
 
         jButton1.setBackground(colorBoton);
         jButton1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -202,13 +217,13 @@ public class INICIARSESION extends javax.swing.JFrame {
         jButton1.setFocusPainted(false);
         jButton1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         jButton1.addActionListener(this::jButton1ActionPerformed);
-        getContentPane().add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 262, 290, 42));
+        getContentPane().add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 279, 290, 42));
 
         lblFooter.setFont(new java.awt.Font("Segoe UI", 1, 9)); // NOI18N
         lblFooter.setForeground(new java.awt.Color(150, 160, 170));
         lblFooter.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblFooter.setText("TELECOMUNICACIONES PARA UN MEJOR FUTURO");
-        getContentPane().add(lblFooter, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 322, 290, 16));
+        getContentPane().add(lblFooter, new org.netbeans.lib.awtextra.AbsoluteConstraints(225, 339, 290, 16));
 
         salir.setText("\u00D7");
         salir.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
@@ -237,6 +252,31 @@ public class INICIARSESION extends javax.swing.JFrame {
     private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
         autenticar();
     }//GEN-LAST:event_jTextField1ActionPerformed
+
+    private void actualizarNombreUsuarioMostrado() {
+        String usuario = jTextField1.getText().trim();
+        String nombre = usuario.isEmpty()
+                ? ""
+                : autenticacionService.buscarPorUsuario(usuario)
+                        .map(Usuario::getNombre)
+                        .orElse("");
+        lblUsuario.setText(nombre.isEmpty() ? " " : nombre);
+    }
+
+    private void seleccionarTextoAlHacerClic(javax.swing.text.JTextComponent campo) {
+        campo.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                campo.selectAll();
+            }
+        });
+        campo.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent evt) {
+                campo.selectAll();
+            }
+        });
+    }
 
     // ==========================
     // ===========================================
@@ -351,6 +391,7 @@ public class INICIARSESION extends javax.swing.JFrame {
     private javax.swing.JTextField jTextField1;
     private javax.swing.JButton salir;
     private javax.swing.JLabel lblBienvenido;
+    private javax.swing.JLabel lblUsuario;
     private javax.swing.JLabel lblSubtitulo;
     private javax.swing.JLabel lblTagline;
     private javax.swing.JLabel lblFooter;
